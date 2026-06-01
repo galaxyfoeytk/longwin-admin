@@ -356,11 +356,28 @@ tbody tr:hover td{background:var(--bg);}
       登入
     </button>
 
-    <div id="configNote" class="config-note" style="margin-top:1.5rem;">
-      <strong>⚠ 尚未設定 API 串接</strong>
-      請先進入「Google Sheets 串接設定」頁面填入你的 API Key，系統才能從試算表讀取帳號。目前為測試模式，請使用示範帳號。
+    <!-- API KEY 設定區（登入頁面直接設定） -->
+    <div id="apiSetupArea" style="margin-top:1.25rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:13px;font-weight:500;color:var(--text);">Google Sheets 串接設定</span>
+        <span id="apiStatusDot" style="font-size:12px;padding:2px 10px;border-radius:20px;font-weight:500;"></span>
+      </div>
+      <div class="pass-wrap" style="margin-bottom:8px;">
+        <input class="field-input" type="password" id="loginApiKey" placeholder="貼入 Google Sheets API Key" style="padding-right:42px;font-family:var(--mono);font-size:12px;" />
+        <button class="eye-btn" onclick="togglePassEl(document.getElementById('loginApiKey'),this)" type="button" aria-label="顯示">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="saveApiKeyFromLogin()" style="flex:1;height:36px;background:var(--blue);color:white;border:none;border-radius:var(--radius-xs);font-size:13px;font-family:var(--font);cursor:pointer;">儲存 API Key</button>
+        <button onclick="testApiKeyFromLogin()" style="height:36px;padding:0 14px;background:var(--teal);color:white;border:none;border-radius:var(--radius-xs);font-size:13px;font-family:var(--font);cursor:pointer;white-space:nowrap;">測試連線</button>
+      </div>
+      <div id="apiTestResult" style="margin-top:8px;font-size:12px;display:none;padding:7px 10px;border-radius:var(--radius-xs);"></div>
     </div>
-    <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:6px;" id="demoRow"></div>
+    <div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem;">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">尚未設定 API Key 時可用示範帳號測試：</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;" id="demoRow"></div>
+    </div>
   </div>
 </div>
 
@@ -821,14 +838,53 @@ function updateBarStatus() {
   const key = localStorage.getItem('longyinApiKey') || '';
   const dot = document.getElementById('barDot');
   const txt = document.getElementById('barText');
-  if(!dot||!txt) return;
-  if(key) {
-    dot.className='bar-dot'; txt.textContent='Google Sheets 串接已設定・龍吟古早味飲品專賣';
-    if(document.getElementById('configNote')) document.getElementById('configNote').style.display='none';
-  } else {
-    dot.className='bar-dot err'; txt.textContent='尚未設定 API Key・請進入串接設定';
-    if(document.getElementById('configNote')) document.getElementById('configNote').style.display='block';
+  if(dot&&txt) {
+    if(key) { dot.className='bar-dot'; txt.textContent='Google Sheets 串接已設定・龍吟古早味飲品專賣'; }
+    else { dot.className='bar-dot err'; txt.textContent='尚未設定 API Key・請在登入頁填入'; }
   }
+  const statusDot = document.getElementById('apiStatusDot');
+  if(statusDot) {
+    if(key) { statusDot.textContent='✓ 已設定'; statusDot.style.cssText='font-size:12px;padding:2px 10px;border-radius:20px;font-weight:500;background:#EAF3DE;color:#3B6D11;'; }
+    else { statusDot.textContent='未設定'; statusDot.style.cssText='font-size:12px;padding:2px 10px;border-radius:20px;font-weight:500;background:#FCEBEB;color:#A32D2D;'; }
+  }
+  const loginKey = document.getElementById('loginApiKey');
+  if(loginKey && key) loginKey.value = key;
+}
+
+function saveApiKeyFromLogin() {
+  const key = document.getElementById('loginApiKey').value.trim();
+  if(!key) { showApiResult('請先貼入 API Key', false); return; }
+  localStorage.setItem('longyinApiKey', key);
+  updateBarStatus();
+  showApiResult('✓ API Key 已儲存！現在可以用試算表帳號登入', true);
+}
+
+async function testApiKeyFromLogin() {
+  const key  = document.getElementById('loginApiKey').value.trim();
+  const name = localStorage.getItem('longyinSheetName') || '帳號設定';
+  if(!key) { showApiResult('請先貼入 API Key', false); return; }
+  showApiResult('測試中...', null);
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(name)}!A1:A2?key=${key}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    localStorage.setItem('longyinApiKey', key);
+    updateBarStatus();
+    showApiResult('✓ 連線成功！試算表讀取正常，可以登入了', true);
+  } catch(e) {
+    showApiResult('✗ 連線失敗：' + e.message, false);
+  }
+}
+
+function showApiResult(msg, ok) {
+  const el = document.getElementById('apiTestResult');
+  if(!el) return;
+  el.style.display = 'block';
+  if(ok === true)  { el.style.background='#EAF3DE'; el.style.color='#3B6D11'; }
+  else if(ok === false) { el.style.background='#FCEBEB'; el.style.color='#A32D2D'; }
+  else { el.style.background='#E6F1FB'; el.style.color='#0C447C'; }
+  el.textContent = msg;
 }
 
 // ─── LOGIN ────────────────────────────────────────────────────────
