@@ -2,324 +2,226 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="龍吟後台">
 <title>龍吟古早味飲品專賣 — 後台管理系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
-
 :root {
-  --blue:        #185FA5;
-  --blue-light:  #E6F1FB;
-  --blue-dark:   #0C447C;
-  --blue-mid:    #378ADD;
-  --green:       #3B6D11;
-  --green-light: #EAF3DE;
-  --amber:       #854F0B;
-  --amber-light: #FAEEDA;
-  --amber-mid:   #FAC775;
-  --coral:       #993C1D;
-  --coral-light: #FAECE7;
-  --purple:      #534AB7;
-  --purple-light:#EEEDFE;
-  --teal:        #0F6E56;
-  --teal-light:  #E1F5EE;
-  --pink:        #993556;
-  --pink-light:  #FBEAF0;
-  --gray:        #5F5E5A;
-  --gray-light:  #F1EFE8;
-  --red:         #A32D2D;
-  --red-light:   #FCEBEB;
-  --bg:          #F5F4F0;
-  --surface:     #FFFFFF;
-  --border:      rgba(0,0,0,0.1);
-  --border-md:   rgba(0,0,0,0.18);
-  --text:        #1C1B18;
-  --text-muted:  #6B6A66;
-  --text-hint:   #A09E99;
-  --radius:      12px;
-  --radius-sm:   7px;
-  --radius-xs:   5px;
-  --font:        'Noto Sans TC', system-ui, sans-serif;
-  --mono:        'DM Mono', 'Courier New', monospace;
-  --shadow:      0 1px 3px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.06);
+  --blue:#185FA5; --blue-l:#E6F1FB; --blue-d:#0C447C;
+  --green:#3B6D11; --green-l:#EAF3DE;
+  --amber:#854F0B; --amber-l:#FAEEDA; --amber-m:#FAC775;
+  --coral:#993C1D; --coral-l:#FAECE7;
+  --purple:#534AB7; --purple-l:#EEEDFE;
+  --teal:#0F6E56; --teal-l:#E1F5EE;
+  --pink:#993556; --pink-l:#FBEAF0;
+  --gray:#5F5E5A; --gray-l:#F1EFE8;
+  --red:#A32D2D; --red-l:#FCEBEB;
+  --bg:#F5F4F0; --surface:#FFFFFF;
+  --border:rgba(0,0,0,0.09); --border-md:rgba(0,0,0,0.16);
+  --text:#1C1B18; --text-m:#6B6A66; --text-h:#A09E99;
+  --r:12px; --rs:7px; --rx:5px;
+  --font:'Noto Sans TC',system-ui,sans-serif;
+  --mono:'DM Mono','Courier New',monospace;
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 0 0 0.5px rgba(0,0,0,0.05);
 }
-
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
+html,body{height:100%;overflow:hidden;font-family:var(--font);font-size:14px;background:var(--bg);color:var(--text);}
 
-/* ─── LOADING ─────────────────────────── */
-#loadingScreen{
-  position:fixed;inset:0;background:var(--surface);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  z-index:999;transition:opacity 0.4s;
-}
-.loader-logo{width:52px;height:52px;border-radius:14px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:1rem;}
-.loader-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px;}
-.loader-sub{font-size:13px;color:var(--text-muted);margin-bottom:1.5rem;}
-.loader-bar{width:200px;height:3px;background:#E8E6E0;border-radius:10px;overflow:hidden;}
-.loader-fill{height:100%;background:var(--blue);border-radius:10px;animation:fill 1.8s ease forwards;}
+/* ── LOADING ── */
+#loadingScreen{position:fixed;inset:0;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity 0.4s;}
+.load-icon{font-size:40px;margin-bottom:12px;}
+.load-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.load-sub{font-size:13px;color:var(--text-m);margin-bottom:1.5rem;}
+.load-bar{width:180px;height:3px;background:#E8E6E0;border-radius:10px;overflow:hidden;}
+.load-fill{height:100%;background:var(--blue);border-radius:10px;animation:fill 1.6s ease forwards;}
 @keyframes fill{from{width:0}to{width:100%}}
 
-/* ─── LOGIN ───────────────────────────── */
-#loginPage{
-  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-  background:var(--bg);padding:1.5rem;
-}
-.login-wrap{width:100%;max-width:400px;}
-.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:2.5rem;}
-.brand-icon{width:44px;height:44px;border-radius:12px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
-.brand-name{font-size:17px;font-weight:600;color:var(--text);}
-.brand-sub{font-size:12px;color:var(--text-muted);}
-.login-title{font-size:22px;font-weight:600;color:var(--text);margin-bottom:4px;}
-.login-subtitle{font-size:13px;color:var(--text-muted);margin-bottom:2rem;}
-.field-group{margin-bottom:1rem;}
-.field-label{font-size:12px;font-weight:500;color:var(--text-muted);margin-bottom:5px;display:block;}
-.field-input{
-  width:100%;padding:0 13px;height:42px;font-size:14px;font-family:var(--font);
-  border:1px solid var(--border-md);border-radius:var(--radius-sm);
-  background:var(--surface);color:var(--text);outline:none;transition:border-color 0.15s,box-shadow 0.15s;
-}
-.field-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,0.1);}
+/* ── LOGIN ── */
+#loginPage{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:var(--bg);padding:1.5rem;}
+.login-wrap{width:100%;max-width:380px;}
+.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:2rem;}
+.brand-icon{width:42px;height:42px;border-radius:11px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.brand-name{font-size:16px;font-weight:600;color:var(--text);}
+.brand-sub{font-size:12px;color:var(--text-m);}
+h1.login-title{font-size:22px;font-weight:600;margin-bottom:4px;}
+.login-sub{font-size:13px;color:var(--text-m);margin-bottom:1.5rem;}
+.f-group{margin-bottom:1rem;}
+.f-label{font-size:12px;font-weight:500;color:var(--text-m);margin-bottom:5px;display:block;}
+.f-input{width:100%;padding:0 12px;height:42px;font-size:14px;font-family:var(--font);border:1px solid var(--border-md);border-radius:var(--rs);background:var(--surface);color:var(--text);outline:none;transition:border-color 0.15s,box-shadow 0.15s;}
+.f-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,0.1);}
 .pass-wrap{position:relative;}
-.pass-wrap .field-input{padding-right:42px;}
-.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-hint);font-size:18px;padding:0;display:flex;align-items:center;}
-.eye-btn:hover{color:var(--text-muted);}
-
-.login-status{
-  font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);
-  margin-bottom:1rem;display:none;align-items:center;gap:8px;
-}
-.login-status.error{background:var(--red-light);color:var(--red);border:1px solid #F7C1C1;}
-.login-status.loading{background:var(--blue-light);color:var(--blue-dark);border:1px solid #B5D4F4;}
-.status-spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;flex-shrink:0;}
+.pass-wrap .f-input{padding-right:42px;}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-h);font-size:16px;padding:0;display:flex;align-items:center;}
+.login-status{font-size:13px;padding:9px 13px;border-radius:var(--rs);margin-bottom:1rem;display:none;align-items:center;gap:8px;}
+.login-status.error{background:var(--red-l);color:var(--red);border:1px solid #F7C1C1;}
+.login-status.loading{background:var(--blue-l);color:var(--blue-d);border:1px solid #B5D4F4;}
+.spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;flex-shrink:0;}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-.login-btn{
-  width:100%;height:44px;border-radius:var(--radius-sm);background:var(--blue);
-  color:white;border:none;font-size:14px;font-weight:600;font-family:var(--font);
-  cursor:pointer;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;
-}
-.login-btn:hover{background:var(--blue-dark);}
+.login-btn{width:100%;height:44px;border-radius:var(--rs);background:var(--blue);color:white;border:none;font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.login-btn:hover{background:var(--blue-d);}
 .login-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.setup-note{margin-top:1.25rem;background:var(--amber-l);border:1px solid var(--amber-m);border-radius:var(--rs);padding:11px 14px;font-size:12px;color:var(--amber);line-height:1.7;}
+.setup-note strong{display:block;margin-bottom:3px;}
+.api-setup{margin-top:1.25rem;}
+.api-label{font-size:12px;font-weight:500;color:var(--text-m);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
+.api-status{font-size:11px;padding:2px 9px;border-radius:20px;font-weight:500;}
+.api-status.set{background:var(--green-l);color:var(--green);}
+.api-status.unset{background:var(--red-l);color:var(--red);}
+.api-row{display:flex;gap:8px;margin-top:6px;}
+.api-btn{height:36px;padding:0 14px;font-size:12px;font-family:var(--font);border:none;border-radius:var(--rx);cursor:pointer;white-space:nowrap;font-weight:500;}
+.api-btn.save{background:var(--blue);color:white;}
+.api-btn.test{background:var(--teal);color:white;}
+.api-result{margin-top:8px;font-size:12px;padding:7px 10px;border-radius:var(--rx);display:none;}
 
-.config-note{
-  margin-top:1.5rem;background:var(--amber-light);border:1px solid var(--amber-mid);
-  border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:var(--amber);line-height:1.7;
-}
-.config-note strong{display:block;margin-bottom:4px;}
-
-/* ─── MAIN LAYOUT ──────────────────────── */
-#appPage{display:none;height:100%;flex-direction:column;}
-
-.topbar{
-  height:50px;background:var(--surface);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 1.25rem;gap:12px;flex-shrink:0;
-  box-shadow:0 1px 0 var(--border);
-}
-.tb-logo{width:28px;height:28px;border-radius:7px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+/* ── APP ── */
+#appPage{height:100%;flex-direction:column;display:none;}
+.topbar{height:50px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:12px;flex-shrink:0;}
+.tb-logo{width:28px;height:28px;border-radius:7px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:15px;}
 .tb-title{font-size:14px;font-weight:600;color:var(--text);flex:1;}
 .tb-right{display:flex;align-items:center;gap:8px;}
-.user-chip{
-  display:flex;align-items:center;gap:8px;padding:5px 10px;
-  background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);
-}
-.user-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
-.user-name-text{font-size:13px;color:var(--text);}
-.role-badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
-.rb-1{background:#E6F1FB;color:#0C447C;}
-.rb-2{background:#EEEDFE;color:#3C3489;}
-.rb-3{background:#EAF3DE;color:#27500A;}
-.rb-4{background:#FAEEDA;color:#633806;}
-.rb-5{background:#E1F5EE;color:#085041;}
-.rb-6{background:#FBEAF0;color:#72243E;}
-.rb-7{background:#FAC775;color:#633806;}
-.rb-8{background:#F1EFE8;color:#444441;}
-.av-1{background:#E6F1FB;color:#0C447C;}
-.av-2{background:#EEEDFE;color:#3C3489;}
-.av-3{background:#EAF3DE;color:#27500A;}
-.av-4{background:#FAEEDA;color:#633806;}
-.av-5{background:#E1F5EE;color:#085041;}
-.av-6{background:#FBEAF0;color:#72243E;}
-.av-7{background:#FAC775;color:#633806;}
-.av-8{background:#F1EFE8;color:#444441;}
-
-.logout-btn{
-  height:32px;padding:0 12px;font-size:12px;border:1px solid var(--border-md);
-  border-radius:var(--radius-sm);background:transparent;color:var(--text-muted);
-  cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px;
-}
+.user-chip{display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);}
+.user-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+.user-name{font-size:13px;color:var(--text);}
+.role-pill{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
+.rp-1{background:#E6F1FB;color:#0C447C;} .rp-2{background:#EEEDFE;color:#3C3489;} .rp-3{background:#EAF3DE;color:#27500A;}
+.rp-4{background:#FAEEDA;color:#633806;} .rp-5{background:#E1F5EE;color:#085041;} .rp-6{background:#FBEAF0;color:#72243E;}
+.rp-7{background:#FAC775;color:#633806;} .rp-8{background:#F1EFE8;color:#444441;}
+.av-1{background:#E6F1FB;color:#0C447C;} .av-2{background:#EEEDFE;color:#3C3489;} .av-3{background:#EAF3DE;color:#27500A;}
+.av-4{background:#FAEEDA;color:#633806;} .av-5{background:#E1F5EE;color:#085041;} .av-6{background:#FBEAF0;color:#72243E;}
+.av-7{background:#FAC775;color:#633806;} .av-8{background:#F1EFE8;color:#444441;}
+.logout-btn{height:32px;padding:0 12px;font-size:12px;border:1px solid var(--border-md);border-radius:var(--rs);background:transparent;color:var(--text-m);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px;}
 .logout-btn:hover{background:var(--bg);}
 
 .body-wrap{display:flex;flex:1;overflow:hidden;}
 
-/* ─── SIDEBAR ─────────────────────────── */
-.sidebar{
-  width:196px;background:var(--surface);border-right:1px solid var(--border);
-  overflow-y:auto;flex-shrink:0;padding:10px 0;
-}
-.nav-section{margin-bottom:6px;}
-.nav-section-label{
-  font-size:10px;font-weight:600;color:var(--text-hint);
-  padding:8px 14px 4px;letter-spacing:0.06em;text-transform:uppercase;
-}
-.nav-item{
-  display:flex;align-items:center;gap:9px;padding:7px 14px;
-  font-size:13px;color:var(--text-muted);cursor:pointer;
-  border-left:2px solid transparent;transition:all 0.1s;
-  user-select:none;
-}
-.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:0.7;}
+/* ── SIDEBAR ── */
+.sidebar{width:192px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;padding:8px 0;}
+.nav-sec{margin-bottom:4px;}
+.nav-sec-lbl{font-size:10px;font-weight:600;color:var(--text-h);padding:8px 14px 3px;letter-spacing:0.06em;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 14px;font-size:13px;color:var(--text-m);cursor:pointer;border-left:2px solid transparent;transition:all 0.1s;user-select:none;}
+.nav-item .nav-emoji{font-size:14px;flex-shrink:0;}
 .nav-item:hover{background:var(--bg);color:var(--text);}
 .nav-item.active{background:#EEF5FC;color:var(--blue);border-left-color:var(--blue);font-weight:500;}
-.nav-item.active svg{opacity:1;}
 .nav-item.locked{opacity:0.3;cursor:not-allowed;pointer-events:none;}
 .nav-home{border-bottom:1px solid var(--border);margin-bottom:6px;padding-bottom:6px;}
 
-/* ─── CONTENT ─────────────────────────── */
+/* ── CONTENT ── */
 .content{flex:1;overflow-y:auto;padding:1.5rem;}
 .page{display:none;animation:fadeIn 0.2s ease;}
 .page.active{display:block;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-
 .page-head{margin-bottom:1.25rem;}
-.page-title{font-size:20px;font-weight:600;color:var(--text);}
-.page-desc{font-size:13px;color:var(--text-muted);margin-top:3px;}
+.page-title{font-size:20px;font-weight:600;}
+.page-desc{font-size:13px;color:var(--text-m);margin-top:3px;}
 
-/* perm tags */
 .perm-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem;}
 .ptag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500;display:inline-flex;align-items:center;gap:4px;}
-.ptag-w{background:var(--teal-light);color:var(--teal);}
-.ptag-r{background:var(--purple-light);color:var(--purple);}
-.ptag-v{background:var(--blue-light);color:var(--blue-dark);}
-.ptag-e{background:var(--amber-light);color:var(--amber);}
+.ptag-w{background:var(--teal-l);color:var(--teal);}
+.ptag-r{background:var(--purple-l);color:var(--purple);}
+.ptag-v{background:var(--blue-l);color:var(--blue-d);}
+.ptag-e{background:var(--amber-l);color:var(--amber);}
 
-/* stat cards */
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem;}
-.stat-card{background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;}
-.stat-label{font-size:12px;color:var(--text-muted);margin-bottom:5px;}
+.stat-card{background:var(--bg);border-radius:var(--rs);padding:12px 14px;}
+.stat-label{font-size:12px;color:var(--text-m);margin-bottom:5px;}
 .stat-val{font-size:24px;font-weight:600;color:var(--text);}
-.stat-sub{font-size:11px;color:var(--text-hint);margin-top:2px;}
+.stat-sub{font-size:11px;color:var(--text-h);margin-top:2px;}
 
-/* module grid */
-.mod-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
-.mod-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:1.1rem;cursor:pointer;transition:border-color 0.15s,transform 0.12s,box-shadow 0.15s;
-  position:relative;
-}
+.mod-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:10px;}
+.mod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;cursor:pointer;transition:border-color 0.15s,transform 0.12s;position:relative;}
 .mod-card:hover{border-color:var(--border-md);transform:translateY(-2px);box-shadow:var(--shadow);}
 .mod-card.locked{opacity:0.35;cursor:not-allowed;pointer-events:none;}
-.mod-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:18px;}
+.mod-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:19px;}
 .mi-blue{background:#E6F1FB;} .mi-teal{background:#E1F5EE;} .mi-amber{background:#FAEEDA;}
 .mi-green{background:#EAF3DE;} .mi-coral{background:#FAECE7;} .mi-purple{background:#EEEDFE;}
 .mi-pink{background:#FBEAF0;} .mi-gray{background:#F1EFE8;}
 .mod-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;}
-.mod-desc{font-size:11px;color:var(--text-muted);line-height:1.5;}
+.mod-desc{font-size:11px;color:var(--text-m);line-height:1.5;}
 .mod-chip{position:absolute;top:10px;right:10px;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;}
-.mc-ok{background:var(--green-light);color:var(--green);}
-.mc-no{background:var(--gray-light);color:var(--gray);}
+.mc-ok{background:var(--green-l);color:var(--green);}
+.mc-no{background:var(--gray-l);color:var(--gray);}
 
-/* table */
-.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1rem;}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1rem;}
 table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
-thead th{padding:9px 14px;text-align:left;font-size:12px;font-weight:500;color:var(--text-muted);border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap;}
+thead th{padding:9px 14px;text-align:left;font-size:12px;font-weight:500;color:var(--text-m);border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap;}
 tbody td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 tbody tr:last-child td{border-bottom:none;}
 tbody tr:hover td{background:var(--bg);}
 .mono{font-family:var(--mono);font-size:12px;}
 
-/* form section */
-.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;}
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;}
 .form-card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-.form-row.triple{grid-template-columns:1fr 1fr 1fr;}
+.form-row.tri{grid-template-columns:1fr 1fr 1fr;}
 .form-row.single{grid-template-columns:1fr;}
-.f-label{font-size:12px;color:var(--text-muted);margin-bottom:4px;display:block;}
-.f-input,.f-select{
-  width:100%;padding:0 10px;height:36px;font-size:13px;font-family:var(--font);
-  border:1px solid var(--border-md);border-radius:var(--radius-xs);
-  background:var(--surface);color:var(--text);outline:none;
-}
-.f-input:focus,.f-select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(24,95,165,0.1);}
-.save-btn{
-  height:36px;padding:0 16px;font-size:13px;font-family:var(--font);
-  background:var(--blue);color:white;border:none;border-radius:var(--radius-xs);
-  cursor:pointer;display:inline-flex;align-items:center;gap:6px;
-}
-.save-btn:hover{background:var(--blue-dark);}
-.readonly-note{font-size:12px;color:var(--amber);background:var(--amber-light);border:1px solid var(--amber-mid);border-radius:var(--radius-xs);padding:8px 12px;display:flex;align-items:center;gap:7px;}
-
-/* status chips */
+.ff-label{font-size:12px;color:var(--text-m);margin-bottom:4px;display:block;}
+.ff-input,.ff-select{width:100%;padding:0 10px;height:36px;font-size:13px;font-family:var(--font);border:1px solid var(--border-md);border-radius:var(--rx);background:var(--surface);color:var(--text);outline:none;}
+.ff-input:focus,.ff-select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(24,95,165,0.1);}
+.save-btn{height:36px;padding:0 16px;font-size:13px;font-family:var(--font);background:var(--blue);color:white;border:none;border-radius:var(--rx);cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.save-btn:hover{background:var(--blue-d);}
+.save-btn.green{background:var(--teal);}
+.readonly-note{font-size:12px;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-m);border-radius:var(--rx);padding:8px 12px;display:flex;align-items:center;gap:7px;}
 .chip{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;display:inline-block;}
-.chip-ok{background:var(--green-light);color:var(--green);}
-.chip-warn{background:var(--amber-light);color:var(--amber);}
-.chip-err{background:var(--red-light);color:var(--red);}
-.chip-off{background:var(--gray-light);color:var(--gray);}
-
-/* action btns */
-.act-btn{height:27px;padding:0 10px;font-size:12px;font-family:var(--font);border:1px solid var(--border-md);border-radius:var(--radius-xs);background:transparent;color:var(--text-muted);cursor:pointer;margin-right:4px;}
+.chip-ok{background:var(--green-l);color:var(--green);}
+.chip-warn{background:var(--amber-l);color:var(--amber);}
+.chip-err{background:var(--red-l);color:var(--red);}
+.chip-off{background:var(--gray-l);color:var(--gray);}
+.act-btn{height:27px;padding:0 10px;font-size:12px;font-family:var(--font);border:1px solid var(--border-md);border-radius:var(--rx);background:transparent;color:var(--text-m);cursor:pointer;margin-right:4px;}
 .act-btn:hover{background:var(--bg);color:var(--text);}
-.act-btn.del:hover{background:var(--red-light);color:var(--red);border-color:#F7C1C1;}
+.act-btn.del:hover{background:var(--red-l);color:var(--red);border-color:#F7C1C1;}
 
-/* bottom bar */
-.bottom-bar{
-  height:38px;background:var(--surface);border-top:1px solid var(--border);
-  display:flex;align-items:center;padding:0 1.25rem;gap:10px;flex-shrink:0;
-}
+/* ── BOTTOM BAR ── */
+.bottom-bar{height:36px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:10px;flex-shrink:0;font-size:12px;}
 .bar-dot{width:7px;height:7px;border-radius:50%;background:#639922;flex-shrink:0;}
 .bar-dot.err{background:var(--red);}
-.bar-dot.loading{background:var(--amber);animation:pulse 1s ease infinite;}
+.bar-dot.pend{background:var(--amber);animation:pulse 1s ease infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-.bar-text{font-size:12px;color:var(--text-muted);flex:1;}
-.bar-id{font-family:var(--mono);font-size:11px;color:var(--text-hint);}
-.bar-link{font-size:12px;color:var(--blue);cursor:pointer;text-decoration:none;white-space:nowrap;}
+.bar-text{color:var(--text-m);flex:1;}
+.bar-link{color:var(--blue);cursor:pointer;}
 
-/* modal */
-.modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,0.4);
-  display:none;align-items:center;justify-content:center;z-index:100;padding:1rem;
-}
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem;}
 .modal-overlay.open{display:flex;}
-.modal-box{
-  background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);
-  padding:1.5rem;width:100%;max-width:440px;
-  animation:modalIn 0.2s ease;
-}
-@keyframes modalIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:none}}
+.modal-box{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:1.5rem;width:100%;max-width:440px;animation:mIn 0.2s ease;}
+@keyframes mIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:none}}
 .modal-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:1.25rem;display:flex;align-items:center;gap:8px;}
 .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;}
-.btn-cancel{height:36px;padding:0 14px;font-size:13px;font-family:var(--font);border:1px solid var(--border-md);border-radius:var(--radius-xs);background:transparent;color:var(--text-muted);cursor:pointer;}
+.btn-cancel{height:36px;padding:0 14px;font-size:13px;font-family:var(--font);border:1px solid var(--border-md);border-radius:var(--rx);background:transparent;color:var(--text-m);cursor:pointer;}
 .btn-cancel:hover{background:var(--bg);}
-.btn-confirm{height:36px;padding:0 14px;font-size:13px;font-family:var(--font);background:var(--blue);color:white;border:none;border-radius:var(--radius-xs);cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
-.btn-confirm:hover{background:var(--blue-dark);}
+.btn-ok{height:36px;padding:0 14px;font-size:13px;font-family:var(--font);background:var(--blue);color:white;border:none;border-radius:var(--rx);cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.btn-ok:hover{background:var(--blue-d);}
 .form-err{font-size:12px;color:var(--red);margin-top:-6px;margin-bottom:8px;display:none;}
-.form-ok{font-size:12px;color:var(--green);background:var(--green-light);border:1px solid #C0DD97;border-radius:var(--radius-xs);padding:7px 12px;margin-bottom:10px;display:none;align-items:center;gap:6px;}
+.form-ok-msg{font-size:12px;color:var(--green);background:var(--green-l);border:1px solid #C0DD97;border-radius:var(--rx);padding:7px 12px;margin-bottom:10px;display:none;align-items:center;gap:6px;}
+.warn-box{font-size:12px;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-m);border-radius:var(--rx);padding:9px 13px;line-height:1.7;margin-bottom:1rem;}
 
-/* config area */
-.config-area{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;}
-.config-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;}
-.config-sub{font-size:13px;color:var(--text-muted);margin-bottom:1.25rem;}
-.config-field{margin-bottom:1rem;}
-.config-note{font-size:12px;color:var(--amber);background:var(--amber-light);border:1px solid var(--amber-mid);border-radius:var(--radius-xs);padding:9px 13px;line-height:1.7;margin-top:1rem;}
-
+/* ── SETUP PAGE ── */
+.setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;}
+.setup-title{font-size:15px;font-weight:600;margin-bottom:4px;}
+.setup-sub{font-size:13px;color:var(--text-m);margin-bottom:1.25rem;}
 .setup-steps{display:flex;flex-direction:column;gap:10px;margin:1rem 0;}
 .setup-step{display:flex;gap:12px;align-items:flex-start;}
 .step-n{width:24px;height:24px;border-radius:50%;background:var(--blue);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
-.step-body{flex:1;}
-.step-body strong{font-size:13px;color:var(--text);display:block;margin-bottom:2px;}
-.step-body span{font-size:12px;color:var(--text-muted);}
-.step-body a{color:var(--blue);font-size:12px;}
+.step-b strong{font-size:13px;color:var(--text);display:block;margin-bottom:2px;}
+.step-b span{font-size:12px;color:var(--text-m);}
+.step-b a{color:var(--blue);font-size:12px;}
+.sheets-id-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--rx);padding:8px 12px;font-family:var(--mono);font-size:11px;color:var(--blue);word-break:break-all;margin-bottom:1rem;cursor:pointer;}
+
+/* ── SYNC TOAST ── */
+.sync-toast{position:fixed;bottom:60px;right:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:8px 14px;font-size:12px;color:var(--text-m);box-shadow:var(--shadow);z-index:50;opacity:0;transition:opacity 0.3s;pointer-events:none;display:flex;align-items:center;gap:6px;}
+.sync-toast.show{opacity:1;}
 </style>
 </head>
 <body>
 
 <!-- LOADING -->
 <div id="loadingScreen">
-  <div class="loader-logo">☕</div>
-  <div class="loader-title">龍吟古早味飲品專賣</div>
-  <div class="loader-sub">後台管理系統載入中...</div>
-  <div class="loader-bar"><div class="loader-fill"></div></div>
+  <div class="load-icon">☕</div>
+  <div class="load-title">龍吟古早味飲品專賣</div>
+  <div class="load-sub">後台管理系統載入中...</div>
+  <div class="load-bar"><div class="load-fill"></div></div>
 </div>
 
 <!-- LOGIN -->
@@ -333,30 +235,36 @@ tbody tr:hover td{background:var(--bg);}
       </div>
     </div>
     <h1 class="login-title">登入</h1>
-    <p class="login-subtitle">輸入帳號密碼進入後台</p>
-
+    <p class="login-sub">輸入帳號密碼進入後台</p>
     <div id="loginStatus" class="login-status"></div>
-
-    <div class="field-group">
-      <label class="field-label">帳號</label>
-      <input class="field-input" type="text" id="uname" placeholder="輸入帳號" autocomplete="username" />
+    <div class="f-group">
+      <label class="f-label">帳號</label>
+      <input class="f-input" type="text" id="uname" placeholder="輸入帳號" autocomplete="username"/>
     </div>
-    <div class="field-group">
-      <label class="field-label">密碼</label>
+    <div class="f-group">
+      <label class="f-label">密碼</label>
       <div class="pass-wrap">
-        <input class="field-input" type="password" id="upass" placeholder="輸入密碼" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
-        <button class="eye-btn" onclick="togglePass(this)" type="button" aria-label="顯示密碼">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
+        <input class="f-input" type="password" id="upass" placeholder="輸入密碼" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <button class="eye-btn" onclick="togglePw('upass',this)" type="button">👁</button>
       </div>
     </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">→ 登入</button>
 
-    <button class="login-btn" id="loginBtn" onclick="doLogin()">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-      登入
-    </button>
-
-    <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:6px;" id="demoRow"></div>
+    <div class="api-setup">
+      <div class="api-label">
+        Apps Script 串接設定
+        <span class="api-status" id="apiStatusBadge">未設定</span>
+      </div>
+      <div class="pass-wrap">
+        <input class="f-input" type="password" id="apiUrlInput" placeholder="貼入 Apps Script 部署網址" style="padding-right:42px;font-family:var(--mono);font-size:11px;"/>
+        <button class="eye-btn" onclick="togglePw('apiUrlInput',this)" type="button">👁</button>
+      </div>
+      <div class="api-row">
+        <button class="api-btn save" onclick="saveApiUrl()">儲存網址</button>
+        <button class="api-btn test" onclick="testApiUrl()">測試連線</button>
+      </div>
+      <div class="api-result" id="apiResult"></div>
+    </div>
   </div>
 </div>
 
@@ -368,13 +276,10 @@ tbody tr:hover td{background:var(--bg);}
     <div class="tb-right">
       <div class="user-chip">
         <div class="user-av" id="topAv"></div>
-        <span class="user-name-text" id="topName"></span>
-        <span class="role-badge" id="topRole"></span>
+        <span class="user-name" id="topName"></span>
+        <span class="role-pill" id="topRole"></span>
       </div>
-      <button class="logout-btn" onclick="doLogout()">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        登出
-      </button>
+      <button class="logout-btn" onclick="doLogout()">↩ 登出</button>
     </div>
   </div>
 
@@ -395,74 +300,31 @@ tbody tr:hover td{background:var(--bg);}
       <!-- 串接設定 -->
       <div class="page" id="page-setup">
         <div class="page-head">
-          <div class="page-title">Google Sheets 串接設定</div>
-          <div class="page-desc">設定完成後，帳號密碼從試算表讀取，無需改程式</div>
+          <div class="page-title">Apps Script 串接設定</div>
+          <div class="page-desc">設定完成後帳號密碼從試算表讀取，無需 API Key</div>
         </div>
-        <div class="config-area">
-          <div class="config-title">試算表資訊</div>
-          <div class="config-sub">已連結的 Google Sheets 試算表</div>
-          <div class="form-row">
-            <div>
-              <label class="f-label">試算表 ID（已自動填入）</label>
-              <input class="f-input" value="1OJXO0Uq6XUzXXDraGoFi-uLZDUNhvbaTgFRgZG6cHNs" readonly style="font-family:var(--mono);font-size:11px;color:var(--text-muted);" />
-            </div>
-            <div>
-              <label class="f-label">帳號工作表名稱</label>
-              <input class="f-input" id="cfgSheetName" value="帳號設定" />
-            </div>
-          </div>
-          <div>
-            <label class="f-label">Google Sheets API Key</label>
-            <div class="pass-wrap">
-              <input class="f-input" type="password" id="cfgApiKey" placeholder="貼入你的 API Key" style="padding-right:42px;" />
-              <button class="eye-btn" onclick="togglePassEl(document.getElementById('cfgApiKey'),this)" type="button" aria-label="顯示">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-            </div>
-          </div>
-          <div class="config-note" style="margin-top:1rem;">
-            ⚠ API Key 僅儲存在此瀏覽器，不會上傳至任何伺服器。換裝置需重新填入。
-          </div>
-          <div style="margin-top:1rem;display:flex;gap:8px;">
-            <button class="save-btn" onclick="saveConfig()">
-              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              儲存設定
-            </button>
-            <button class="save-btn" style="background:var(--teal);" onclick="testConnection()">
-              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              測試連線
-            </button>
-          </div>
-          <div id="testResult" style="margin-top:10px;font-size:13px;display:none;"></div>
-        </div>
-
-        <div class="config-area">
-          <div class="config-title">試算表格式說明</div>
-          <div class="config-sub">在 Google Sheets 新增「帳號設定」工作表，第一列填欄位標題，第二列起填帳號資料</div>
-          <div class="table-card" style="margin-bottom:0;">
-            <table>
-              <thead><tr><th>欄位</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th></tr></thead>
-              <tbody>
-                <tr><td style="font-weight:500;">標題列</td><td>帳號</td><td>密碼</td><td>姓名</td><td>角色代碼</td><td>角色名稱</td><td>啟用狀態</td><td>備註</td></tr>
-                <tr><td style="color:var(--text-muted);">範例</td><td class="mono">（自填）</td><td class="mono">（自填）</td><td>Brian</td><td>1</td><td>系統管理員</td><td>TRUE</td><td>老闆</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div style="margin-top:1rem;">
-            <a href="https://docs.google.com/spreadsheets/d/1OJXO0Uq6XUzXXDraGoFi-uLZDUNhvbaTgFRgZG6cHNs/edit" target="_blank" class="save-btn" style="text-decoration:none;display:inline-flex;">
-              📊 開啟試算表
-            </a>
-          </div>
-        </div>
-
-        <div class="config-area">
-          <div class="config-title">取得 API Key 步驟</div>
+        <div class="setup-card">
+          <div class="setup-title">步驟說明</div>
+          <div class="setup-sub">請依照以下步驟設定 Google Apps Script 後端</div>
           <div class="setup-steps">
-            <div class="setup-step"><div class="step-n">1</div><div class="step-body"><strong>前往 Google Cloud Console</strong><br><a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a></div></div>
-            <div class="setup-step"><div class="step-n">2</div><div class="step-body"><strong>啟用 Google Sheets API</strong><span>API 和服務 → 程式庫 → 搜尋 Google Sheets API → 啟用</span></div></div>
-            <div class="setup-step"><div class="step-n">3</div><div class="step-body"><strong>建立 API 金鑰</strong><span>憑證 → 建立憑證 → API 金鑰 → 複製</span></div></div>
-            <div class="setup-step"><div class="step-n">4</div><div class="step-body"><strong>設定試算表共用</strong><span>試算表右上角「共用」→ 知道連結的人可查看</span></div></div>
-            <div class="setup-step"><div class="step-n">5</div><div class="step-body"><strong>貼入上方 API Key 欄位並儲存</strong></div></div>
+            <div class="setup-step"><div class="step-n">1</div><div class="step-b"><strong>下載 Apps Script 後端程式碼</strong><span>從對話中下載「龍吟_AppsScript.gs」</span></div></div>
+            <div class="setup-step"><div class="step-n">2</div><div class="step-b"><strong>開啟試算表 → 擴充功能 → Apps Script</strong><span>貼上程式碼，選 initAll 執行並授權</span></div></div>
+            <div class="setup-step"><div class="step-n">3</div><div class="step-b"><strong>部署為網路應用程式</strong><span>部署 → 新增部署 → 類型選「網路應用程式」→ 存取權選「所有人」→ 部署</span></div></div>
+            <div class="setup-step"><div class="step-n">4</div><div class="step-b"><strong>複製部署網址貼入登入頁</strong></div></div>
+          </div>
+          <div class="setup-title" style="margin-top:1rem;">試算表 ID</div>
+          <div class="sheets-id-box" onclick="copyText('1OJXO0Uq6XUzXXDraGoFi-uLZDUNhvbaTgFRgZG6cHNs',this)">1OJXO0Uq6XUzXXDraGoFi-uLZDUNhvbaTgFRgZG6cHNs　（點此複製）</div>
+          <div style="margin-top:1rem;">
+            <label class="ff-label">目前設定的 Apps Script 網址</label>
+            <div class="pass-wrap">
+              <input class="f-input" type="password" id="setupApiUrl" placeholder="尚未設定" style="font-family:var(--mono);font-size:11px;padding-right:42px;"/>
+              <button class="eye-btn" onclick="togglePw('setupApiUrl',this)" type="button">👁</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="save-btn" onclick="saveApiUrlFromSetup()">💾 儲存</button>
+              <button class="save-btn green" onclick="testApiUrlFromSetup()">✓ 測試連線</button>
+            </div>
+            <div id="setupTestResult" style="margin-top:8px;font-size:13px;display:none;padding:8px 12px;border-radius:var(--rx);"></div>
           </div>
         </div>
       </div>
@@ -470,131 +332,96 @@ tbody tr:hover td{background:var(--bg);}
       <!-- 茶製記錄 -->
       <div class="page" id="page-tea">
         <div class="page-head"><div class="page-title">茶製記錄</div><div class="page-desc">紅茶・綠茶・仙草凍茶・冬瓜茶・糖水・梅釀</div></div>
-        <div id="teaForm"></div>
-        <div class="table-card">
-          <table>
-            <thead><tr><th style="width:60px">桶號</th><th style="width:90px">茶種</th><th style="width:80px">煮好時間</th><th style="width:90px">預估報廢</th><th style="width:80px">試喝人員</th><th style="width:80px">煮茶人員</th><th style="width:70px">狀態</th></tr></thead>
-            <tbody>
-              <tr><td>A1</td><td>紅茶</td><td>08:30</td><td>14:30</td><td>阿誠</td><td>小美</td><td><span class="chip chip-ok">正常</span></td></tr>
-              <tr><td>B2</td><td>仙草凍茶</td><td>09:00</td><td>15:00</td><td>美君</td><td>阿誠</td><td><span class="chip chip-ok">正常</span></td></tr>
-              <tr><td>C3</td><td>冬瓜茶</td><td>07:45</td><td>11:45</td><td>小美</td><td>阿志</td><td><span class="chip chip-warn">即將到期</span></td></tr>
-            </tbody>
-          </table>
+        <div id="teaFormArea"></div>
+        <div class="table-card" id="teaTableWrap">
+          <table><thead><tr><th style="width:80px">日期</th><th style="width:80px">茶種</th><th style="width:55px">桶號</th><th style="width:75px">煮好時間</th><th style="width:80px">煮茶人員</th><th style="width:75px">狀態</th><th style="width:100px">備註</th></tr></thead>
+          <tbody id="teaBody"><tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table>
         </div>
       </div>
 
       <!-- 試喝記錄 -->
       <div class="page" id="page-taste">
         <div class="page-head"><div class="page-title">試喝記錄</div><div class="page-desc">仙草・杏仁試喝記錄表</div></div>
-        <div id="tasteForm"></div>
+        <div id="tasteFormArea"></div>
         <div class="table-card">
-          <table>
-            <thead><tr><th>日期</th><th>品項</th><th>罐數</th><th>試喝結果</th><th>試喝人員</th><th>備註</th></tr></thead>
-            <tbody>
-              <tr><td>05/29</td><td>仙草</td><td>8罐</td><td><span class="chip chip-ok">通過</span></td><td>小美</td><td>-</td></tr>
-              <tr><td>05/29</td><td>杏仁</td><td>5罐</td><td><span class="chip chip-ok">通過</span></td><td>阿誠</td><td>-</td></tr>
-            </tbody>
-          </table>
+          <table><thead><tr><th>日期</th><th>品項</th><th>罐數</th><th>試喝結果</th><th>試喝人員</th><th>備註</th></tr></thead>
+          <tbody id="tasteBody"><tr><td colspan="6" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table>
         </div>
       </div>
 
       <!-- 叫貨記錄 -->
       <div class="page" id="page-order">
         <div class="page-head"><div class="page-title">叫貨記錄</div><div class="page-desc">龍吟總店・日本鶴神叫貨紀錄</div></div>
-        <div id="orderForm"></div>
+        <div id="orderFormArea"></div>
         <div class="table-card">
-          <table>
-            <thead><tr><th>叫貨日期</th><th>商品</th><th>數量</th><th>叫貨人</th><th>到貨日期</th><th>金額</th><th>簽收人</th></tr></thead>
-            <tbody>
-              <tr><td>05/28</td><td>日本鶴神紅茶</td><td>10罐</td><td>老闆</td><td>05/30</td><td>$3,200</td><td>-</td></tr>
-              <tr><td>05/27</td><td>仙草凍</td><td>5桶</td><td>美君</td><td>05/28</td><td>$1,800</td><td>美君</td></tr>
-              <tr><td>05/25</td><td>日本鶴神仙草凍</td><td>3箱</td><td>老闆</td><td>05/27</td><td>$2,400</td><td>阿誠</td></tr>
-            </tbody>
-          </table>
+          <table><thead><tr><th>叫貨日期</th><th>商品</th><th>數量</th><th>叫貨人員</th><th>金額</th><th>到貨狀態</th></tr></thead>
+          <tbody id="orderBody"><tr><td colspan="6" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table>
         </div>
       </div>
 
       <!-- 溫度記錄 -->
       <div class="page" id="page-temp">
         <div class="page-head"><div class="page-title">冰箱溫度記錄</div><div class="page-desc">標準值：冷藏 0~7℃・冷凍 -18℃以下・每日 2 次</div></div>
-        <div id="tempForm"></div>
+        <div id="tempFormArea"></div>
         <div class="table-card">
-          <table>
-            <thead><tr><th>日期</th><th>班別</th><th>前冰箱</th><th>後冰箱</th><th>客冰箱</th><th>簽名</th><th>狀態</th></tr></thead>
-            <tbody>
-              <tr><td>05/29</td><td>早班</td><td>3℃</td><td>4℃</td><td>5℃</td><td>小美</td><td><span class="chip chip-ok">正常</span></td></tr>
-              <tr><td>05/28</td><td>晚班</td><td>4℃</td><td>3℃</td><td>6℃</td><td>阿誠</td><td><span class="chip chip-ok">正常</span></td></tr>
-              <tr><td>05/28</td><td>早班</td><td>2℃</td><td>4℃</td><td>5℃</td><td>美君</td><td><span class="chip chip-ok">正常</span></td></tr>
-            </tbody>
-          </table>
+          <table><thead><tr><th>日期</th><th>班別</th><th>前冰箱</th><th>後冰箱</th><th>客冰箱</th><th>簽名</th><th>狀態</th></tr></thead>
+          <tbody id="tempBody"><tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table>
         </div>
       </div>
 
       <!-- 電表記錄 -->
-      <div class="page" id="page-power">
-        <div class="page-head"><div class="page-title">電表度數記錄</div><div class="page-desc">每日開班記錄，異常用電量請立即回報群組</div></div>
-        <div id="powerForm"></div>
+      <div class="page" id="page-elec">
+        <div class="page-head"><div class="page-title">電表度數記錄</div><div class="page-desc">每日開班記錄，異常用電請立即回報</div></div>
+        <div id="elecFormArea"></div>
         <div class="table-card">
-          <table>
-            <thead><tr><th>日期</th><th>當日度數</th><th>昨日度數</th><th>差值</th><th>記錄人</th><th>備註</th></tr></thead>
-            <tbody>
-              <tr><td>05/29</td><td>12,450</td><td>12,418</td><td>32度</td><td>小美</td><td>-</td></tr>
-              <tr><td>05/28</td><td>12,418</td><td>12,385</td><td>33度</td><td>阿誠</td><td>-</td></tr>
-              <tr><td>05/27</td><td>12,385</td><td>12,350</td><td>35度</td><td>美君</td><td>-</td></tr>
-            </tbody>
-          </table>
+          <table><thead><tr><th>日期</th><th>當日度數</th><th>昨日度數</th><th>用電(度)</th><th>記錄人員</th><th>狀態</th><th>備註</th></tr></thead>
+          <tbody id="elecBody"><tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table>
         </div>
       </div>
 
       <!-- 濾心記錄 -->
       <div class="page" id="page-filter">
         <div class="page-head"><div class="page-title">濾心更換記錄</div><div class="page-desc">總店・倉庫濾心更換紀錄</div></div>
-        <div id="filterForm"></div>
+        <div id="filterFormArea"></div>
         <div class="table-card">
-          <table>
-            <thead><tr><th>日期</th><th>地點</th><th>第一支</th><th>第二支</th><th>第三支</th><th>簽名</th></tr></thead>
-            <tbody>
-              <tr><td>05/15</td><td>總店</td><td><span class="chip chip-ok">更換</span></td><td><span class="chip chip-ok">更換</span></td><td>-</td><td>老闆</td></tr>
-              <tr><td>04/20</td><td>倉庫</td><td><span class="chip chip-ok">更換</span></td><td>-</td><td>-</td><td>美君</td></tr>
-            </tbody>
-          </table>
+          <table><thead><tr><th>日期</th><th>地點</th><th>第一支</th><th>第二支</th><th>第三支</th><th>簽名</th></tr></thead>
+          <tbody id="filterBody"><tr><td colspan="6" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table>
         </div>
       </div>
 
       <!-- 杯數統計 -->
       <div class="page" id="page-cups">
-        <div class="page-head"><div class="page-title">每日杯數統計</div><div class="page-desc">總店每日杯數統計・市場紀錄表</div></div>
-        <div class="stats-row">
-          <div class="stat-card"><div class="stat-label">今日仙草</div><div class="stat-val">142</div><div class="stat-sub">杯</div></div>
-          <div class="stat-card"><div class="stat-label">今日杏仁</div><div class="stat-val">89</div><div class="stat-sub">杯</div></div>
-          <div class="stat-card"><div class="stat-label">仙草撞奶</div><div class="stat-val">34</div><div class="stat-sub">杯</div></div>
-          <div class="stat-card"><div class="stat-label">市場仙草</div><div class="stat-val">-</div><div class="stat-sub">今日無市場</div></div>
+        <div class="page-head"><div class="page-title">每日杯數統計</div><div class="page-desc">總店每日杯數・市場紀錄</div></div>
+        <div class="stats-row" id="cupsStats">
+          <div class="stat-card"><div class="stat-label">今日仙草</div><div class="stat-val" id="statJelly">—</div><div class="stat-sub">杯</div></div>
+          <div class="stat-card"><div class="stat-label">今日杏仁</div><div class="stat-val" id="statAlmond">—</div><div class="stat-sub">杯</div></div>
+          <div class="stat-card"><div class="stat-label">仙草撞奶</div><div class="stat-val" id="statJellyMilk">—</div><div class="stat-sub">杯</div></div>
+          <div class="stat-card"><div class="stat-label">總杯數</div><div class="stat-val" id="statTotal">—</div><div class="stat-sub">杯</div></div>
         </div>
-        <div id="cupsForm"></div>
+        <div id="cupsFormArea"></div>
         <div class="table-card">
-          <table>
-            <thead><tr><th>日期</th><th>仙草(杯)</th><th>杏仁(杯)</th><th>仙草撞奶</th><th>仙草罐</th><th>杏仁罐</th><th>記錄人</th></tr></thead>
-            <tbody>
-              <tr><td>05/29</td><td>142</td><td>89</td><td>34</td><td>23</td><td>15</td><td>小美</td></tr>
-              <tr><td>05/28</td><td>128</td><td>95</td><td>29</td><td>21</td><td>14</td><td>阿誠</td></tr>
-              <tr><td>05/27</td><td>156</td><td>102</td><td>38</td><td>26</td><td>17</td><td>阿誠</td></tr>
-            </tbody>
-          </table>
+          <table><thead><tr><th>日期</th><th>仙草(杯)</th><th>杏仁(杯)</th><th>仙草撞奶</th><th>仙草罐</th><th>杏仁罐</th><th>總杯數</th><th>記錄人員</th></tr></thead>
+          <tbody id="cupsBody"><tr><td colspan="8" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table>
         </div>
       </div>
 
-      <!-- 市場記錄 -->
+      <!-- 市場紀錄 -->
       <div class="page" id="page-market">
-        <div class="page-head"><div class="page-title">市場紀錄</div><div class="page-desc">月市場・仙草・杏仁・仙草撞奶每日記錄</div></div>
-        <div id="marketForm"></div>
+        <div class="page-head"><div class="page-title">市場紀錄</div><div class="page-desc">月市場仙草杏仁銷售記錄</div></div>
+        <div id="marketFormArea"></div>
         <div class="table-card">
-          <table>
-            <thead><tr><th>天數</th><th>日期</th><th>天氣</th><th>仙草(杯)</th><th>杏仁(杯)</th><th>仙草撞奶</th><th>仙草罐</th><th>杏仁罐</th><th>記錄人</th></tr></thead>
-            <tbody>
-              <tr><td>1</td><td>05/01</td><td>晴</td><td>45</td><td>32</td><td>12</td><td>6</td><td>4</td><td>美君</td></tr>
-              <tr><td>2</td><td>05/02</td><td>陰</td><td>38</td><td>28</td><td>9</td><td>5</td><td>3</td><td>美君</td></tr>
-            </tbody>
-          </table>
+          <table><thead><tr><th>日期</th><th>天氣</th><th>仙草(杯)</th><th>杏仁(杯)</th><th>仙草撞奶</th><th>總杯數</th><th>記錄人員</th></tr></thead>
+          <tbody id="marketBody"><tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- 時數記錄 -->
+      <div class="page" id="page-hours">
+        <div class="page-head"><div class="page-title">時數記錄</div><div class="page-desc">員工出勤時數</div></div>
+        <div id="hoursFormArea"></div>
+        <div class="table-card">
+          <table><thead><tr><th>日期</th><th>員工</th><th>角色</th><th>開始</th><th>結束</th><th>工時(h)</th><th>加班(h)</th></tr></thead>
+          <tbody id="hoursBody"><tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table>
         </div>
       </div>
 
@@ -602,61 +429,33 @@ tbody tr:hover td{background:var(--bg);}
       <div class="page" id="page-report">
         <div class="page-head"><div class="page-title">報表分析</div><div class="page-desc">營收・杯數・用料趨勢</div></div>
         <div class="stats-row">
-          <div class="stat-card"><div class="stat-label">本月營收</div><div class="stat-val">$128,400</div><div class="stat-sub">↑ 12% vs 上月</div></div>
-          <div class="stat-card"><div class="stat-label">本月杯數</div><div class="stat-val">3,842</div><div class="stat-sub">↑ 8%</div></div>
-          <div class="stat-card"><div class="stat-label">客單價</div><div class="stat-val">$33</div><div class="stat-sub">本月平均</div></div>
-          <div class="stat-card"><div class="stat-label">叫貨次數</div><div class="stat-val">18</div><div class="stat-sub">本月</div></div>
+          <div class="stat-card"><div class="stat-label">本月杯數</div><div class="stat-val" id="rptCups">—</div><div class="stat-sub">杯</div></div>
+          <div class="stat-card"><div class="stat-label">本月叫貨</div><div class="stat-val" id="rptOrders">—</div><div class="stat-sub">筆</div></div>
+          <div class="stat-card"><div class="stat-label">本月市場</div><div class="stat-val" id="rptMarket">—</div><div class="stat-sub">天</div></div>
+          <div class="stat-card"><div class="stat-label">溫度異常</div><div class="stat-val" id="rptTempWarn">—</div><div class="stat-sub">次</div></div>
         </div>
-        <div class="readonly-note">
-          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          報表資料來自 Google Sheets「龍吟古早味飲品專賣」・串接後自動同步
-        </div>
-      </div>
-
-      <!-- 時數記錄 -->
-      <div class="page" id="page-hours">
-        <div class="page-head"><div class="page-title">時數記錄</div><div class="page-desc">員工出勤時數</div></div>
-        <div id="hoursForm"></div>
-        <div class="table-card">
-          <table>
-            <thead><tr><th>日期</th><th>員工</th><th>開始時間</th><th>結束時間</th><th>總時數</th><th>備註</th></tr></thead>
-            <tbody>
-              <tr><td>05/29</td><td>小美</td><td>08:00</td><td>17:00</td><td>9h</td><td>-</td></tr>
-              <tr><td>05/29</td><td>阿誠</td><td>12:00</td><td>21:00</td><td>9h</td><td>-</td></tr>
-            </tbody>
-          </table>
-        </div>
+        <div class="readonly-note">📊 報表資料來自 Google Sheets「龍吟古早味飲品專賣」，串接後自動同步</div>
       </div>
 
       <!-- 帳號管理 -->
       <div class="page" id="page-users">
-        <div class="page-head"><div class="page-title">帳號管理</div><div class="page-desc">帳號設定・角色權限指派・僅最高管理員可操作</div></div>
+        <div class="page-head"><div class="page-title">帳號管理</div><div class="page-desc">帳號設定・角色指派・僅最高管理員可操作</div></div>
         <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
-          <button class="save-btn" onclick="openAddUser()">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            新增帳號
-          </button>
+          <button class="save-btn" onclick="openAddUser()">＋ 新增帳號</button>
         </div>
         <div class="table-card">
-          <table>
-            <thead><tr><th style="width:120px">帳號</th><th style="width:110px">姓名</th><th style="width:140px">角色</th><th style="width:55px">狀態</th><th>操作</th></tr></thead>
-            <tbody id="userTableBody"></tbody>
-          </table>
+          <table><thead><tr><th style="width:120px">帳號</th><th style="width:110px">姓名</th><th style="width:140px">角色</th><th style="width:60px">狀態</th><th>操作</th></tr></thead>
+          <tbody id="userBody"><tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table>
         </div>
-        <div class="readonly-note" style="margin-top:1rem;">
-          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          帳號密碼儲存於 Google Sheets「帳號設定」工作表，請直接在試算表修改密碼
-        </div>
+        <div class="readonly-note" style="margin-top:1rem;">🔒 密碼請直接在 Google Sheets「帳號設定」工作表修改</div>
       </div>
 
       <!-- 操作紀錄 -->
       <div class="page" id="page-logs">
-        <div class="page-head"><div class="page-title">操作紀錄</div><div class="page-desc">所有修改行為完整保存，避免責任不清</div></div>
+        <div class="page-head"><div class="page-title">操作紀錄</div><div class="page-desc">所有重要操作完整保存</div></div>
         <div class="table-card">
-          <table>
-            <thead><tr><th>時間</th><th>人員</th><th>動作</th><th>模組</th><th>內容摘要</th></tr></thead>
-            <tbody id="logTableBody"></tbody>
-          </table>
+          <table><thead><tr><th>時間</th><th>人員</th><th>動作</th><th>模組</th><th>內容</th></tr></thead>
+          <tbody id="logBody"><tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table>
         </div>
       </div>
 
@@ -666,29 +465,23 @@ tbody tr:hover td{background:var(--bg);}
   <div class="bottom-bar">
     <div class="bar-dot" id="barDot"></div>
     <span class="bar-text" id="barText">載入中...</span>
-    <span class="bar-id">ID: 1OJXO0Uq6XUzXXDraGoFi-uLZDUNhvbaTgFRgZG6cHNs</span>
     <a class="bar-link" href="https://docs.google.com/spreadsheets/d/1OJXO0Uq6XUzXXDraGoFi-uLZDUNhvbaTgFRgZG6cHNs/edit" target="_blank">開啟試算表 ↗</a>
   </div>
 </div>
 
-<!-- USER MODAL -->
+<!-- 帳號 MODAL -->
 <div class="modal-overlay" id="userModal">
   <div class="modal-box">
-    <div class="modal-title">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span id="modalTitle">新增帳號</span>
-    </div>
-    <div id="formOk" class="form-ok"></div>
-    <div style="background:var(--amber-light);border:1px solid var(--amber-mid);border-radius:var(--radius-xs);padding:9px 13px;font-size:12px;color:var(--amber);margin-bottom:1rem;line-height:1.6;">
-      ⚠ 密碼請直接在 Google Sheets「帳號設定」工作表填寫，不要在此輸入
-    </div>
+    <div class="modal-title">👤 <span id="modalTitle">新增帳號</span></div>
+    <div id="formOkMsg" class="form-ok-msg"></div>
+    <div class="warn-box">⚠ 密碼請直接在 Google Sheets「帳號設定」工作表填寫，不要在此輸入</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-      <div><label class="f-label">帳號（英數，區分大小寫）</label><input class="f-input" id="mu_key" placeholder="例：staff2" autocomplete="off"/></div>
-      <div><label class="f-label">姓名</label><input class="f-input" id="mu_name" placeholder="例：阿志"/></div>
+      <div><label class="ff-label">帳號（英數，區分大小寫）</label><input class="ff-input" id="mu_key" placeholder="例：staff2" autocomplete="off"/></div>
+      <div><label class="ff-label">姓名</label><input class="ff-input" id="mu_name" placeholder="例：阿志"/></div>
     </div>
     <div style="margin-bottom:10px;">
-      <label class="f-label">角色</label>
-      <select class="f-select" id="mu_role">
+      <label class="ff-label">角色</label>
+      <select class="ff-select" id="mu_role">
         <option value="1">1. 系統最高管理員（老闆）</option>
         <option value="2">2. 營運管理者（督導）</option>
         <option value="3">3. 店長</option>
@@ -702,45 +495,42 @@ tbody tr:hover td{background:var(--bg);}
     <div id="formErr" class="form-err">請填寫帳號與姓名</div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal()">取消</button>
-      <button class="btn-confirm" onclick="saveUser()">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-        儲存
-      </button>
+      <button class="btn-ok" onclick="saveUser()">✓ 儲存</button>
     </div>
   </div>
 </div>
 
+<div class="sync-toast" id="syncToast"></div>
+
 <script>
-// ─── CONFIG ───────────────────────────────────────────────────────
-const SHEET_ID   = '1OJXO0Uq6XUzXXDraGoFi-uLZDUNhvbaTgFRgZG6cHNs';
+// ── CONFIG ─────────────────────────────────────────────────────
+var API_URL = localStorage.getItem('longyinApiUrl') || '';
+
 const ROLE_LABELS = {1:'系統最高管理員',2:'營運管理者',3:'店長',4:'副店長',5:'正職員工',6:'工讀生',7:'財務/會計',8:'外部顧問'};
-const ROLE_CLS    = {1:'rb-1',2:'rb-2',3:'rb-3',4:'rb-4',5:'rb-5',6:'rb-6',7:'rb-7',8:'rb-8'};
+const ROLE_CLS    = {1:'rp-1',2:'rp-2',3:'rp-3',4:'rp-4',5:'rp-5',6:'rp-6',7:'rp-7',8:'rp-8'};
 const AV_CLS      = {1:'av-1',2:'av-2',3:'av-3',4:'av-4',5:'av-5',6:'av-6',7:'av-7',8:'av-8'};
 
-// ─── MODULES ──────────────────────────────────────────────────────
 const MODULES = [
-  {id:'tea',    icon:'🍵', cls:'mi-coral',  name:'茶製記錄',   desc:'紅茶・綠茶・仙草・冬瓜・糖水・梅釀', roles:[1,2,3,4,5]},
-  {id:'taste',  icon:'💧', cls:'mi-teal',   name:'試喝記錄',   desc:'仙草・杏仁每日試喝紀錄',              roles:[1,2,3,4,5]},
-  {id:'order',  icon:'📦', cls:'mi-blue',   name:'叫貨記錄',   desc:'龍吟總店・日本鶴神叫貨單',            roles:[1,2,3,4,5]},
-  {id:'temp',   icon:'🌡', cls:'mi-amber',  name:'溫度記錄',   desc:'冷藏冷凍冰箱每日 2 次',               roles:[1,2,3,4,5,6]},
-  {id:'power',  icon:'⚡', cls:'mi-green',  name:'電表記錄',   desc:'每日開班電表度數',                    roles:[1,2,3,4,5,6]},
-  {id:'filter', icon:'💧', cls:'mi-teal',   name:'濾心記錄',   desc:'濾心更換記錄表',                      roles:[1,2,3,4,5,6]},
-  {id:'cups',   icon:'☕', cls:'mi-purple', name:'杯數統計',   desc:'總店每日杯數・市場記錄',               roles:[1,2,3,4]},
-  {id:'market', icon:'🏪', cls:'mi-pink',   name:'市場紀錄',   desc:'月市場仙草杏仁銷售記錄',              roles:[1,2,3,4]},
-  {id:'hours',  icon:'⏱', cls:'mi-gray',   name:'時數記錄',   desc:'員工出勤時數記錄',                    roles:[1,2,3,4]},
-  {id:'report', icon:'📊', cls:'mi-teal',   name:'報表分析',   desc:'營收・杯數・趨勢報表',                 roles:[1,2,7,8]},
-  {id:'users',  icon:'👥', cls:'mi-gray',   name:'帳號管理',   desc:'帳號設定・角色指派',                  roles:[1]},
-  {id:'logs',   icon:'📋', cls:'mi-gray',   name:'操作紀錄',   desc:'所有修改行為完整保存',                roles:[1,2,3]},
-  {id:'setup',  icon:'⚙️', cls:'mi-blue',   name:'串接設定',   desc:'Google Sheets API 設定',             roles:[1]},
+  {id:'tea',    emoji:'🍵', cls:'mi-coral',  name:'茶製記錄',  desc:'紅茶・綠茶・仙草・冬瓜・糖水・梅釀', roles:[1,2,3,4,5]},
+  {id:'taste',  emoji:'💧', cls:'mi-teal',   name:'試喝記錄',  desc:'仙草・杏仁每日試喝紀錄',              roles:[1,2,3,4,5]},
+  {id:'order',  emoji:'📦', cls:'mi-blue',   name:'叫貨記錄',  desc:'龍吟總店・日本鶴神叫貨單',            roles:[1,2,3,4,5]},
+  {id:'temp',   emoji:'🌡', cls:'mi-amber',  name:'溫度記錄',  desc:'冷藏冷凍冰箱每日 2 次',               roles:[1,2,3,4,5,6]},
+  {id:'elec',   emoji:'⚡', cls:'mi-green',  name:'電表記錄',  desc:'每日開班電表度數',                    roles:[1,2,3,4,5,6]},
+  {id:'filter', emoji:'💧', cls:'mi-teal',   name:'濾心記錄',  desc:'濾心更換記錄',                        roles:[1,2,3,4,5,6]},
+  {id:'cups',   emoji:'☕', cls:'mi-purple', name:'杯數統計',  desc:'總店每日杯數・市場統計',               roles:[1,2,3,4]},
+  {id:'market', emoji:'🏪', cls:'mi-pink',   name:'市場紀錄',  desc:'月市場仙草杏仁銷售記錄',              roles:[1,2,3,4]},
+  {id:'hours',  emoji:'⏱', cls:'mi-gray',   name:'時數記錄',  desc:'員工出勤時數',                        roles:[1,2,3,4]},
+  {id:'report', emoji:'📊', cls:'mi-teal',   name:'報表分析',  desc:'杯數・叫貨・趨勢報表',                roles:[1,2,7,8]},
+  {id:'users',  emoji:'👥', cls:'mi-gray',   name:'帳號管理',  desc:'帳號設定・角色指派',                  roles:[1]},
+  {id:'logs',   emoji:'📋', cls:'mi-gray',   name:'操作紀錄',  desc:'所有操作完整保存',                    roles:[1,2,3]},
+  {id:'setup',  emoji:'⚙️', cls:'mi-blue',   name:'串接設定',  desc:'Apps Script 網址設定',               roles:[1]},
 ];
-
 const NAV_GROUPS = [
-  {label:'現場記錄', ids:['tea','taste','temp','power','filter']},
+  {label:'現場記錄', ids:['tea','taste','temp','elec','filter']},
   {label:'庫存進貨', ids:['order']},
   {label:'數據統計', ids:['cups','market','hours','report']},
   {label:'系統管理', ids:['users','logs','setup']},
 ];
-
 const PERM_LAYERS = [
   {label:'填寫權限', cls:'ptag-w', roles:[1,2,3,4,5,6]},
   {label:'審核權限', cls:'ptag-r', roles:[1,2,3,4]},
@@ -748,244 +538,212 @@ const PERM_LAYERS = [
   {label:'修改/刪除', cls:'ptag-e', roles:[1]},
 ];
 
-// ─── STATE ────────────────────────────────────────────────────────
-let currentUser = null;
-let localAccounts = []; // fallback while Sheets not configured
-let editUserIdx = -1;
-let operationLogs = [
-  {time:'13:42',user:'小美',action:'新增',module:'茶製記錄',summary:'新增 A1 紅茶桶'},
-  {time:'09:30',user:'阿誠',action:'新增',module:'電表記錄',summary:'05/29 度數 12,450'},
-  {time:'08:00',user:'美君',action:'新增',module:'溫度記錄',summary:'前冰箱早班 3℃'},
-];
+var currentUser = null;
+var editUserIdx = -1;
+var opLogs = [];
 
-// ─── STARTUP ──────────────────────────────────────────────────────
+// ── API ────────────────────────────────────────────────────────
+async function api(params) {
+  if (!API_URL) return {ok:false, error:'尚未設定 Apps Script 網址'};
+  var url = API_URL + '?' + Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+  try {
+    var res = await fetch(url);
+    return await res.json();
+  } catch(e) {
+    return {ok:false, error:e.message};
+  }
+}
+
+function showToast(msg, type) {
+  var el = document.getElementById('syncToast');
+  el.textContent = msg;
+  el.className = 'sync-toast show';
+  if(type==='ok') el.style.color='var(--green)';
+  else if(type==='err') el.style.color='var(--red)';
+  else el.style.color='var(--text-m)';
+  setTimeout(()=>el.classList.remove('show'), 2500);
+}
+
+// ── STARTUP ────────────────────────────────────────────────────
 window.addEventListener('load', () => {
-  loadConfig();
+  updateApiStatus();
   setTimeout(() => {
-    document.getElementById('loadingScreen').style.opacity = '0';
-    setTimeout(() => {
-      document.getElementById('loadingScreen').style.display = 'none';
-      document.getElementById('loginPage').style.display = 'flex';
-      updateBarStatus();
-    }, 400);
-  }, 1800);
+    document.getElementById('loadingScreen').style.opacity='0';
+    setTimeout(()=>{
+      document.getElementById('loadingScreen').style.display='none';
+      document.getElementById('loginPage').style.display='flex';
+    },400);
+  },1600);
 });
 
-// ─── CONFIG PERSISTENCE ───────────────────────────────────────────
-function loadConfig() {
-  const key = localStorage.getItem('longyinApiKey') || '';
-  const name = localStorage.getItem('longyinSheetName') || '帳號設定';
-  if(document.getElementById('cfgApiKey')) document.getElementById('cfgApiKey').value = key;
-  if(document.getElementById('cfgSheetName')) document.getElementById('cfgSheetName').value = name;
-}
-
-function saveConfig() {
-  const key  = document.getElementById('cfgApiKey').value.trim();
-  const name = document.getElementById('cfgSheetName').value.trim() || '帳號設定';
-  localStorage.setItem('longyinApiKey', key);
-  localStorage.setItem('longyinSheetName', name);
-  const r = document.getElementById('testResult');
-  r.style.display = 'block';
-  r.style.color = 'var(--green)';
-  r.textContent = '✓ 設定已儲存';
-  updateBarStatus();
-  setTimeout(() => r.style.display = 'none', 2000);
-}
-
-async function testConnection() {
-  const key  = document.getElementById('cfgApiKey').value.trim();
-  const name = document.getElementById('cfgSheetName').value.trim() || '帳號設定';
-  const r    = document.getElementById('testResult');
-  if(!key) { r.style.display='block';r.style.color='var(--red)';r.textContent='✗ 請先填入 API Key';return; }
-  r.style.display='block'; r.style.color='var(--blue)'; r.textContent='測試中...';
-  try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(name)}!A1:A2?key=${key}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message);
-    r.style.color='var(--green)';
-    r.textContent = `✓ 連線成功！讀取到欄位：${data.values?.[0]?.[0]||'（空白）'}`;
-    localStorage.setItem('longyinApiKey', key);
-    localStorage.setItem('longyinSheetName', name);
-    updateBarStatus();
-  } catch(e) {
-    r.style.color='var(--red)'; r.textContent='✗ 連線失敗：'+e.message;
+function updateApiStatus() {
+  API_URL = localStorage.getItem('longyinApiUrl') || '';
+  var badge = document.getElementById('apiStatusBadge');
+  if(badge) {
+    badge.textContent = API_URL ? '✓ 已設定' : '未設定';
+    badge.className = 'api-status ' + (API_URL ? 'set' : 'unset');
   }
-}
-
-function updateBarStatus() {
-  const key = localStorage.getItem('longyinApiKey') || '';
-  const dot = document.getElementById('barDot');
-  const txt = document.getElementById('barText');
+  var dot = document.getElementById('barDot');
+  var txt = document.getElementById('barText');
   if(dot&&txt) {
-    if(key) { dot.className='bar-dot'; txt.textContent='Google Sheets 串接已設定・龍吟古早味飲品專賣'; }
-    else { dot.className='bar-dot err'; txt.textContent='尚未設定 API Key・請在登入頁填入'; }
+    if(API_URL){ dot.className='bar-dot'; txt.textContent='Apps Script 串接已設定・龍吟古早味飲品專賣'; }
+    else { dot.className='bar-dot err'; txt.textContent='尚未設定 Apps Script 網址'; }
   }
-  const statusDot = document.getElementById('apiStatusDot');
-  if(statusDot) {
-    if(key) { statusDot.textContent='✓ 已設定'; statusDot.style.cssText='font-size:12px;padding:2px 10px;border-radius:20px;font-weight:500;background:#EAF3DE;color:#3B6D11;'; }
-    else { statusDot.textContent='未設定'; statusDot.style.cssText='font-size:12px;padding:2px 10px;border-radius:20px;font-weight:500;background:#FCEBEB;color:#A32D2D;'; }
-  }
-  const loginKey = document.getElementById('loginApiKey');
-  if(loginKey && key) loginKey.value = key;
+  // 填入登入頁欄位
+  var loginInput = document.getElementById('apiUrlInput');
+  if(loginInput && API_URL) loginInput.value = API_URL;
+  // 填入設定頁欄位
+  var setupInput = document.getElementById('setupApiUrl');
+  if(setupInput && API_URL) setupInput.value = API_URL;
 }
 
-function saveApiKeyFromLogin() {
-  const key = document.getElementById('loginApiKey').value.trim();
-  if(!key) { showApiResult('請先貼入 API Key', false); return; }
-  localStorage.setItem('longyinApiKey', key);
-  updateBarStatus();
-  showApiResult('✓ API Key 已儲存！現在可以用試算表帳號登入', true);
+function saveApiUrl() {
+  var v = document.getElementById('apiUrlInput').value.trim();
+  if(!v){ showApiResult('請填入網址','err'); return; }
+  localStorage.setItem('longyinApiUrl', v);
+  API_URL = v;
+  updateApiStatus();
+  showApiResult('✓ 已儲存！現在可以用試算表帳號登入','ok');
 }
 
-async function testApiKeyFromLogin() {
-  const key  = document.getElementById('loginApiKey').value.trim();
-  const name = localStorage.getItem('longyinSheetName') || '帳號設定';
-  if(!key) { showApiResult('請先貼入 API Key', false); return; }
-  showApiResult('測試中...', null);
-  try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(name)}!A1:A2?key=${key}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message);
-    localStorage.setItem('longyinApiKey', key);
-    updateBarStatus();
-    showApiResult('✓ 連線成功！試算表讀取正常，可以登入了', true);
-  } catch(e) {
-    showApiResult('✗ 連線失敗：' + e.message, false);
+async function testApiUrl() {
+  var v = document.getElementById('apiUrlInput').value.trim();
+  if(!v){ showApiResult('請先填入網址','err'); return; }
+  showApiResult('測試中...','info');
+  API_URL = v;
+  var r = await api({action:'login', username:'__test__', password:'__test__'});
+  if(r && !r.error?.includes('尚未設定')) {
+    localStorage.setItem('longyinApiUrl', v);
+    updateApiStatus();
+    showApiResult('✓ 連線成功！可以登入了','ok');
+  } else {
+    showApiResult('✗ 連線失敗：'+(r.error||'無法連接'),'err');
   }
 }
 
-function showApiResult(msg, ok) {
-  const el = document.getElementById('apiTestResult');
-  if(!el) return;
-  el.style.display = 'block';
-  if(ok === true)  { el.style.background='#EAF3DE'; el.style.color='#3B6D11'; }
-  else if(ok === false) { el.style.background='#FCEBEB'; el.style.color='#A32D2D'; }
-  else { el.style.background='#E6F1FB'; el.style.color='#0C447C'; }
+function showApiResult(msg, type) {
+  var el = document.getElementById('apiResult');
+  el.style.display='block';
   el.textContent = msg;
+  if(type==='ok') { el.style.background='var(--green-l)'; el.style.color='var(--green)'; }
+  else if(type==='err') { el.style.background='var(--red-l)'; el.style.color='var(--red)'; }
+  else { el.style.background='var(--blue-l)'; el.style.color='var(--blue-d)'; }
 }
 
-// ─── LOGIN ────────────────────────────────────────────────────────
-async function loadAccountsFromSheets() {
-  const key  = localStorage.getItem('longyinApiKey') || '';
-  const name = localStorage.getItem('longyinSheetName') || '帳號設定';
-  if(!key) return null; // not configured
-  try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(name)}!A2:G100?key=${key}`;
-    const res  = await fetch(url);
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message);
-    const rows = data.values || [];
-    return rows.map(r => ({
-      key:    r[0]||'',
-      pass:   r[1]||'',
-      name:   r[2]||'',
-      role:   parseInt(r[3])||5,
-      label:  r[4]||ROLE_LABELS[parseInt(r[3])||5]||'員工',
-      active: r[5]!=='FALSE',
-      note:   r[6]||'',
-    })).filter(a => a.key && a.active);
-  } catch(e) {
-    return {error: e.message};
+function saveApiUrlFromSetup() {
+  var v = document.getElementById('setupApiUrl').value.trim();
+  if(!v) return;
+  localStorage.setItem('longyinApiUrl', v);
+  API_URL = v;
+  updateApiStatus();
+  var el = document.getElementById('setupTestResult');
+  el.style.display='block'; el.style.background='var(--green-l)'; el.style.color='var(--green)';
+  el.textContent='✓ 已儲存';
+  setTimeout(()=>el.style.display='none',1500);
+}
+
+async function testApiUrlFromSetup() {
+  var v = document.getElementById('setupApiUrl').value.trim();
+  if(!v) return;
+  var el = document.getElementById('setupTestResult');
+  el.style.display='block'; el.style.background='var(--blue-l)'; el.style.color='var(--blue-d)';
+  el.textContent='測試中...';
+  API_URL = v;
+  var r = await api({action:'login', username:'__test__', password:'__test__'});
+  if(r && !r.error?.includes('尚未設定')) {
+    localStorage.setItem('longyinApiUrl', v);
+    updateApiStatus();
+    el.style.background='var(--green-l)'; el.style.color='var(--green)';
+    el.textContent='✓ 連線成功！';
+  } else {
+    el.style.background='var(--red-l)'; el.style.color='var(--red)';
+    el.textContent='✗ 連線失敗：'+(r?.error||'無法連接');
   }
 }
 
+// ── LOGIN ──────────────────────────────────────────────────────
 async function doLogin() {
-  const uname = document.getElementById('uname').value.trim();
-  const upass = document.getElementById('upass').value;
-  const btn   = document.getElementById('loginBtn');
-  const status= document.getElementById('loginStatus');
-
-  if(!uname||!upass){ showStatus('請輸入帳號和密碼','error'); return; }
-
-  btn.disabled = true;
-  showStatus('驗證中...','loading');
-
-  const accounts = await loadAccountsFromSheets();
-
-  if(accounts === null) {
-    // no API key → use local demo accounts
-    const demo = localAccounts.find(a => a.key===uname && a.pass===upass && a.active);
-    if(demo){ loginSuccess(demo); } else { btn.disabled=false; showStatus('帳號或密碼錯誤','error'); }
-    return;
+  var uname = document.getElementById('uname').value.trim();
+  var upass = document.getElementById('upass').value;
+  var btn = document.getElementById('loginBtn');
+  var status = document.getElementById('loginStatus');
+  if(!uname||!upass){ showLoginStatus('請輸入帳號和密碼','error'); return; }
+  if(!API_URL){ showLoginStatus('請先設定 Apps Script 網址','error'); return; }
+  btn.disabled=true;
+  showLoginStatus('驗證中...','loading');
+  var r = await api({action:'login', username:uname, password:upass});
+  if(r.ok && r.user) {
+    loginSuccess(r.user);
+  } else {
+    btn.disabled=false;
+    showLoginStatus(r.error||'帳號或密碼錯誤','error');
   }
-  if(accounts && accounts.error) {
-    btn.disabled=false; showStatus('試算表讀取失敗：'+accounts.error,'error'); return;
-  }
-  const user = accounts.find(a => a.key===uname && a.pass===upass);
-  if(user){ loginSuccess(user); } else { btn.disabled=false; showStatus('帳號或密碼錯誤','error'); }
 }
 
-function showStatus(msg, type) {
-  const el = document.getElementById('loginStatus');
-  el.style.display = 'flex';
-  el.className = 'login-status ' + type;
-  el.innerHTML = type==='loading'
-    ? `<div class="status-spinner"></div>${msg}`
-    : `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${msg}`;
+function showLoginStatus(msg, type) {
+  var el = document.getElementById('loginStatus');
+  el.style.display='flex';
+  el.className='login-status '+type;
+  el.innerHTML = type==='loading' ? '<div class="spinner"></div>'+msg : '⚠ '+msg;
 }
 
 function loginSuccess(user) {
   currentUser = user;
   buildApp();
-  document.getElementById('loginPage').style.display = 'none';
-  document.getElementById('appPage').style.display = 'flex';
-  document.getElementById('loginBtn').disabled = false;
-  document.getElementById('loginStatus').style.display = 'none';
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('appPage').style.display='flex';
+  document.getElementById('loginBtn').disabled=false;
+  document.getElementById('loginStatus').style.display='none';
+  loadAllData();
+  addLog('登入','系統','登入後台');
 }
 
 function doLogout() {
-  currentUser = null;
-  document.getElementById('uname').value = '';
-  document.getElementById('upass').value = '';
-  document.getElementById('appPage').style.display = 'none';
-  document.getElementById('loginPage').style.display = 'flex';
+  currentUser=null;
+  document.getElementById('uname').value='';
+  document.getElementById('upass').value='';
+  document.getElementById('appPage').style.display='none';
+  document.getElementById('loginPage').style.display='flex';
 }
 
-// ─── BUILD APP ────────────────────────────────────────────────────
+// ── BUILD APP ──────────────────────────────────────────────────
 function buildApp() {
-  const u = currentUser;
-  // topbar
-  const av = document.getElementById('topAv');
+  var u = currentUser;
+  var av = document.getElementById('topAv');
   av.textContent = (u.name||'?')[0];
-  av.className = 'user-av ' + (AV_CLS[u.role]||'av-5');
+  av.className = 'user-av '+(AV_CLS[u.role]||'av-5');
   document.getElementById('topName').textContent = u.name;
-  const rb = document.getElementById('topRole');
+  var rb = document.getElementById('topRole');
   rb.textContent = ROLE_LABELS[u.role]||u.label;
-  rb.className = 'role-badge '+(ROLE_CLS[u.role]||'rb-5');
-  // home
+  rb.className = 'role-pill '+(ROLE_CLS[u.role]||'rp-5');
   document.getElementById('homeTitle').textContent = '歡迎回來，'+u.name;
   document.getElementById('homeDesc').textContent = '角色：'+(ROLE_LABELS[u.role]||u.label)+'・請選擇功能模組';
-  // perm tags
-  const pr = document.getElementById('permRow'); pr.innerHTML='';
-  PERM_LAYERS.forEach(pl => {
+  var pr = document.getElementById('permRow'); pr.innerHTML='';
+  PERM_LAYERS.forEach(pl=>{
     if(pl.roles.includes(u.role)){
-      const t=document.createElement('span'); t.className='ptag '+pl.cls; t.textContent='✓ '+pl.label; pr.appendChild(t);
+      var t=document.createElement('span'); t.className='ptag '+pl.cls; t.textContent='✓ '+pl.label; pr.appendChild(t);
     }
   });
-  buildSidebar(); buildHomeGrid(); buildForms(); renderUserTable(); renderLogs();
+  buildSidebar(); buildHomeGrid(); buildForms();
   showPage('home');
 }
 
 function buildSidebar() {
-  const sb = document.getElementById('sidebar'); sb.innerHTML='';
-  const home=document.createElement('div');
-  home.className='nav-item nav-home'; home.id='nav-home';
-  home.innerHTML='<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> 首頁';
-  home.onclick=()=>showPage('home'); sb.appendChild(home);
+  var sb = document.getElementById('sidebar'); sb.innerHTML='';
+  var h=document.createElement('div'); h.className='nav-item nav-home'; h.id='nav-home';
+  h.innerHTML='🏠 <span>首頁</span>'; h.onclick=()=>showPage('home'); sb.appendChild(h);
   NAV_GROUPS.forEach(g=>{
-    const mods=g.ids.map(id=>MODULES.find(m=>m.id===id)).filter(Boolean);
-    const visible=mods.filter(m=>m.roles.includes(currentUser.role));
+    var mods=g.ids.map(id=>MODULES.find(m=>m.id===id)).filter(Boolean);
+    var visible=mods.filter(m=>m.roles.includes(currentUser.role));
     if(!visible.length) return;
-    const sec=document.createElement('div'); sec.className='nav-section';
-    const lbl=document.createElement('div'); lbl.className='nav-section-label'; lbl.textContent=g.label;
+    var sec=document.createElement('div'); sec.className='nav-sec';
+    var lbl=document.createElement('div'); lbl.className='nav-sec-lbl'; lbl.textContent=g.label;
     sec.appendChild(lbl);
     mods.forEach(m=>{
-      const ok=m.roles.includes(currentUser.role);
-      const ni=document.createElement('div');
+      var ok=m.roles.includes(currentUser.role);
+      var ni=document.createElement('div');
       ni.className='nav-item'+(ok?'':' locked'); ni.id='nav-'+m.id;
-      ni.innerHTML=`<span style="font-size:14px">${m.icon}</span> ${m.name}`;
+      ni.innerHTML='<span class="nav-emoji">'+m.emoji+'</span><span>'+m.name+'</span>';
       if(ok) ni.onclick=()=>showPage(m.id);
       sec.appendChild(ni);
     });
@@ -994,165 +752,270 @@ function buildSidebar() {
 }
 
 function buildHomeGrid() {
-  const grid=document.getElementById('homeGrid'); grid.innerHTML='';
+  var grid=document.getElementById('homeGrid'); grid.innerHTML='';
   MODULES.forEach(m=>{
-    const ok=m.roles.includes(currentUser.role);
-    const c=document.createElement('div');
+    var ok=m.roles.includes(currentUser.role);
+    var c=document.createElement('div');
     c.className='mod-card'+(ok?'':' locked');
-    c.innerHTML=`<div class="mod-icon ${m.cls}" style="font-size:18px">${m.icon}</div><div class="mod-name">${m.name}</div><div class="mod-desc">${m.desc}</div><span class="mod-chip ${ok?'mc-ok':'mc-no'}">${ok?'可使用':'無權限'}</span>`;
+    c.innerHTML='<div class="mod-icon '+m.cls+'" style="font-size:19px">'+m.emoji+'</div><div class="mod-name">'+m.name+'</div><div class="mod-desc">'+m.desc+'</div><span class="mod-chip '+(ok?'mc-ok':'mc-no')+'">'+(ok?'可使用':'無權限')+'</span>';
     if(ok) c.onclick=()=>showPage(m.id);
     grid.appendChild(c);
   });
 }
 
 function buildForms() {
-  const u=currentUser;
-  const canWrite=[1,3,4,5].includes(u.role);
-  const canWriteAll=[1,3,4,5,6].includes(u.role);
-  const noAccess=`<div class="readonly-note"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> 您的權限為檢視，無法填寫</div>`;
+  var u=currentUser;
+  var canWrite=[1,3,4,5].includes(u.role);
+  var canAll=[1,3,4,5,6].includes(u.role);
+  var noAccess='<div class="readonly-note">🔒 您的權限為檢視，無法填寫</div>';
+  var today=new Date().toISOString().slice(0,10).replace(/-/g,'/');
 
   // 茶製
-  document.getElementById('teaForm').innerHTML = canWrite ? `<div class="form-card"><div class="form-card-title">🍵 新增茶製記錄</div><div class="form-row"><div><label class="f-label">茶種</label><select class="f-select"><option>紅茶</option><option>綠茶</option><option>仙草凍茶</option><option>冬瓜茶</option><option>糖水</option><option>梅釀</option></select></div><div><label class="f-label">桶號</label><input class="f-input" placeholder="如 A1"/></div></div><div class="form-row"><div><label class="f-label">煮好時間</label><input type="time" class="f-input"/></div><div><label class="f-label">煮茶人員</label><input class="f-input" value="${u.name}"/></div></div><div class="form-row"><div><label class="f-label">試喝人員</label><input class="f-input" placeholder="試喝人姓名"/></div><div><label class="f-label">備註</label><input class="f-input" placeholder="選填"/></div></div><button class="save-btn">💾 儲存記錄</button></div>` : noAccess;
+  document.getElementById('teaFormArea').innerHTML=canWrite?`<div class="form-card"><div class="form-card-title">🍵 新增茶製記錄</div><div class="form-row"><div><label class="ff-label">日期</label><input type="date" class="ff-input" id="tea_date" value="${today.replace(/\//g,'-')}"/></div><div><label class="ff-label">茶種</label><select class="ff-select" id="tea_type"><option>紅茶</option><option>綠茶</option><option>仙草凍茶</option><option>冬瓜茶</option><option>糖水</option><option>梅釀</option></select></div></div><div class="form-row"><div><label class="ff-label">桶號</label><input class="ff-input" id="tea_barrel" placeholder="如 A1"/></div><div><label class="ff-label">煮好時間</label><input type="time" class="ff-input" id="tea_time"/></div></div><div class="form-row"><div><label class="ff-label">煮茶人員</label><input class="ff-input" id="tea_brewer" value="${u.name}"/></div><div><label class="ff-label">狀態</label><select class="ff-select" id="tea_status"><option>待確認</option><option>正常</option><option>即將到期</option><option>已報廢</option><option>異常</option></select></div></div><div class="form-row single"><label class="ff-label">備註</label><input class="ff-input" id="tea_note" placeholder="選填"/></div><button class="save-btn" onclick="saveTea()">💾 儲存記錄</button></div>`:noAccess;
 
   // 試喝
-  document.getElementById('tasteForm').innerHTML = canWrite ? `<div class="form-card"><div class="form-card-title">💧 新增試喝記錄</div><div class="form-row"><div><label class="f-label">品項</label><select class="f-select"><option>仙草</option><option>杏仁</option></select></div><div><label class="f-label">罐數</label><input type="number" class="f-input" placeholder="0"/></div></div><div class="form-row"><div><label class="f-label">試喝結果</label><select class="f-select"><option>通過</option><option>異常-需回報</option></select></div><div><label class="f-label">試喝人員</label><input class="f-input" value="${u.name}"/></div></div><button class="save-btn">💾 儲存記錄</button></div>` : noAccess;
+  document.getElementById('tasteFormArea').innerHTML=canWrite?`<div class="form-card"><div class="form-card-title">💧 新增試喝記錄</div><div class="form-row"><div><label class="ff-label">日期</label><input type="date" class="ff-input" id="tst_date" value="${today.replace(/\//g,'-')}"/></div><div><label class="ff-label">品項</label><select class="ff-select" id="tst_item"><option>仙草</option><option>杏仁</option></select></div></div><div class="form-row"><div><label class="ff-label">罐數</label><input type="number" class="ff-input" id="tst_qty" placeholder="0"/></div><div><label class="ff-label">試喝結果</label><select class="ff-select" id="tst_result"><option>通過</option><option>異常-需回報</option><option>待確認</option></select></div></div><div class="form-row"><div><label class="ff-label">試喝人員</label><input class="ff-input" id="tst_taster" value="${u.name}"/></div><div><label class="ff-label">備註</label><input class="ff-input" id="tst_note" placeholder="選填"/></div></div><button class="save-btn" onclick="saveTaste()">💾 儲存記錄</button></div>`:noAccess;
 
   // 叫貨
-  document.getElementById('orderForm').innerHTML = canWrite ? `<div class="form-card"><div class="form-card-title">📦 新增叫貨記錄</div><div class="form-row"><div><label class="f-label">商品</label><select class="f-select"><option>日本鶴神紅茶</option><option>日本鶴神仙草凍</option><option>仙草凍</option><option>杏仁粉</option><option>其他</option></select></div><div><label class="f-label">數量</label><input class="f-input" placeholder="如 10罐"/></div></div><div class="form-row"><div><label class="f-label">叫貨日期</label><input type="date" class="f-input"/></div><div><label class="f-label">叫貨人</label><input class="f-input" value="${u.name}"/></div></div><div class="form-row"><div><label class="f-label">金額</label><input class="f-input" placeholder="$0"/></div><div><label class="f-label">備註</label><input class="f-input" placeholder="選填"/></div></div><button class="save-btn">💾 儲存記錄</button></div>` : noAccess;
+  document.getElementById('orderFormArea').innerHTML=canWrite?`<div class="form-card"><div class="form-card-title">📦 新增叫貨記錄</div><div class="form-row"><div><label class="ff-label">叫貨日期</label><input type="date" class="ff-input" id="ord_date" value="${today.replace(/\//g,'-')}"/></div><div><label class="ff-label">商品</label><select class="ff-select" id="ord_product"><option>日本鶴神紅茶</option><option>日本鶴神仙草凍</option><option>仙草凍</option><option>杏仁粉</option><option>糖</option><option>冬瓜磚</option><option>梅釀原料</option><option>紙杯</option><option>塑膠袋</option><option>其他</option></select></div></div><div class="form-row"><div><label class="ff-label">數量</label><input class="ff-input" id="ord_qty" placeholder="如 10"/></div><div><label class="ff-label">單位</label><select class="ff-select" id="ord_unit"><option>罐</option><option>箱</option><option>桶</option><option>包</option><option>個</option></select></div></div><div class="form-row"><div><label class="ff-label">叫貨人員</label><input class="ff-input" id="ord_orderer" value="${u.name}"/></div><div><label class="ff-label">金額</label><input class="ff-input" id="ord_amount" placeholder="$0"/></div></div><button class="save-btn" onclick="saveOrder()">💾 儲存記錄</button></div>`:noAccess;
 
   // 溫度
-  document.getElementById('tempForm').innerHTML = canWriteAll ? `<div class="form-card"><div class="form-card-title">🌡 記錄冰箱溫度</div><div class="form-row"><div><label class="f-label">日期</label><input type="date" class="f-input"/></div><div><label class="f-label">班別</label><select class="f-select"><option>早班</option><option>晚班</option></select></div></div><div class="form-row triple"><div><label class="f-label">前冰箱 (℃)</label><input type="number" class="f-input" placeholder="0~7"/></div><div><label class="f-label">後冰箱 (℃)</label><input type="number" class="f-input" placeholder="0~7"/></div><div><label class="f-label">客冰箱 (℃)</label><input type="number" class="f-input" placeholder="0~7"/></div></div><div class="form-row"><div><label class="f-label">簽名</label><input class="f-input" value="${u.name}"/></div><div><label class="f-label">備註</label><input class="f-input" placeholder="如有異常請填寫"/></div></div><button class="save-btn">💾 儲存記錄</button></div>` : noAccess;
+  document.getElementById('tempFormArea').innerHTML=canAll?`<div class="form-card"><div class="form-card-title">🌡 記錄冰箱溫度</div><div class="form-row"><div><label class="ff-label">日期</label><input type="date" class="ff-input" id="tmp_date" value="${today.replace(/\//g,'-')}"/></div><div><label class="ff-label">班別</label><select class="ff-select" id="tmp_shift"><option>早班</option><option>晚班</option></select></div></div><div class="form-row tri"><div><label class="ff-label">前冰箱 (℃)</label><input type="number" class="ff-input" id="tmp_front" placeholder="0~7" step="0.1"/></div><div><label class="ff-label">後冰箱 (℃)</label><input type="number" class="ff-input" id="tmp_back" placeholder="0~7" step="0.1"/></div><div><label class="ff-label">客冰箱 (℃)</label><input type="number" class="ff-input" id="tmp_guest" placeholder="0~7" step="0.1"/></div></div><div class="form-row tri"><div><label class="ff-label">前冷凍 (℃)</label><input type="number" class="ff-input" id="tmp_ff" placeholder="-18以下" step="0.1"/></div><div><label class="ff-label">後冷凍 (℃)</label><input type="number" class="ff-input" id="tmp_bf" placeholder="-18以下" step="0.1"/></div><div><label class="ff-label">簽名</label><input class="ff-input" id="tmp_signer" value="${u.name}"/></div></div><div class="form-row single"><label class="ff-label">備註</label><input class="ff-input" id="tmp_note" placeholder="如有異常請說明"/></div><button class="save-btn" onclick="saveTemp()">💾 儲存記錄</button></div>`:noAccess;
 
   // 電表
-  document.getElementById('powerForm').innerHTML = canWriteAll ? `<div class="form-card"><div class="form-card-title">⚡ 記錄電表度數</div><div class="form-row"><div><label class="f-label">日期</label><input type="date" class="f-input"/></div><div><label class="f-label">當日度數</label><input type="number" class="f-input" placeholder="0"/></div></div><div class="form-row"><div><label class="f-label">記錄人員</label><input class="f-input" value="${u.name}"/></div><div><label class="f-label">備註</label><input class="f-input" placeholder="如有異常請填寫並回報群組"/></div></div><button class="save-btn">💾 儲存記錄</button></div>` : noAccess;
+  document.getElementById('elecFormArea').innerHTML=canAll?`<div class="form-card"><div class="form-card-title">⚡ 記錄電表度數</div><div class="form-row"><div><label class="ff-label">日期</label><input type="date" class="ff-input" id="elc_date" value="${today.replace(/\//g,'-')}"/></div><div><label class="ff-label">當日度數</label><input type="number" class="ff-input" id="elc_today" placeholder="填入今日電表數字"/></div></div><div class="form-row"><div><label class="ff-label">記錄人員</label><input class="ff-input" id="elc_recorder" value="${u.name}"/></div><div><label class="ff-label">備註</label><input class="ff-input" id="elc_note" placeholder="異常請說明並回報群組"/></div></div><button class="save-btn" onclick="saveElec()">💾 儲存記錄</button></div>`:noAccess;
 
   // 濾心
-  document.getElementById('filterForm').innerHTML = canWriteAll ? `<div class="form-card"><div class="form-card-title">💧 記錄濾心更換</div><div class="form-row"><div><label class="f-label">日期</label><input type="date" class="f-input"/></div><div><label class="f-label">地點</label><select class="f-select"><option>總店</option><option>倉庫</option></select></div></div><div class="form-row triple"><div><label class="f-label">第一支</label><select class="f-select"><option>未更換</option><option>更換</option></select></div><div><label class="f-label">第二支</label><select class="f-select"><option>未更換</option><option>更換</option></select></div><div><label class="f-label">第三支</label><select class="f-select"><option>未更換</option><option>更換</option></select></div></div><div class="form-row"><div><label class="f-label">簽名</label><input class="f-input" value="${u.name}"/></div></div><button class="save-btn">💾 儲存記錄</button></div>` : noAccess;
+  document.getElementById('filterFormArea').innerHTML=canAll?`<div class="form-card"><div class="form-card-title">💧 記錄濾心更換</div><div class="form-row"><div><label class="ff-label">日期</label><input type="date" class="ff-input" id="flt_date" value="${today.replace(/\//g,'-')}"/></div><div><label class="ff-label">地點</label><select class="ff-select" id="flt_loc"><option>總店</option><option>倉庫</option></select></div></div><div class="form-row tri"><div><label class="ff-label">第一支</label><select class="ff-select" id="flt_1"><option>未更換</option><option>更換</option><option>待更換</option></select></div><div><label class="ff-label">第二支</label><select class="ff-select" id="flt_2"><option>未更換</option><option>更換</option><option>待更換</option></select></div><div><label class="ff-label">第三支</label><select class="ff-select" id="flt_3"><option>未更換</option><option>更換</option><option>待更換</option></select></div></div><div class="form-row"><div><label class="ff-label">簽名</label><input class="ff-input" id="flt_signer" value="${u.name}"/></div></div><button class="save-btn" onclick="saveFilter()">💾 儲存記錄</button></div>`:noAccess;
 
   // 杯數
-  document.getElementById('cupsForm').innerHTML = [1,3,4,5].includes(u.role) ? `<div class="form-card"><div class="form-card-title">☕ 填入每日杯數</div><div class="form-row"><div><label class="f-label">日期</label><input type="date" class="f-input"/></div><div><label class="f-label">仙草（杯）</label><input type="number" class="f-input" placeholder="0"/></div></div><div class="form-row triple"><div><label class="f-label">杏仁（杯）</label><input type="number" class="f-input" placeholder="0"/></div><div><label class="f-label">仙草撞奶</label><input type="number" class="f-input" placeholder="0"/></div><div><label class="f-label">仙草罐數</label><input type="number" class="f-input" placeholder="0"/></div></div><div class="form-row"><div><label class="f-label">杏仁罐數</label><input type="number" class="f-input" placeholder="0"/></div><div><label class="f-label">記錄人</label><input class="f-input" value="${u.name}"/></div></div><button class="save-btn">💾 儲存記錄</button></div>` : '';
+  document.getElementById('cupsFormArea').innerHTML=[1,3,4,5].includes(u.role)?`<div class="form-card"><div class="form-card-title">☕ 填入每日杯數</div><div class="form-row"><div><label class="ff-label">日期</label><input type="date" class="ff-input" id="cup_date" value="${today.replace(/\//g,'-')}"/></div><div><label class="ff-label">仙草（杯）</label><input type="number" class="ff-input" id="cup_jelly" placeholder="0"/></div></div><div class="form-row tri"><div><label class="ff-label">杏仁（杯）</label><input type="number" class="ff-input" id="cup_almond" placeholder="0"/></div><div><label class="ff-label">仙草撞奶</label><input type="number" class="ff-input" id="cup_jellyMilk" placeholder="0"/></div><div><label class="ff-label">仙草罐數</label><input type="number" class="ff-input" id="cup_jellycan" placeholder="0"/></div></div><div class="form-row"><div><label class="ff-label">杏仁罐數</label><input type="number" class="ff-input" id="cup_almondcan" placeholder="0"/></div><div><label class="ff-label">記錄人員</label><input class="ff-input" id="cup_recorder" value="${u.name}"/></div></div><button class="save-btn" onclick="saveCups()">💾 儲存記錄</button></div>`:'';
 
   // 市場
-  document.getElementById('marketForm').innerHTML = [1,3,4,5].includes(u.role) ? `<div class="form-card"><div class="form-card-title">🏪 新增市場記錄</div><div class="form-row"><div><label class="f-label">日期</label><input type="date" class="f-input"/></div><div><label class="f-label">天氣</label><select class="f-select"><option>晴</option><option>陰</option><option>雨</option><option>颱風</option></select></div></div><div class="form-row triple"><div><label class="f-label">仙草（杯）</label><input type="number" class="f-input" placeholder="0"/></div><div><label class="f-label">杏仁（杯）</label><input type="number" class="f-input" placeholder="0"/></div><div><label class="f-label">仙草撞奶</label><input type="number" class="f-input" placeholder="0"/></div></div><div class="form-row"><div><label class="f-label">記錄人</label><input class="f-input" value="${u.name}"/></div><div><label class="f-label">備註</label><input class="f-input" placeholder="選填"/></div></div><button class="save-btn">💾 儲存記錄</button></div>` : '';
+  document.getElementById('marketFormArea').innerHTML=[1,3,4,5].includes(u.role)?`<div class="form-card"><div class="form-card-title">🏪 新增市場記錄</div><div class="form-row"><div><label class="ff-label">日期</label><input type="date" class="ff-input" id="mkt_date" value="${today.replace(/\//g,'-')}"/></div><div><label class="ff-label">天氣</label><select class="ff-select" id="mkt_weather"><option>晴</option><option>多雲</option><option>陰</option><option>雨</option><option>大雨</option><option>颱風</option></select></div></div><div class="form-row tri"><div><label class="ff-label">仙草（杯）</label><input type="number" class="ff-input" id="mkt_jelly" placeholder="0"/></div><div><label class="ff-label">杏仁（杯）</label><input type="number" class="ff-input" id="mkt_almond" placeholder="0"/></div><div><label class="ff-label">仙草撞奶</label><input type="number" class="ff-input" id="mkt_jellyMilk" placeholder="0"/></div></div><div class="form-row"><div><label class="ff-label">記錄人員</label><input class="ff-input" id="mkt_recorder" value="${u.name}"/></div><div><label class="ff-label">備註</label><input class="ff-input" id="mkt_note" placeholder="選填"/></div></div><button class="save-btn" onclick="saveMarket()">💾 儲存記錄</button></div>`:'';
 
   // 時數
-  document.getElementById('hoursForm').innerHTML = [1,3,4].includes(u.role) ? `<div class="form-card"><div class="form-card-title">⏱ 新增時數記錄</div><div class="form-row"><div><label class="f-label">日期</label><input type="date" class="f-input"/></div><div><label class="f-label">員工姓名</label><input class="f-input" placeholder="員工姓名"/></div></div><div class="form-row"><div><label class="f-label">開始時間</label><input type="time" class="f-input"/></div><div><label class="f-label">結束時間</label><input type="time" class="f-input"/></div></div><button class="save-btn">💾 儲存記錄</button></div>` : '';
+  document.getElementById('hoursFormArea').innerHTML=[1,3,4].includes(u.role)?`<div class="form-card"><div class="form-card-title">⏱ 新增時數記錄</div><div class="form-row"><div><label class="ff-label">日期</label><input type="date" class="ff-input" id="hr_date" value="${today.replace(/\//g,'-')}"/></div><div><label class="ff-label">員工姓名</label><input class="ff-input" id="hr_name" placeholder="員工姓名"/></div></div><div class="form-row"><div><label class="ff-label">角色</label><select class="ff-select" id="hr_role"><option>正職員工</option><option>工讀生</option><option>副店長</option><option>店長</option></select></div><div><label class="ff-label">開始時間</label><input type="time" class="ff-input" id="hr_start"/></div></div><div class="form-row"><div><label class="ff-label">結束時間</label><input type="time" class="ff-input" id="hr_end"/></div><div><label class="ff-label">備註</label><input class="ff-input" id="hr_note" placeholder="選填"/></div></div><button class="save-btn" onclick="saveHours()">💾 儲存記錄</button></div>`:'';
 }
 
-// ─── PAGE NAV ─────────────────────────────────────────────────────
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const pg=document.getElementById('page-'+id);
-  if(pg) pg.classList.add('active');
-  const nv=document.getElementById('nav-'+id);
-  if(nv) nv.classList.add('active');
-  else if(id==='home') { const nh=document.getElementById('nav-home'); if(nh) nh.classList.add('active'); }
+// ── SAVE FUNCTIONS ─────────────────────────────────────────────
+function gv(id){var el=document.getElementById(id);return el?el.value:'';}
+
+async function saveTea(){
+  showToast('儲存中...','info');
+  var r=await api({action:'teaSave',date:gv('tea_date'),type:gv('tea_type'),barrel:gv('tea_barrel'),brewTime:gv('tea_time'),brewer:gv('tea_brewer'),status:gv('tea_status'),note:gv('tea_note')});
+  if(r.ok){showToast('✓ 茶製記錄已儲存','ok');loadTea();addLog('新增','茶製記錄','新增'+gv('tea_type')+'記錄');}
+  else showToast('✗ '+r.error,'err');
+}
+async function saveTaste(){
+  showToast('儲存中...','info');
+  var r=await api({action:'tasteSave',date:gv('tst_date'),item:gv('tst_item'),qty:gv('tst_qty'),result:gv('tst_result'),taster:gv('tst_taster'),note:gv('tst_note')});
+  if(r.ok){showToast('✓ 試喝記錄已儲存','ok');loadTaste();addLog('新增','試喝記錄','新增'+gv('tst_item')+'試喝');}
+  else showToast('✗ '+r.error,'err');
+}
+async function saveOrder(){
+  showToast('儲存中...','info');
+  var r=await api({action:'orderSave',orderDate:gv('ord_date'),product:gv('ord_product'),qty:gv('ord_qty'),unit:gv('ord_unit'),orderer:gv('ord_orderer'),amount:gv('ord_amount'),status:'待到貨'});
+  if(r.ok){showToast('✓ 叫貨記錄已儲存','ok');loadOrder();addLog('新增','叫貨記錄','叫貨：'+gv('ord_product'));}
+  else showToast('✗ '+r.error,'err');
+}
+async function saveTemp(){
+  showToast('儲存中...','info');
+  var r=await api({action:'tempSave',date:gv('tmp_date'),shift:gv('tmp_shift'),front:gv('tmp_front'),back:gv('tmp_back'),guest:gv('tmp_guest'),frontFreeze:gv('tmp_ff'),backFreeze:gv('tmp_bf'),signer:gv('tmp_signer'),note:gv('tmp_note')});
+  if(r.ok){showToast('✓ 溫度記錄已儲存','ok');loadTemp();addLog('新增','溫度記錄',gv('tmp_shift')+'溫度記錄');}
+  else showToast('✗ '+r.error,'err');
+}
+async function saveElec(){
+  showToast('儲存中...','info');
+  var r=await api({action:'elecSave',date:gv('elc_date'),today:gv('elc_today'),recorder:gv('elc_recorder'),note:gv('elc_note')});
+  if(r.ok){showToast('✓ 電表記錄已儲存','ok');loadElec();addLog('新增','電表記錄','電表：'+gv('elc_today')+'度');}
+  else showToast('✗ '+r.error,'err');
+}
+async function saveFilter(){
+  showToast('儲存中...','info');
+  var r=await api({action:'filterSave',date:gv('flt_date'),location:gv('flt_loc'),f1:gv('flt_1'),f2:gv('flt_2'),f3:gv('flt_3'),signer:gv('flt_signer')});
+  if(r.ok){showToast('✓ 濾心記錄已儲存','ok');loadFilter();addLog('新增','濾心記錄',gv('flt_loc')+'濾心記錄');}
+  else showToast('✗ '+r.error,'err');
+}
+async function saveCups(){
+  showToast('儲存中...','info');
+  var r=await api({action:'cupsSave',date:gv('cup_date'),jelly:gv('cup_jelly'),almond:gv('cup_almond'),jellyMilk:gv('cup_jellyMilk'),jellycan:gv('cup_jellycan'),almondcan:gv('cup_almondcan'),recorder:gv('cup_recorder')});
+  if(r.ok){showToast('✓ 杯數統計已儲存','ok');loadCups();addLog('新增','杯數統計','杯數：'+gv('cup_jelly')+'仙草');}
+  else showToast('✗ '+r.error,'err');
+}
+async function saveMarket(){
+  showToast('儲存中...','info');
+  var r=await api({action:'marketSave',date:gv('mkt_date'),weather:gv('mkt_weather'),jelly:gv('mkt_jelly'),almond:gv('mkt_almond'),jellyMilk:gv('mkt_jellyMilk'),recorder:gv('mkt_recorder'),note:gv('mkt_note')});
+  if(r.ok){showToast('✓ 市場記錄已儲存','ok');loadMarket();addLog('新增','市場紀錄','市場：'+gv('mkt_date'));}
+  else showToast('✗ '+r.error,'err');
+}
+async function saveHours(){
+  showToast('儲存中...','info');
+  var r=await api({action:'hoursSave',date:gv('hr_date'),name:gv('hr_name'),role:gv('hr_role'),start:gv('hr_start'),end:gv('hr_end'),note:gv('hr_note')});
+  if(r.ok){showToast('✓ 時數記錄已儲存','ok');loadHours();addLog('新增','時數記錄',gv('hr_name')+'時數');}
+  else showToast('✗ '+r.error,'err');
 }
 
-// ─── USER TABLE ───────────────────────────────────────────────────
-function renderUserTable() {
-  const tbody=document.getElementById('userTableBody'); if(!tbody) return;
-  tbody.innerHTML='';
-  localAccounts.forEach((a,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="mono">${a.key}</td><td>${a.name}</td><td><span class="role-badge ${ROLE_CLS[a.role]||'rb-5'}">${ROLE_LABELS[a.role]||a.label}</span></td><td><span class="chip ${a.active?'chip-ok':'chip-off'}">${a.active?'啟用':'停用'}</span></td><td><button class="act-btn" onclick="openEditUser(${i})">編輯</button><button class="act-btn ${a.active?'del':''}" onclick="toggleUser(${i})">${a.active?'停用':'啟用'}</button></td>`;
-    tbody.appendChild(tr);
-  });
+// ── LOAD DATA ──────────────────────────────────────────────────
+function chip(v,ok,warn,err) {
+  if(v===ok) return '<span class="chip chip-ok">'+v+'</span>';
+  if(v===warn) return '<span class="chip chip-warn">'+v+'</span>';
+  if(v===err||v==='⚠ 異常'||v==='異常') return '<span class="chip chip-err">'+v+'</span>';
+  return '<span class="chip">'+v+'</span>';
 }
 
-function renderLogs() {
-  const tbody=document.getElementById('logTableBody'); if(!tbody) return;
-  tbody.innerHTML='';
-  operationLogs.forEach(l=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${l.time}</td><td>${l.user}</td><td><span class="chip chip-ok">${l.action}</span></td><td>${l.module}</td><td>${l.summary}</td>`;
-    tbody.appendChild(tr);
-  });
+async function loadAllData(){
+  loadTea(); loadTaste(); loadOrder(); loadTemp(); loadElec();
+  loadFilter(); loadCups(); loadMarket(); loadHours(); loadUsers(); loadLogs();
 }
 
-function openAddUser() {
+async function loadTea(){
+  var r=await api({action:'teaGetAll'});
+  var b=document.getElementById('teaBody');
+  if(!r.ok||!r.data||!r.data.length){b.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  b.innerHTML=r.data.slice(0,50).map(d=>`<tr><td>${d.date}</td><td>${d.type}</td><td>${d.barrel}</td><td>${d.brewTime}</td><td>${d.brewer}</td><td>${chip(d.status,'正常','即將到期','已報廢')}</td><td>${d.note}</td></tr>`).join('');
+}
+async function loadTaste(){
+  var r=await api({action:'tasteGetAll'});
+  var b=document.getElementById('tasteBody');
+  if(!r.ok||!r.data||!r.data.length){b.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  b.innerHTML=r.data.slice(0,50).map(d=>`<tr><td>${d.date}</td><td>${d.item}</td><td>${d.qty}</td><td>${chip(d.result,'通過','待確認','異常-需回報')}</td><td>${d.taster}</td><td>${d.note}</td></tr>`).join('');
+}
+async function loadOrder(){
+  var r=await api({action:'orderGetAll'});
+  var b=document.getElementById('orderBody');
+  if(!r.ok||!r.data||!r.data.length){b.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  b.innerHTML=r.data.slice(0,50).map(d=>`<tr><td>${d.orderDate}</td><td>${d.product}</td><td>${d.qty}${d.unit}</td><td>${d.orderer}</td><td>${d.amount?'$'+d.amount:'-'}</td><td>${chip(d.status,'已到貨','部分到貨','異常')}</td></tr>`).join('');
+}
+async function loadTemp(){
+  var r=await api({action:'tempGetAll'});
+  var b=document.getElementById('tempBody');
+  if(!r.ok||!r.data||!r.data.length){b.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  b.innerHTML=r.data.slice(0,50).map(d=>`<tr><td>${d.date}</td><td>${d.shift}</td><td>${d.front}℃</td><td>${d.back}℃</td><td>${d.guest}℃</td><td>${d.signer}</td><td>${chip(d.status,'✓ 正常','','⚠ 異常')}</td></tr>`).join('');
+}
+async function loadElec(){
+  var r=await api({action:'elecGetAll'});
+  var b=document.getElementById('elecBody');
+  if(!r.ok||!r.data||!r.data.length){b.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  b.innerHTML=r.data.slice(0,50).map(d=>`<tr><td>${d.date}</td><td>${d.today}</td><td>${d.yesterday||'-'}</td><td>${d.usage||'-'}</td><td>${d.recorder}</td><td>${chip(d.abnormal,'✓ 正常','','⚠ 異常')}</td><td>${d.note}</td></tr>`).join('');
+}
+async function loadFilter(){
+  var r=await api({action:'filterGetAll'});
+  var b=document.getElementById('filterBody');
+  if(!r.ok||!r.data||!r.data.length){b.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  b.innerHTML=r.data.slice(0,50).map(d=>`<tr><td>${d.date}</td><td>${d.location}</td><td>${chip(d.f1,'更換','待更換','')}</td><td>${chip(d.f2,'更換','待更換','')}</td><td>${chip(d.f3,'更換','待更換','')}</td><td>${d.signer}</td></tr>`).join('');
+}
+async function loadCups(){
+  var r=await api({action:'cupsGetAll'});
+  var b=document.getElementById('cupsBody');
+  if(!r.ok||!r.data||!r.data.length){b.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  // 更新今日統計
+  var today=new Date().toISOString().slice(0,10);
+  var td=r.data.find(d=>d.date&&d.date.replace(/\//g,'-').slice(0,10)===today);
+  if(td){
+    document.getElementById('statJelly').textContent=td.jelly||'0';
+    document.getElementById('statAlmond').textContent=td.almond||'0';
+    document.getElementById('statJellyMilk').textContent=td.jellyMilk||'0';
+    document.getElementById('statTotal').textContent=td.total||'0';
+  }
+  b.innerHTML=r.data.slice(0,50).map(d=>`<tr><td>${d.date}</td><td>${d.jelly}</td><td>${d.almond}</td><td>${d.jellyMilk}</td><td>${d.jellycan}</td><td>${d.almondcan}</td><td><strong>${d.total}</strong></td><td>${d.recorder}</td></tr>`).join('');
+}
+async function loadMarket(){
+  var r=await api({action:'marketGetAll'});
+  var b=document.getElementById('marketBody');
+  if(!r.ok||!r.data||!r.data.length){b.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  b.innerHTML=r.data.slice(0,50).map(d=>`<tr><td>${d.date}</td><td>${d.weather}</td><td>${d.jelly}</td><td>${d.almond}</td><td>${d.jellyMilk}</td><td><strong>${d.total}</strong></td><td>${d.recorder}</td></tr>`).join('');
+}
+async function loadHours(){
+  var r=await api({action:'hoursGetAll'});
+  var b=document.getElementById('hoursBody');
+  if(!r.ok||!r.data||!r.data.length){b.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  b.innerHTML=r.data.slice(0,50).map(d=>`<tr><td>${d.date}</td><td>${d.name}</td><td>${d.role}</td><td>${d.start}</td><td>${d.end}</td><td>${d.work}</td><td>${d.overtime}</td></tr>`).join('');
+  // 報表
+  var month=new Date().toISOString().slice(0,7);
+  var mCups=0, mOrders=0, mMarket=0, mTempWarn=0;
+  document.getElementById('rptCups').textContent=mCups||'—';
+}
+async function loadUsers(){
+  var r=await api({action:'getAccounts'});
+  var b=document.getElementById('userBody');
+  if(!r.ok||!r.accounts){b.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:20px">載入失敗</td></tr>';return;}
+  b.innerHTML=r.accounts.map((a,i)=>`<tr><td class="mono">${a.key}</td><td>${a.name}</td><td><span class="role-pill ${ROLE_CLS[a.role]||'rp-5'}">${ROLE_LABELS[a.role]||a.label}</span></td><td><span class="chip ${a.active?'chip-ok':'chip-off'}">${a.active?'啟用':'停用'}</span></td><td><button class="act-btn" onclick="openEditUser('${a.key}','${a.name}',${a.role})">編輯</button><button class="act-btn del" onclick="toggleUser('${a.key}')">${a.active?'停用':'啟用'}</button></td></tr>`).join('');
+}
+async function loadLogs(){
+  var r=await api({action:'logGetAll'});
+  var b=document.getElementById('logBody');
+  if(!r.ok||!r.data||!r.data.length){b.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  b.innerHTML=r.data.slice(0,100).map(d=>`<tr><td>${d.time}</td><td>${d.user}</td><td><span class="chip chip-ok">${d.action}</span></td><td>${d.module}</td><td>${d.detail}</td></tr>`).join('');
+}
+
+async function addLog(action,module,detail){
+  if(!currentUser) return;
+  api({action:'logSave',user:currentUser.name,role:ROLE_LABELS[currentUser.role]||'',action:action,module:module,detail:detail});
+}
+
+// ── USER MANAGEMENT ────────────────────────────────────────────
+function openAddUser(){
   editUserIdx=-1;
   document.getElementById('modalTitle').textContent='新增帳號';
   document.getElementById('mu_key').value=''; document.getElementById('mu_key').disabled=false;
   document.getElementById('mu_name').value=''; document.getElementById('mu_role').value='5';
   document.getElementById('formErr').style.display='none';
-  document.getElementById('formOk').style.display='none';
+  document.getElementById('formOkMsg').style.display='none';
   document.getElementById('userModal').classList.add('open');
 }
-
-function openEditUser(i) {
-  editUserIdx=i; const a=localAccounts[i];
-  document.getElementById('modalTitle').textContent='編輯帳號：'+a.name;
-  document.getElementById('mu_key').value=a.key; document.getElementById('mu_key').disabled=true;
-  document.getElementById('mu_name').value=a.name; document.getElementById('mu_role').value=String(a.role);
+function openEditUser(key,name,role){
+  document.getElementById('modalTitle').textContent='編輯帳號：'+name;
+  document.getElementById('mu_key').value=key; document.getElementById('mu_key').disabled=true;
+  document.getElementById('mu_name').value=name; document.getElementById('mu_role').value=String(role);
   document.getElementById('formErr').style.display='none';
-  document.getElementById('formOk').style.display='none';
+  document.getElementById('formOkMsg').style.display='none';
   document.getElementById('userModal').classList.add('open');
 }
-
-function saveUser() {
-  const key=document.getElementById('mu_key').value.trim();
-  const name=document.getElementById('mu_name').value.trim();
-  const role=parseInt(document.getElementById('mu_role').value);
-  if(!name||(editUserIdx===-1&&!key)){ document.getElementById('formErr').style.display='block'; return; }
+async function saveUser(){
+  var key=document.getElementById('mu_key').value.trim();
+  var name=document.getElementById('mu_name').value.trim();
+  var role=document.getElementById('mu_role').value;
+  if(!name||(!key&&editUserIdx===-1)){document.getElementById('formErr').style.display='block';return;}
   document.getElementById('formErr').style.display='none';
-  if(editUserIdx===-1){
-    if(localAccounts.find(a=>a.key===key)){ document.getElementById('formErr').textContent='此帳號已存在'; document.getElementById('formErr').style.display='block'; return; }
-    localAccounts.push({key,name,pass:'',role,active:true});
-    addLog('新增','帳號管理','新增帳號 '+key);
-  } else {
-    localAccounts[editUserIdx].name=name; localAccounts[editUserIdx].role=role;
-    addLog('修改','帳號管理','更新帳號 '+localAccounts[editUserIdx].key);
-  }
-  const ok=document.getElementById('formOk');
-  ok.style.display='flex'; ok.textContent='✓ 已儲存，請同步更新 Google Sheets 中的帳號設定工作表';
-  renderUserTable(); setTimeout(closeModal,1500);
+  var r=await api({action:'saveAccount',key:key,name:name,role:role});
+  var ok=document.getElementById('formOkMsg');
+  ok.style.display='flex'; ok.textContent='✓ 已儲存';
+  loadUsers();
+  addLog('新增','帳號管理','帳號 '+key);
+  setTimeout(closeModal,1200);
+}
+async function toggleUser(key){
+  await api({action:'toggleAccount',key:key});
+  loadUsers();
+  addLog('修改','帳號管理','切換帳號 '+key+' 狀態');
+}
+function closeModal(){document.getElementById('userModal').classList.remove('open');}
+
+// ── NAV ────────────────────────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  var pg=document.getElementById('page-'+id);
+  if(pg) pg.classList.add('active');
+  var nv=document.getElementById('nav-'+id);
+  if(nv) nv.classList.add('active');
+  else if(id==='home'){var nh=document.getElementById('nav-home');if(nh)nh.classList.add('active');}
+  // 依需要重新載入
+  if(id==='users') loadUsers();
+  if(id==='logs') loadLogs();
 }
 
-function toggleUser(i){ localAccounts[i].active=!localAccounts[i].active; addLog(localAccounts[i].active?'啟用':'停用','帳號管理','帳號 '+localAccounts[i].key); renderUserTable(); }
-function closeModal(){ document.getElementById('userModal').classList.remove('open'); }
-function addLog(action,module,summary){ operationLogs.unshift({time:new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),user:currentUser?.name||'系統',action,module,summary}); if(operationLogs.length>50) operationLogs.pop(); renderLogs(); }
-
-// ─── DEMO ACCOUNTS (fallback, no passwords stored) ────────────────
-const DEMO_ACCOUNTS = [
-  {key:'brian',     pass:'brian123', name:'Brian（老闆）',  role:1,label:'系統最高管理員',active:true},
-  {key:'supervisor',pass:'sup123',   name:'督導',          role:2,label:'營運管理者',active:true},
-  {key:'manager',   pass:'mgr123',   name:'店長',          role:3,label:'店長',      active:true},
-  {key:'meijun',    pass:'asst123',  name:'美君',          role:4,label:'副店長',    active:true},
-  {key:'staff1',    pass:'staff123', name:'正職員工A',      role:5,label:'正職員工',  active:true},
-  {key:'part1',     pass:'part123',  name:'工讀生A',        role:6,label:'工讀生',    active:true},
-  {key:'finance',   pass:'fin123',   name:'記帳人員',       role:7,label:'財務/會計', active:true},
-];
-localAccounts = [...DEMO_ACCOUNTS];
-
-// demo buttons
-function buildDemoBtns(){
-  const row=document.getElementById('demoRow'); if(!row) return;
-  DEMO_ACCOUNTS.forEach(a=>{
-    const b=document.createElement('button');
-    b.style.cssText='padding:5px 10px;font-size:11px;border-radius:20px;border:1px solid var(--border-md);background:var(--bg);color:var(--text-muted);cursor:pointer;font-family:var(--font);';
-    b.textContent=a.name+'（'+ROLE_LABELS[a.role]+'）';
-    b.onclick=()=>{ document.getElementById('uname').value=a.key; document.getElementById('upass').value=a.pass; };
-    row.appendChild(b);
+function togglePw(id,btn){
+  var el=document.getElementById(id);
+  el.type=el.type==='text'?'password':'text';
+  btn.textContent=el.type==='text'?'🙈':'👁';
+}
+function copyText(text,el){
+  navigator.clipboard.writeText(text).then(()=>{
+    var o=el.textContent; el.textContent='已複製！';
+    setTimeout(()=>el.textContent=o,1500);
   });
-}
-buildDemoBtns();
-
-// ─── UTILS ────────────────────────────────────────────────────────
-function togglePass(btn){
-  const inp=btn.previousElementSibling||btn.parentElement.querySelector('input');
-  if(!inp) return;
-  const show=inp.type==='text'; inp.type=show?'password':'text';
-  btn.innerHTML=show
-    ? '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
-    : '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
-}
-function togglePassEl(inp,btn){
-  const show=inp.type==='text'; inp.type=show?'password':'text';
-  btn.innerHTML=show
-    ? '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
-    : '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 }
 </script>
 </body>
