@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>每日杯數統計 — 龍吟後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_base.css">
+</head>
+<body>
+<div class="tb">
+  <div class="tbl" onclick="goHome()">☕</div>
+  <div class="page-title-wrap">
+    <div class="page-title-main" id="page-title">每日杯數統計</div>
+    <div class="page-title-sub" id="page-sub">仙草・杏仁・撞奶每日數量記錄</div>
+  </div>
+  <div class="tbr">
+    <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
+    <button class="lgb" onclick="goHome()">🏠 主頁</button>
+    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+  </div>
+</div>
+<div class="main">
+  <!-- 今日看板 -->
+  <div class="sr" id="todayPanel">
+    <div class="sc"><div class="sl">今日仙草</div><div class="sv2" id="s-j">—</div><div class="ss">杯</div></div>
+    <div class="sc"><div class="sl">今日杏仁</div><div class="sv2" id="s-a">—</div><div class="ss">杯</div></div>
+    <div class="sc"><div class="sl">仙草撞奶</div><div class="sv2" id="s-jm">—</div><div class="ss">杯</div></div>
+    <div class="sc"><div class="sl">仙草罐</div><div class="sv2" id="s-jc">—</div><div class="ss">罐</div></div>
+    <div class="sc"><div class="sl">杏仁罐</div><div class="sv2" id="s-ac">—</div><div class="ss">罐</div></div>
+    <div class="sc" style="background:var(--blue-l)"><div class="sl">總杯數</div><div class="sv2" id="s-tot" style="color:var(--blue)">—</div><div class="ss">杯</div></div>
+  </div>
+
+  <div class="fc">
+    <div class="fct">☕ 填入每日杯數</div>
+    <div class="fr">
+      <div><label class="ffl">日期</label><input type="date" class="ffi" id="c_d"/></div>
+      <div><label class="ffl">仙草（杯）</label><input type="number" class="ffi" id="c_j" placeholder="0"/></div>
+    </div>
+    <div class="fr tri">
+      <div><label class="ffl">杏仁（杯）</label><input type="number" class="ffi" id="c_a" placeholder="0"/></div>
+      <div><label class="ffl">仙草撞奶（杯）</label><input type="number" class="ffi" id="c_jm" placeholder="0"/></div>
+      <div><label class="ffl">仙草罐數</label><input type="number" class="ffi" id="c_jc" placeholder="0"/></div>
+    </div>
+    <div class="fr">
+      <div><label class="ffl">杏仁罐數</label><input type="number" class="ffi" id="c_ac" placeholder="0"/></div>
+      <div><label class="ffl">記錄人員</label><input class="ffi" id="c_r"/></div>
+    </div>
+    <div class="fr one"><label class="ffl">備註</label><input class="ffi" id="c_n" placeholder="選填"/></div>
+    <button class="sbtn" onclick="saveCups()">💾 儲存記錄</button>
+  </div>
+
+  <div class="tc">
+    <div class="tc-head"><div class="tc-title">📋 杯數記錄（近 60 筆）</div></div>
+    <table>
+      <thead><tr><th>日期</th><th>仙草(杯)</th><th>杏仁(杯)</th><th>仙草撞奶</th><th>仙草罐</th><th>杏仁罐</th><th>總杯數</th><th>記錄人員</th></tr></thead>
+      <tbody id="tb-cups"><tr><td colspan="8" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・每日杯數統計</span></div>
+<script src="_base.js"></script>
+<script>
+window.addEventListener('load',()=>{
+  var u=buildSubHeader('每日杯數統計','仙草・杏仁・撞奶每日數量記錄');
+  if(!u)return;
+  sv('c_d',today);sv('c_r',u.name);
+  loadCups();
+});
+async function saveCups(){
+  toast('儲存中...','info');
+  var r=await api({action:'cupsSave',date:gv('c_d'),jelly:gv('c_j'),almond:gv('c_a'),jellyMilk:gv('c_jm'),jellycan:gv('c_jc'),almondcan:gv('c_ac'),recorder:gv('c_r'),note:gv('c_n')});
+  if(r.ok){toast('✓ 杯數統計已儲存','ok');loadCups();}else toast('✗ '+r.error,'er');
+}
+async function loadCups(){
+  var r=await api({action:'cupsGetAll'});
+  var b=document.getElementById('tb-cups');
+  if(!r.ok||!r.data?.length){b.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  var td=r.data.find(d=>d.date&&d.date.replace(/\//g,'-').slice(0,10)===today);
+  if(td){
+    document.getElementById('s-j').textContent=td.jelly||'0';
+    document.getElementById('s-a').textContent=td.almond||'0';
+    document.getElementById('s-jm').textContent=td.jellyMilk||'0';
+    document.getElementById('s-jc').textContent=td.jellycan||'0';
+    document.getElementById('s-ac').textContent=td.almondcan||'0';
+    document.getElementById('s-tot').textContent=td.total||'0';
+  }
+  b.innerHTML=r.data.slice(0,60).map(d=>`<tr><td>${d.date}</td><td>${d.jelly}</td><td>${d.almond}</td><td>${d.jellyMilk}</td><td>${d.jellycan}</td><td>${d.almondcan}</td><td><strong>${d.total}</strong></td><td>${d.recorder}</td></tr>`).join('');
+}
+</script>
+</body>
+</html>

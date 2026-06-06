@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>月盤點 — 龍吟後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_base.css">
+<style>
+.inv-section{margin-bottom:1.5rem;}
+.inv-section-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;padding:6px 10px;background:var(--blue-l);border-radius:var(--rx);border-left:3px solid var(--blue);}
+.inv-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.inv-header{font-size:11px;font-weight:600;color:var(--text-m);border-bottom:2px solid var(--border);}
+.inv-name{font-size:13px;}
+.inv-input{width:100%;padding:0 8px;height:32px;font-size:13px;border:1px solid var(--border-md);border-radius:var(--rx);text-align:center;}
+.diff-pos{color:var(--red);font-weight:600;}
+.diff-neg{color:var(--green);font-weight:600;}
+</style>
+</head>
+<body>
+<div class="tb">
+  <div class="tbl" onclick="goHome()">☕</div>
+  <div class="page-title-wrap">
+    <div class="page-title-main" id="page-title">月盤點</div>
+    <div class="page-title-sub" id="page-sub">每月完整盤點・庫存結算</div>
+  </div>
+  <div class="tbr">
+    <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
+    <button class="lgb" onclick="goHome()">🏠 主頁</button>
+    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="fc">
+    <div class="fct">🗂 月盤點表</div>
+    <div class="fr tri">
+      <div><label class="ffl">盤點日期</label><input type="date" class="ffi" id="mo_d"/></div>
+      <div><label class="ffl">盤點人員</label><input class="ffi" id="mo_p"/></div>
+      <div><label class="ffl">盤點類型</label><select class="ffs" id="mo_t"><option>月盤</option><option>補盤</option></select></div>
+    </div>
+  </div>
+
+  <!-- 品項盤點 -->
+  <div id="invForm">
+    <div class="inv-section">
+      <div class="inv-section-title">🍵 茶葉・原料類</div>
+      <div class="inv-row inv-header">
+        <div>品項</div><div style="text-align:center">單位</div><div style="text-align:center">帳存</div><div style="text-align:center">實存</div><div style="text-align:center">差異</div>
+      </div>
+      <div id="cat-tea"></div>
+    </div>
+    <div class="inv-section">
+      <div class="inv-section-title">🥤 包材・耗材類</div>
+      <div class="inv-row inv-header">
+        <div>品項</div><div style="text-align:center">單位</div><div style="text-align:center">帳存</div><div style="text-align:center">實存</div><div style="text-align:center">差異</div>
+      </div>
+      <div id="cat-pack"></div>
+    </div>
+    <div class="inv-section">
+      <div class="inv-section-title">❄️ 冷藏・冷凍類</div>
+      <div class="inv-row inv-header">
+        <div>品項</div><div style="text-align:center">單位</div><div style="text-align:center">帳存</div><div style="text-align:center">實存</div><div style="text-align:center">差異</div>
+      </div>
+      <div id="cat-cold"></div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:1.5rem;">
+    <button class="sbtn" onclick="saveBiweekly()">💾 提交盤點結果</button>
+  </div>
+
+  <!-- 歷史盤點 -->
+  <div class="tc">
+    <div class="tc-head"><div class="tc-title">📋 盤點歷史</div></div>
+    <table>
+      <thead><tr><th>日期</th><th>類型</th><th>盤點人員</th><th>品項數</th><th>差異數</th><th>狀態</th></tr></thead>
+      <tbody id="tb-bw"><tr><td colspan="6" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・月盤點</span></div>
+<script src="_base.js"></script>
+<script>
+const ITEMS = {
+  'cat-tea':[
+    {n:'日本鶴神紅茶',u:'罐'},{n:'仙草原汁',u:'桶'},{n:'杏仁粉',u:'包'},{n:'冬瓜磚',u:'塊'},{n:'糖',u:'包'},{n:'梅釀原料',u:'包'}
+  ],
+  'cat-pack':[
+    {n:'大吸管',u:'包'},{n:'小吸管',u:'包'},{n:'外帶袋',u:'包'},{n:'紙杯',u:'條'},{n:'杯蓋',u:'包'},{n:'杯套',u:'包'},{n:'貼紙卷',u:'卷'},{n:'發票捲',u:'卷'}
+  ],
+  'cat-cold':[
+    {n:'燕麥奶',u:'罐'},{n:'仙草凍',u:'桶'},{n:'冰塊',u:'袋'}
+  ]
+};
+
+window.addEventListener('load',()=>{
+  var u=buildSubHeader('月盤點','每月完整盤點・庫存結算');
+  if(!u)return;
+  sv('mo_d',today);sv('mo_p',u.name);
+  buildForm();
+});
+
+function buildForm(){
+  Object.entries(ITEMS).forEach(([cat,items])=>{
+    document.getElementById(cat).innerHTML=items.map((item,i)=>`
+      <div class="inv-row">
+        <div class="inv-name">${item.n}</div>
+        <div style="text-align:center;font-size:12px;color:var(--text-m)">${item.u}</div>
+        <div><input class="inv-input" type="number" id="${cat}_acc_${i}" placeholder="0" oninput="calcDiff('${cat}',${i})"/></div>
+        <div><input class="inv-input" type="number" id="${cat}_act_${i}" placeholder="0" oninput="calcDiff('${cat}',${i})"/></div>
+        <div style="text-align:center;font-size:13px;font-weight:600" id="${cat}_diff_${i}">—</div>
+      </div>`).join('');
+  });
+}
+
+function calcDiff(cat,i){
+  var acc=parseFloat(document.getElementById(`${cat}_acc_${i}`)?.value||0);
+  var act=parseFloat(document.getElementById(`${cat}_act_${i}`)?.value||0);
+  var diff=act-acc;
+  var el=document.getElementById(`${cat}_diff_${i}`);
+  if(el){
+    if(diff===0){el.textContent='0';el.className='';}
+    else if(diff>0){el.textContent='+'+diff;el.className='diff-pos';}
+    else{el.textContent=diff;el.className='diff-neg';}
+  }
+}
+
+async function saveBiweekly(){
+  toast('儲存中...','info');
+  // 收集差異品項
+  var diffs=[];
+  Object.entries(ITEMS).forEach(([cat,items])=>{
+    items.forEach((item,i)=>{
+      var acc=parseFloat(document.getElementById(`${cat}_acc_${i}`)?.value||0);
+      var act=parseFloat(document.getElementById(`${cat}_act_${i}`)?.value||0);
+      if(acc||act) diffs.push({name:item.n,unit:item.u,acc,act,diff:act-acc});
+    });
+  });
+  var r=await api({action:'orderSave',orderDate:gv('mo_d'),product:'月盤點-'+gv('mo_t'),qty:diffs.length,unit:'品項',orderer:gv('mo_p'),status:'已完成',note:JSON.stringify(diffs.filter(d=>d.diff!==0).map(d=>`${d.name}:差${d.diff}${d.unit}`))});
+  if(r.ok){toast('✓ 月盤點已提交','ok');}
+  else toast('✗ '+r.error,'er');
+}
+</script>
+</body>
+</html>

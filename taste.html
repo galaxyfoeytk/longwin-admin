@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>試飲記錄 — 龍吟後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_base.css">
+</head>
+<body>
+<div class="tb">
+  <div class="tbl" onclick="goHome()">☕</div>
+  <div class="page-title-wrap">
+    <div class="page-title-main" id="page-title">仙杏試飲記錄</div>
+    <div class="page-title-sub" id="page-sub">仙草・杏仁每日試飲品質記錄</div>
+  </div>
+  <div class="tbr">
+    <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
+    <button class="lgb" onclick="goHome()">🏠 主頁</button>
+    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+  </div>
+</div>
+<div class="main">
+  <div class="fc" id="formArea">
+    <div class="fct">💧 新增試飲記錄</div>
+    <div class="fr">
+      <div><label class="ffl">日期</label><input type="date" class="ffi" id="ts_d"/></div>
+      <div><label class="ffl">品項</label><select class="ffs" id="ts_i"><option>仙草</option><option>杏仁</option></select></div>
+    </div>
+    <div class="fr">
+      <div><label class="ffl">罐數</label><input type="number" class="ffi" id="ts_q" placeholder="0"/></div>
+      <div><label class="ffl">試飲結果</label>
+        <select class="ffs" id="ts_r">
+          <option>通過</option><option>異常-需回報</option><option>待確認</option>
+        </select>
+      </div>
+    </div>
+    <div class="fr">
+      <div><label class="ffl">試飲時間</label><input type="time" class="ffi" id="ts_tm"/></div>
+      <div><label class="ffl">試飲人員</label><input class="ffi" id="ts_t"/></div>
+    </div>
+    <div class="fr one"><label class="ffl">備註（異常請說明）</label><input class="ffi" id="ts_n" placeholder="選填"/></div>
+    <button class="sbtn" onclick="saveTaste()">💾 儲存記錄</button>
+  </div>
+
+  <!-- 今日統計 -->
+  <div class="sr" id="todayStats" style="display:none">
+    <div class="sc"><div class="sl">今日仙草</div><div class="sv2" id="s-jelly">—</div><div class="ss">罐</div></div>
+    <div class="sc"><div class="sl">今日杏仁</div><div class="sv2" id="s-almond">—</div><div class="ss">罐</div></div>
+    <div class="sc"><div class="sl">今日通過</div><div class="sv2" id="s-pass" style="color:var(--green)">—</div><div class="ss">筆</div></div>
+    <div class="sc"><div class="sl">今日異常</div><div class="sv2" id="s-fail" style="color:var(--red)">—</div><div class="ss">筆</div></div>
+  </div>
+
+  <div class="tc">
+    <div class="tc-head"><div class="tc-title">📋 試飲記錄（近 50 筆）</div></div>
+    <table>
+      <thead><tr><th>日期</th><th>品項</th><th>罐數</th><th>試飲時間</th><th>結果</th><th>試飲人員</th><th>備註</th></tr></thead>
+      <tbody id="tb-taste"><tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・試飲記錄</span></div>
+<script src="_base.js"></script>
+<script>
+const RES_MAP = {'通過':['#EAF3DE','#3B6D11'],'異常-需回報':['#FCEBEB','#A32D2D'],'待確認':['#FAEEDA','#854F0B']};
+window.addEventListener('load', ()=>{
+  var u = buildSubHeader('仙杏試飲記錄','仙草・杏仁每日試飲品質記錄');
+  if(!u) return;
+  sv('ts_d',today); sv('ts_t',u.name);
+  loadTaste();
+});
+async function saveTaste(){
+  toast('儲存中...','info');
+  var r=await api({action:'tasteSave',date:gv('ts_d'),item:gv('ts_i'),qty:gv('ts_q'),result:gv('ts_r'),tasteTime:gv('ts_tm'),taster:gv('ts_t'),note:gv('ts_n')});
+  if(r.ok){toast('✓ 試飲記錄已儲存','ok');loadTaste();}else toast('✗ '+r.error,'er');
+}
+async function loadTaste(){
+  var r=await api({action:'tasteGetAll'});
+  var b=document.getElementById('tb-taste');
+  if(!r.ok||!r.data?.length){b.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';return;}
+  // 今日統計
+  var td=r.data.filter(d=>d.date&&d.date.replace(/\//g,'-').slice(0,10)===today);
+  if(td.length){
+    document.getElementById('todayStats').style.display='grid';
+    document.getElementById('s-jelly').textContent=td.filter(d=>d.item==='仙草').reduce((s,d)=>s+parseInt(d.qty||0),0);
+    document.getElementById('s-almond').textContent=td.filter(d=>d.item==='杏仁').reduce((s,d)=>s+parseInt(d.qty||0),0);
+    document.getElementById('s-pass').textContent=td.filter(d=>d.result==='通過').length;
+    document.getElementById('s-fail').textContent=td.filter(d=>d.result==='異常-需回報').length;
+  }
+  b.innerHTML=r.data.slice(0,50).map(d=>{
+    var sc=RES_MAP[d.result]||['#F1EFE8','#5F5E5A'];
+    return`<tr><td>${d.date}</td><td>${d.item}</td><td>${d.qty}罐</td><td>${d.tasteTime||'—'}</td><td><span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;background:${sc[0]};color:${sc[1]}">${d.result}</span></td><td>${d.taster}</td><td>${d.note||'—'}</td></tr>`;
+  }).join('');
+}
+</script>
+</body>
+</html>

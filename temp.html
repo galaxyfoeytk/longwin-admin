@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>溫度記錄 — 龍吟後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_base.css">
+<style>
+.temp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:1rem;}
+.temp-box{background:var(--surface);border:2px solid var(--border);border-radius:var(--rs);padding:12px;text-align:center;}
+.temp-box.ok{border-color:#C0DD97;background:var(--green-l);}
+.temp-box.warn{border-color:var(--amber-m);background:var(--amber-l);}
+.temp-box.er{border-color:#F7C1C1;background:var(--red-l);}
+.temp-name{font-size:11px;color:var(--text-m);margin-bottom:6px;}
+.temp-val{font-size:24px;font-weight:700;}
+.temp-std{font-size:10px;color:var(--text-h);margin-top:3px;}
+</style>
+</head>
+<body>
+<div class="tb">
+  <div class="tbl" onclick="goHome()">☕</div>
+  <div class="page-title-wrap">
+    <div class="page-title-main" id="page-title">冰箱溫度記錄</div>
+    <div class="page-title-sub" id="page-sub">冷藏 0~7℃・冷凍 -18℃以下・每日 2 次</div>
+  </div>
+  <div class="tbr">
+    <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
+    <button class="lgb" onclick="goHome()">🏠 主頁</button>
+    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="note">📌 標準值：冷藏 0~7℃・冷凍 -18℃以下。超出範圍請立即回報並記錄矯正措施。</div>
+
+  <div class="fc" id="formArea">
+    <div class="fct">🌡 記錄冰箱溫度</div>
+    <div class="fr">
+      <div><label class="ffl">日期</label><input type="date" class="ffi" id="tp_d"/></div>
+      <div><label class="ffl">班別</label><select class="ffs" id="tp_s"><option>早班</option><option>晚班</option></select></div>
+    </div>
+    <div style="font-size:12px;font-weight:500;color:var(--text-m);margin-bottom:8px;">冷藏冰箱（標準：0~7℃）</div>
+    <div class="fr tri">
+      <div><label class="ffl">前冰箱 (℃)</label><input type="number" class="ffi" id="tp_f" placeholder="0~7" step="0.1"/></div>
+      <div><label class="ffl">後冰箱 (℃)</label><input type="number" class="ffi" id="tp_b" placeholder="0~7" step="0.1"/></div>
+      <div><label class="ffl">客冰箱 (℃)</label><input type="number" class="ffi" id="tp_g" placeholder="0~7" step="0.1"/></div>
+    </div>
+    <div style="font-size:12px;font-weight:500;color:var(--text-m);margin-bottom:8px;">冷凍冰箱（標準：-18℃以下）</div>
+    <div class="fr">
+      <div><label class="ffl">前冷凍 (℃)</label><input type="number" class="ffi" id="tp_ff" placeholder="-18以下" step="0.1"/></div>
+      <div><label class="ffl">後冷凍 (℃)</label><input type="number" class="ffi" id="tp_bf" placeholder="-18以下" step="0.1"/></div>
+    </div>
+    <div class="fr">
+      <div><label class="ffl">簽名</label><input class="ffi" id="tp_sg"/></div>
+      <div><label class="ffl">備註（異常請說明矯正措施）</label><input class="ffi" id="tp_n" placeholder="如有異常請說明"/></div>
+    </div>
+    <button class="sbtn" onclick="saveTemp()">💾 儲存記錄</button>
+  </div>
+
+  <!-- 今日溫度看板 -->
+  <div class="tc" id="todayPanel" style="display:none">
+    <div class="tc-head"><div class="tc-title">📊 今日溫度狀況</div></div>
+    <div style="padding:12px;">
+      <div class="temp-grid" id="tempGrid"></div>
+    </div>
+  </div>
+
+  <div class="tc">
+    <div class="tc-head"><div class="tc-title">📋 歷史記錄（近 50 筆）</div></div>
+    <table>
+      <thead><tr><th>日期</th><th>班別</th><th>前冰箱</th><th>後冰箱</th><th>客冰箱</th><th>前冷凍</th><th>後冷凍</th><th>簽名</th><th>狀態</th><th>備註</th></tr></thead>
+      <tbody id="tb-temp"><tr><td colspan="10" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・溫度記錄</span></div>
+
+<script src="_base.js"></script>
+<script>
+window.addEventListener('load', () => {
+  var u = buildSubHeader('冰箱溫度記錄','冷藏 0~7℃・冷凍 -18℃以下・每日 2 次');
+  if(!u) return;
+  sv('tp_d', today);
+  sv('tp_sg', u.name);
+  loadTemp();
+});
+
+function tempClass(v, min, max) {
+  if(v===''||v===null) return '';
+  var n = parseFloat(v);
+  if(isNaN(n)) return '';
+  if(n>=min&&n<=max) return 'ok';
+  if(Math.abs(n-min)<2||Math.abs(n-max)<2) return 'warn';
+  return 'er';
+}
+
+async function saveTemp() {
+  toast('儲存中...','info');
+  var r = await api({action:'tempSave',date:gv('tp_d'),shift:gv('tp_s'),front:gv('tp_f'),back:gv('tp_b'),guest:gv('tp_g'),frontFreeze:gv('tp_ff'),backFreeze:gv('tp_bf'),signer:gv('tp_sg'),note:gv('tp_n')});
+  if(r.ok){ toast('✓ 溫度記錄已儲存','ok'); loadTemp(); }
+  else toast('✗ '+r.error,'er');
+}
+
+async function loadTemp() {
+  var r = await api({action:'tempGetAll'});
+  var tbody = document.getElementById('tb-temp');
+  if(!r.ok||!r.data||!r.data.length){
+    tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';
+    return;
+  }
+  // 今日看板
+  var td = r.data.filter(d=>d.date&&d.date.replace(/\//g,'-').slice(0,10)===today);
+  if(td.length>0){
+    var latest = td[td.length-1];
+    document.getElementById('todayPanel').style.display='block';
+    var boxes = [
+      {n:'前冰箱',v:latest.front,min:0,max:7,std:'0~7℃'},
+      {n:'後冰箱',v:latest.back,min:0,max:7,std:'0~7℃'},
+      {n:'客冰箱',v:latest.guest,min:0,max:7,std:'0~7℃'},
+      {n:'前冷凍',v:latest.frontFreeze,min:-99,max:-18,std:'-18℃以下'},
+      {n:'後冷凍',v:latest.backFreeze,min:-99,max:-18,std:'-18℃以下'},
+    ];
+    document.getElementById('tempGrid').innerHTML = boxes.map(b=>{
+      var cls = b.v ? (parseFloat(b.v)>=b.min&&parseFloat(b.v)<=b.max?'ok':'er') : '';
+      return `<div class="temp-box ${cls}"><div class="temp-name">${b.n}</div><div class="temp-val">${b.v||'—'}${b.v?'℃':''}</div><div class="temp-std">${b.std}</div></div>`;
+    }).join('');
+  }
+  // 歷史
+  tbody.innerHTML = r.data.slice(0,50).map(d=>{
+    var sc = d.status==='✓ 正常'?['#EAF3DE','#3B6D11']:['#FCEBEB','#A32D2D'];
+    return `<tr><td>${d.date}</td><td>${d.shift}</td><td>${d.front}℃</td><td>${d.back}℃</td><td>${d.guest}℃</td><td>${d.frontFreeze||'—'}℃</td><td>${d.backFreeze||'—'}℃</td><td>${d.signer}</td><td><span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;background:${sc[0]};color:${sc[1]}">${d.status}</span></td><td>${d.note||'—'}</td></tr>`;
+  }).join('');
+}
+</script>
+</body>
+</html>

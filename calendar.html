@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>週排程日曆 — 龍吟後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_base.css">
+<style>
+.cal-nav{display:flex;align-items:center;gap:12px;margin-bottom:1rem;}
+.cal-nav-btn{height:34px;padding:0 14px;border:1px solid var(--border-md);border-radius:var(--rs);background:var(--surface);cursor:pointer;font-family:var(--font);font-size:13px;}
+.cal-nav-btn:hover{background:var(--bg);}
+.cal-week{font-size:15px;font-weight:700;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:1rem;}
+.cal-day{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:8px;min-height:120px;}
+.cal-day.today{border-color:var(--blue);background:var(--blue-l);}
+.cal-day-header{font-size:11px;font-weight:600;color:var(--text-m);margin-bottom:4px;text-align:center;}
+.cal-day-num{font-size:20px;font-weight:700;text-align:center;margin-bottom:6px;}
+.cal-day.today .cal-day-num{color:var(--blue);}
+.cal-event{font-size:11px;padding:3px 7px;border-radius:4px;margin-bottom:3px;cursor:pointer;line-height:1.4;}
+.ev-ship{background:#E6F1FB;color:#0C447C;}
+.ev-order{background:#EAF3DE;color:#27500A;}
+.ev-market{background:#FBEAF0;color:#72243E;}
+.ev-staff{background:#EEEDFE;color:#3C3489;}
+.ev-other{background:#F1EFE8;color:#5F5E5A;}
+.add-ev-btn{font-size:11px;color:var(--text-h);cursor:pointer;margin-top:4px;display:block;text-align:center;}
+.add-ev-btn:hover{color:var(--blue);}
+.ev-type-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;}
+.ev-type{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border-radius:var(--r);padding:1.5rem;width:100%;max-width:400px;}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:1.25rem;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;}
+.btn-cancel{height:36px;padding:0 14px;font-size:13px;border:1px solid var(--border-md);border-radius:var(--rx);background:transparent;cursor:pointer;font-family:var(--font);}
+</style>
+</head>
+<body>
+<div class="tb">
+  <div class="tbl" onclick="goHome()">☕</div>
+  <div class="page-title-wrap">
+    <div class="page-title-main" id="page-title">週排程日曆</div>
+    <div class="page-title-sub" id="page-sub">出貨・叫貨・市場・行程安排</div>
+  </div>
+  <div class="tbr">
+    <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
+    <button class="lgb" onclick="goHome()">🏠 主頁</button>
+    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="changeWeek(-1)">‹ 上週</button>
+    <span class="cal-week" id="weekLabel"></span>
+    <button class="cal-nav-btn" onclick="changeWeek(1)">下週 ›</button>
+    <button class="cal-nav-btn" onclick="goToday()">今天</button>
+  </div>
+
+  <div class="ev-type-row">
+    <span class="ev-type ev-ship">🚚 出貨</span>
+    <span class="ev-type ev-order">📦 叫貨</span>
+    <span class="ev-type ev-market">🏪 市場</span>
+    <span class="ev-type ev-staff">👥 人員</span>
+    <span class="ev-type ev-other">📌 其他</span>
+  </div>
+
+  <div class="cal-grid" id="calGrid"></div>
+
+  <!-- 本週行程列表 -->
+  <div class="tc">
+    <div class="tc-head"><div class="tc-title">📋 本週行程清單</div></div>
+    <table>
+      <thead><tr><th>日期</th><th>類型</th><th>標題</th><th>說明</th><th>負責人</th></tr></thead>
+      <tbody id="tb-events"><tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:20px">本週尚無行程</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 新增行程 Modal -->
+<div class="modal-bg" id="addModal">
+  <div class="modal">
+    <div class="modal-title">➕ 新增行程</div>
+    <div class="fr one" style="margin-bottom:10px"><label class="ffl">日期</label><input type="date" class="ffi" id="ev_d"/></div>
+    <div class="fr one" style="margin-bottom:10px"><label class="ffl">類型</label>
+      <select class="ffs" id="ev_t">
+        <option value="ship">🚚 出貨</option>
+        <option value="order">📦 叫貨</option>
+        <option value="market">🏪 市場</option>
+        <option value="staff">👥 人員</option>
+        <option value="other">📌 其他</option>
+      </select>
+    </div>
+    <div class="fr one" style="margin-bottom:10px"><label class="ffl">標題</label><input class="ffi" id="ev_title" placeholder="行程標題"/></div>
+    <div class="fr one" style="margin-bottom:10px"><label class="ffl">說明</label><input class="ffi" id="ev_note" placeholder="詳細說明（選填）"/></div>
+    <div class="fr one" style="margin-bottom:10px"><label class="ffl">負責人</label><input class="ffi" id="ev_owner"/></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="sbtn" onclick="saveEvent()">✓ 新增</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・週排程日曆</span></div>
+<script src="_base.js"></script>
+<script>
+var weekOffset = 0;
+var events = JSON.parse(localStorage.getItem('longyinEvents')||'[]');
+var selectedDate = '';
+
+const DAYS = ['日','一','二','三','四','五','六'];
+const EV_CLS = {ship:'ev-ship',order:'ev-order',market:'ev-market',staff:'ev-staff',other:'ev-other'};
+const EV_LABEL = {ship:'🚚 出貨',order:'📦 叫貨',market:'🏪 市場',staff:'👥 人員',other:'📌 其他'};
+
+window.addEventListener('load',()=>{
+  var u=buildSubHeader('週排程日曆','出貨・叫貨・市場・行程安排');
+  if(!u)return;
+  sv('ev_owner',u.name);
+  renderCal();
+});
+
+function getWeekDates(offset){
+  var d=new Date();
+  var day=d.getDay();
+  var monday=new Date(d);
+  monday.setDate(d.getDate()-day+1+(offset*7));
+  var dates=[];
+  for(var i=0;i<7;i++){
+    var dd=new Date(monday);
+    dd.setDate(monday.getDate()+i);
+    dates.push(dd);
+  }
+  return dates;
+}
+
+function fmt(d){return d.toISOString().slice(0,10);}
+
+function renderCal(){
+  var dates=getWeekDates(weekOffset);
+  var start=dates[0],end=dates[6];
+  document.getElementById('weekLabel').textContent=
+    `${start.getFullYear()}/${String(start.getMonth()+1).padStart(2,'0')}/${String(start.getDate()).padStart(2,'0')} - ${String(end.getMonth()+1).padStart(2,'0')}/${String(end.getDate()).padStart(2,'0')}`;
+  var grid=document.getElementById('calGrid');
+  grid.innerHTML=dates.map((d,i)=>{
+    var ds=fmt(d);
+    var isToday=ds===today;
+    var dayEvents=events.filter(e=>e.date===ds);
+    return`<div class="cal-day${isToday?' today':''}">
+      <div class="cal-day-header">週${DAYS[d.getDay()]}</div>
+      <div class="cal-day-num">${d.getDate()}</div>
+      ${dayEvents.map(e=>`<div class="cal-event ${EV_CLS[e.type]||'ev-other'}" onclick="delEvent('${e.id}')" title="${e.note||''}（點擊刪除）">${EV_LABEL[e.type]||'📌'} ${e.title}</div>`).join('')}
+      <span class="add-ev-btn" onclick="openAdd('${ds}')">＋ 新增</span>
+    </div>`;
+  }).join('');
+  renderList(dates);
+}
+
+function renderList(dates){
+  var ds=dates.map(d=>fmt(d));
+  var wevents=events.filter(e=>ds.includes(e.date)).sort((a,b)=>a.date.localeCompare(b.date));
+  var b=document.getElementById('tb-events');
+  if(!wevents.length){b.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:20px">本週尚無行程</td></tr>';return;}
+  b.innerHTML=wevents.map(e=>`<tr><td>${e.date}</td><td><span class="cal-event ${EV_CLS[e.type]||'ev-other'}" style="display:inline-block">${EV_LABEL[e.type]||'📌'}</span></td><td>${e.title}</td><td>${e.note||'—'}</td><td>${e.owner||'—'}</td></tr>`).join('');
+}
+
+function openAdd(date){ selectedDate=date; sv('ev_d',date); document.getElementById('addModal').classList.add('open'); }
+function closeModal(){ document.getElementById('addModal').classList.remove('open'); }
+
+function saveEvent(){
+  var e={id:Date.now().toString(),date:gv('ev_d'),type:gv('ev_t'),title:gv('ev_title'),note:gv('ev_note'),owner:gv('ev_owner')};
+  if(!e.title){toast('請填寫標題','er');return;}
+  events.push(e);
+  localStorage.setItem('longyinEvents',JSON.stringify(events));
+  closeModal();
+  renderCal();
+  toast('✓ 行程已新增','ok');
+}
+
+function delEvent(id){
+  if(!confirm('確定刪除此行程？'))return;
+  events=events.filter(e=>e.id!==id);
+  localStorage.setItem('longyinEvents',JSON.stringify(events));
+  renderCal();
+  toast('行程已刪除','info');
+}
+
+function changeWeek(d){ weekOffset+=d; renderCal(); }
+function goToday(){ weekOffset=0; renderCal(); }
+</script>
+</body>
+</html>

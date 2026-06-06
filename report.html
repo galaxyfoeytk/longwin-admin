@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>PAGE_report — 龍吟後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_base.css">
+</head>
+<body>
+<div class="tb">
+  <div class="tbl" onclick="goHome()">☕</div>
+  <div class="page-title-wrap">
+    <div class="page-title-main" id="page-title">載入中</div>
+    <div class="page-title-sub" id="page-sub"></div>
+  </div>
+  <div class="tbr">
+    <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
+    <button class="lgb" onclick="goHome()">🏠 主頁</button>
+    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+  </div>
+</div>
+<div class="main" id="mainContent"><div style="color:var(--text-h);padding:20px">載入中...</div></div>
+<div class="toast" id="toast"></div>
+<div class="bb"><div class="bd"></div><span class="bt" id="btText">龍吟古早味飲品專賣</span></div>
+<script src="_base.js"></script>
+<script>
+var PAGE_CONFIG = {
+  elec:{title:'電表度數記錄',sub:'每日開班電表度數',action:'elecGetAll',saveAction:'elecSave',
+    form:['日期|date|el_d|date','當日度數|today|el_t|number','記錄人員|recorder|el_r|text','備註|note|el_n|text'],
+    cols:['日期','當日度數','昨日度數','用電(度)','記錄人員','狀態','備註'],
+    row:d=>`<tr><td>${d.date}</td><td>${d.today}</td><td>${d.yesterday||'-'}</td><td>${d.usage||'-'}</td><td>${d.recorder}</td><td>${d.abnormal||'-'}</td><td>${d.note||'-'}</td></tr>`
+  },
+  filter:{title:'濾心更換記錄',sub:'總店・倉庫濾心更換',action:'filterGetAll',saveAction:'filterSave',
+    form:['日期|date|fl_d|date','地點|location|fl_l|select:總店,倉庫','第一支|f1|fl_1|select:未更換,更換,待更換','第二支|f2|fl_2|select:未更換,更換,待更換','第三支|f3|fl_3|select:未更換,更換,待更換','簽名|signer|fl_s|text'],
+    cols:['日期','地點','第一支','第二支','第三支','簽名','備註'],
+    row:d=>`<tr><td>${d.date}</td><td>${d.location}</td><td>${d.f1}</td><td>${d.f2}</td><td>${d.f3}</td><td>${d.signer}</td><td>${d.note||'-'}</td></tr>`
+  },
+  order:{title:'叫貨記錄',sub:'龍吟總店・日本鶴神叫貨單',action:'orderGetAll',saveAction:'orderSave',
+    form:['叫貨日期|orderDate|o_d|date','商品|product|o_p|select:日本鶴神紅茶,日本鶴神仙草凍,仙草凍,杏仁粉,糖,冬瓜磚,梅釀原料,紙杯,塑膠袋,其他','數量|qty|o_q|number','單位|unit|o_u|select:罐,箱,桶,包,個','叫貨人員|orderer|o_or|text','金額|amount|o_am|number'],
+    cols:['叫貨日期','商品','數量','叫貨人員','金額','到貨狀態'],
+    row:d=>`<tr><td>${d.orderDate}</td><td>${d.product}</td><td>${d.qty}${d.unit}</td><td>${d.orderer}</td><td>${d.amount?'$'+d.amount:'-'}</td><td>${d.status||'-'}</td></tr>`
+  },
+  market:{title:'市場紀錄',sub:'月市場仙草杏仁銷售記錄',action:'marketGetAll',saveAction:'marketSave',
+    form:['日期|date|mk_d|date','天氣|weather|mk_w|select:晴,多雲,陰,雨,大雨,颱風','仙草(杯)|jelly|mk_j|number','杏仁(杯)|almond|mk_a|number','仙草撞奶|jellyMilk|mk_jm|number','記錄人員|recorder|mk_r|text'],
+    cols:['日期','天氣','仙草(杯)','杏仁(杯)','仙草撞奶','總杯數','記錄人員'],
+    row:d=>`<tr><td>${d.date}</td><td>${d.weather}</td><td>${d.jelly}</td><td>${d.almond}</td><td>${d.jellyMilk}</td><td><strong>${d.total}</strong></td><td>${d.recorder}</td></tr>`
+  },
+  hours:{title:'時數記錄',sub:'員工出勤時數',action:'hoursGetAll',saveAction:'hoursSave',
+    form:['日期|date|h_d|date','員工姓名|name|h_n|text','角色|role|h_r|select:正職員工,工讀生,副店長,店長','開始時間|start|h_s|time','結束時間|end|h_e|time'],
+    cols:['日期','員工','角色','開始','結束','工時(h)','加班(h)'],
+    row:d=>`<tr><td>${d.date}</td><td>${d.name}</td><td>${d.role}</td><td>${d.start}</td><td>${d.end}</td><td>${d.work}</td><td>${d.overtime}</td></tr>`
+  },
+  report:{title:'報表分析',sub:'營收・杯數・趨勢總覽',action:'cupsGetAll',
+    noForm:true,
+    cols:['日期','仙草(杯)','杏仁(杯)','仙草撞奶','總杯數','記錄人員'],
+    row:d=>`<tr><td>${d.date}</td><td>${d.jelly}</td><td>${d.almond}</td><td>${d.jellyMilk}</td><td><strong>${d.total}</strong></td><td>${d.recorder}</td></tr>`
+  },
+  users:{title:'帳號管理',sub:'帳號設定・角色指派',action:'getAccounts',
+    noForm:true,adminOnly:true,
+    cols:['帳號','姓名','角色','狀態'],
+    row:d=>`<tr><td style="font-family:monospace;font-size:12px">${d.key}</td><td>${d.name}</td><td>${d.label||''}</td><td>${d.active?'啟用':'停用'}</td></tr>`
+  },
+  logs:{title:'操作紀錄',sub:'所有操作完整保存',action:'logGetAll',
+    noForm:true,
+    cols:['時間','人員','動作','模組','內容'],
+    row:d=>`<tr><td>${d.time}</td><td>${d.user}</td><td>${d.action}</td><td>${d.module}</td><td>${d.detail}</td></tr>`
+  },
+};
+
+var PAGEID = 'report';
+var cfg = PAGE_CONFIG[PAGEID];
+
+window.addEventListener('load', async ()=>{
+  var u = buildSubHeader(cfg.title, cfg.sub||'');
+  if(!u) return;
+  document.getElementById('btText').textContent = '龍吟古早味飲品專賣・' + cfg.title;
+  renderPage(u);
+});
+
+function renderPage(u){
+  var html = '';
+  // 表單
+  if(!cfg.noForm){
+    html += '<div class="fc"><div class="fct">➕ 新增'+cfg.title+'</div>';
+    var fields = cfg.form||[];
+    // 分兩欄
+    for(var i=0;i<fields.length;i+=2){
+      html += '<div class="fr">';
+      for(var j=i;j<Math.min(i+2,fields.length);j++){
+        var parts=fields[j].split('|');
+        var label=parts[0],key=parts[1],id=parts[2],type=parts[3];
+        html += '<div><label class="ffl">'+label+'</label>';
+        if(type.startsWith('select:')){
+          var opts=type.slice(7).split(',');
+          html += '<select class="ffs" id="'+id+'">'+opts.map(o=>'<option>'+o+'</option>').join('')+'</select>';
+        } else {
+          html += '<input type="'+type+'" class="ffi" id="'+id+'" '+(type==='number'?'placeholder="0"':'')+(type==='date'?'value="'+today+'"':'')+'>';
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+    html += '<button class="sbtn" onclick="doSave()">💾 儲存記錄</button></div>';
+  }
+  // 表格
+  html += '<div class="tc"><div class="tc-head"><div class="tc-title">📋 '+cfg.title+'記錄</div><button class="sbtn g" onclick="loadData()" style="height:30px;font-size:12px">重新整理</button></div>';
+  html += '<table><thead><tr>'+cfg.cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead>';
+  html += '<tbody id="tb-data"><tr><td colspan="'+cfg.cols.length+'" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table></div>';
+  // 自動設定當前使用者
+  document.getElementById('mainContent').innerHTML = html;
+  if(u) {
+    var rf = cfg.form||[];
+    rf.forEach(f=>{
+      var parts=f.split('|');
+      if(parts[1]==='recorder'||parts[1]==='signer'||parts[1]==='orderer'||parts[1]==='name'||parts[1]==='brewer'){
+        var el=document.getElementById(parts[2]); if(el) el.value=u.name;
+      }
+    });
+  }
+  loadData();
+}
+
+async function doSave(){
+  toast('儲存中...','info');
+  var params={action:cfg.saveAction||''};
+  (cfg.form||[]).forEach(f=>{var p=f.split('|');params[p[1]]=gv(p[2]);});
+  var r=await api(params);
+  if(r.ok){toast('✓ 已儲存','ok');loadData();}else toast('✗ '+(r.error||'儲存失敗'),'er');
+}
+
+async function loadData(){
+  var r=await api({action:cfg.action});
+  var b=document.getElementById('tb-data'); if(!b) return;
+  var data=r.data||r.accounts||[];
+  if(!r.ok||!data.length){
+    b.innerHTML='<tr><td colspan="'+cfg.cols.length+'" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';
+    return;
+  }
+  b.innerHTML=data.slice(0,60).map(cfg.row).join('');
+}
+</script>
+</body>
+</html>

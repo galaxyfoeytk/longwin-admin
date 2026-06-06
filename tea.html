@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>茶製記錄 — 龍吟後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_base.css">
+<style>
+.status-chip{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500;display:inline-block;}
+.s-ok{background:var(--green-l);color:var(--green);}
+.s-warn{background:var(--amber-l);color:var(--amber);}
+.s-er{background:var(--red-l);color:var(--red);}
+.s-def{background:var(--gray-l);color:var(--gray);}
+.batch-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:8px;}
+.batch-header{display:flex;align-items:center;justify-content:space-between;}
+.batch-type{font-size:15px;font-weight:700;}
+.batch-barrel{font-size:12px;color:var(--text-m);background:var(--bg);padding:2px 8px;border-radius:20px;}
+.batch-times{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px;}
+.batch-time-label{color:var(--text-m);margin-bottom:2px;}
+.batch-time-val{font-weight:500;font-size:13px;}
+.batch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:1rem;}
+.expire-bar{height:4px;border-radius:2px;background:var(--bg);overflow:hidden;margin-top:4px;}
+.expire-fill{height:100%;border-radius:2px;background:var(--green);}
+.expire-fill.warn{background:var(--amber-m);}
+.expire-fill.er{background:var(--red);}
+</style>
+</head>
+<body>
+<div class="tb">
+  <div class="tbl" onclick="goHome()">☕</div>
+  <div class="page-title-wrap">
+    <div class="page-title-main" id="page-title">茶製記錄</div>
+    <div class="page-title-sub" id="page-sub">製茶批次・效期・狀態追蹤</div>
+  </div>
+  <div class="tbr">
+    <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
+    <button class="lgb" onclick="goHome()">🏠 主頁</button>
+    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- 新增表單 -->
+  <div class="fc" id="formArea">
+    <div class="fct">🍵 新增茶製記錄</div>
+    <div class="fr">
+      <div><label class="ffl">日期</label><input type="date" class="ffi" id="t_d"/></div>
+      <div><label class="ffl">茶種</label>
+        <select class="ffs" id="t_tp">
+          <option>紅茶</option><option>綠茶</option><option>仙草凍茶</option>
+          <option>冬瓜茶</option><option>糖水</option><option>梅釀</option>
+        </select>
+      </div>
+    </div>
+    <div class="fr tri">
+      <div><label class="ffl">桶號</label><input class="ffi" id="t_b" placeholder="如 A1"/></div>
+      <div><label class="ffl">煮好時間</label><input type="time" class="ffi" id="t_tm"/></div>
+      <div><label class="ffl">煮茶人員</label><input class="ffi" id="t_br"/></div>
+    </div>
+    <div class="fr tri">
+      <div><label class="ffl">試喝人員</label><input class="ffi" id="t_taster"/></div>
+      <div><label class="ffl">狀態</label>
+        <select class="ffs" id="t_st">
+          <option>待確認</option><option>正常</option><option>即將到期</option><option>已報廢</option><option>異常</option>
+        </select>
+      </div>
+      <div><label class="ffl">備註</label><input class="ffi" id="t_note" placeholder="選填"/></div>
+    </div>
+    <button class="sbtn" onclick="saveTea()">💾 儲存記錄</button>
+  </div>
+
+  <!-- 進行中批次看板 -->
+  <div class="tc">
+    <div class="tc-head">
+      <div class="tc-title">🟡 進行中批次</div>
+      <button class="sbtn g" onclick="loadTea()" style="height:30px;font-size:12px">重新整理</button>
+    </div>
+    <div style="padding:12px;">
+      <div class="batch-grid" id="batchGrid"><div style="color:var(--text-h);font-size:13px;padding:8px">載入中...</div></div>
+    </div>
+  </div>
+
+  <!-- 歷史記錄 -->
+  <div class="tc">
+    <div class="tc-head"><div class="tc-title">📋 歷史記錄（近 50 筆）</div></div>
+    <table>
+      <thead><tr><th>日期</th><th>茶種</th><th>桶號</th><th>煮好時間</th><th>煮茶人員</th><th>試喝人員</th><th>狀態</th><th>備註</th></tr></thead>
+      <tbody id="tb-tea"><tr><td colspan="8" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・茶製記錄</span></div>
+
+<script src="_base.js"></script>
+<script>
+window.addEventListener('load', () => {
+  var u = buildSubHeader('茶製記錄','製茶批次・效期・狀態追蹤');
+  if(!u) return;
+  sv('t_d', today);
+  sv('t_br', u.name);
+  // 工讀生不能新增
+  if(u.role===6) document.getElementById('formArea').innerHTML='<div class="note">🔒 您的權限為檢視，無法新增茶製記錄</div>';
+  loadTea();
+});
+
+const STATUS_MAP = {
+  '正常':['#EAF3DE','#3B6D11','✓ 正常'],
+  '即將到期':['#FAEEDA','#854F0B','⚠ 即將到期'],
+  '已報廢':['#FCEBEB','#A32D2D','✗ 已報廢'],
+  '異常':['#FCEBEB','#A32D2D','⚠ 異常'],
+  '待確認':['#F1EFE8','#5F5E5A','— 待確認'],
+};
+
+async function saveTea() {
+  toast('儲存中...','info');
+  var r = await api({action:'teaSave',date:gv('t_d'),type:gv('t_tp'),barrel:gv('t_b'),brewTime:gv('t_tm'),brewer:gv('t_br'),taster:gv('t_taster'),status:gv('t_st'),note:gv('t_note')});
+  if(r.ok){ toast('✓ 茶製記錄已儲存','ok'); loadTea(); }
+  else toast('✗ '+r.error,'er');
+}
+
+async function loadTea() {
+  var r = await api({action:'teaGetAll'});
+  var batchGrid = document.getElementById('batchGrid');
+  var tbody = document.getElementById('tb-tea');
+  if(!r.ok||!r.data||!r.data.length){
+    batchGrid.innerHTML='<div style="color:var(--text-h);font-size:13px;padding:8px">目前無進行中批次</div>';
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';
+    return;
+  }
+  // 進行中批次（非報廢）
+  var active = r.data.filter(d=>d.status!=='已報廢');
+  if(!active.length){
+    batchGrid.innerHTML='<div style="color:var(--text-h);font-size:13px;padding:8px">目前無進行中批次</div>';
+  } else {
+    batchGrid.innerHTML = active.slice(0,20).map(d=>{
+      var sc = STATUS_MAP[d.status]||['#F1EFE8','#5F5E5A',d.status];
+      return `<div class="batch-card">
+        <div class="batch-header">
+          <span class="batch-type">${d.type}</span>
+          <span class="batch-barrel">${d.barrel}</span>
+        </div>
+        <span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;background:${sc[0]};color:${sc[1]};display:inline-block;width:fit-content">${sc[2]}</span>
+        <div class="batch-times">
+          <div><div class="batch-time-label">煮好時間</div><div class="batch-time-val">${d.brewTime||'—'}</div></div>
+          <div><div class="batch-time-label">煮茶人員</div><div class="batch-time-val">${d.brewer||'—'}</div></div>
+          <div><div class="batch-time-label">試喝人員</div><div class="batch-time-val">${d.taster||'—'}</div></div>
+        </div>
+        ${d.note?`<div style="font-size:12px;color:var(--text-m)">備註：${d.note}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+  // 歷史表格
+  tbody.innerHTML = r.data.slice(0,50).map(d=>{
+    var sc = STATUS_MAP[d.status]||['#F1EFE8','#5F5E5A',d.status];
+    return `<tr><td>${d.date}</td><td>${d.type}</td><td>${d.barrel}</td><td>${d.brewTime||'—'}</td><td>${d.brewer}</td><td>${d.taster||'—'}</td><td><span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;background:${sc[0]};color:${sc[1]}">${sc[2]}</span></td><td>${d.note||'—'}</td></tr>`;
+  }).join('');
+}
+</script>
+</body>
+</html>

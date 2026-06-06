@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>仙草杏仁統計 — 龍吟後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_base.css">
+<style>
+.month-tab{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;}
+.mtab{padding:5px 14px;border-radius:20px;border:1px solid var(--border-md);background:var(--surface);cursor:pointer;font-size:13px;font-family:var(--font);}
+.mtab.active{background:var(--blue);color:white;border-color:var(--blue);}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.bar-label{width:70px;font-size:12px;color:var(--text-m);flex-shrink:0;}
+.bar-wrap{flex:1;height:20px;background:var(--bg);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.4s;}
+.bar-val{width:50px;font-size:12px;font-weight:600;text-align:right;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="tb">
+  <div class="tbl" onclick="goHome()">☕</div>
+  <div class="page-title-wrap">
+    <div class="page-title-main" id="page-title">仙草杏仁統計表</div>
+    <div class="page-title-sub" id="page-sub">月匯總・趨勢・比較分析</div>
+  </div>
+  <div class="tbr">
+    <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
+    <button class="lgb" onclick="goHome()">🏠 主頁</button>
+    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+  </div>
+</div>
+<div class="main">
+  <div class="month-tab" id="monthTab"></div>
+
+  <div class="sr" id="monthStats">
+    <div class="sc"><div class="sl">本月仙草</div><div class="sv2" id="ms-j">—</div><div class="ss">杯</div></div>
+    <div class="sc"><div class="sl">本月杏仁</div><div class="sv2" id="ms-a">—</div><div class="ss">杯</div></div>
+    <div class="sc"><div class="sl">仙草撞奶</div><div class="sv2" id="ms-jm">—</div><div class="ss">杯</div></div>
+    <div class="sc" style="background:var(--blue-l)"><div class="sl">總杯數</div><div class="sv2" id="ms-tot" style="color:var(--blue)">—</div><div class="ss">杯</div></div>
+    <div class="sc"><div class="sl">記錄天數</div><div class="sv2" id="ms-days">—</div><div class="ss">天</div></div>
+    <div class="sc"><div class="sl">日均杯數</div><div class="sv2" id="ms-avg">—</div><div class="ss">杯/天</div></div>
+  </div>
+
+  <!-- 每日長條圖 -->
+  <div class="fc">
+    <div class="fct">📊 每日杯數分布</div>
+    <div id="barChart" style="min-height:80px"></div>
+  </div>
+
+  <div class="tc">
+    <div class="tc-head"><div class="tc-title">📋 明細記錄</div></div>
+    <table>
+      <thead><tr><th>日期</th><th>仙草(杯)</th><th>杏仁(杯)</th><th>仙草撞奶</th><th>總杯數</th></tr></thead>
+      <tbody id="tb-stat"><tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・仙草杏仁統計表</span></div>
+<script src="_base.js"></script>
+<script>
+var allData = [];
+var curMonth = today.slice(0,7);
+
+window.addEventListener('load',()=>{
+  var u=buildSubHeader('仙草杏仁統計表','月匯總・趨勢・比較分析');
+  if(!u)return;
+  loadAll();
+});
+
+async function loadAll(){
+  var r=await api({action:'cupsGetAll'});
+  if(!r.ok||!r.data?.length) return;
+  allData=r.data;
+  // 建立月份標籤
+  var months=[...new Set(r.data.map(d=>d.date?d.date.replace(/\//g,'-').slice(0,7):'').filter(Boolean))].sort().reverse();
+  var tab=document.getElementById('monthTab');
+  tab.innerHTML=months.map(m=>`<button class="mtab${m===curMonth?' active':''}" onclick="selectMonth('${m}')">${m}</button>`).join('');
+  renderMonth(curMonth);
+}
+
+function selectMonth(m){
+  curMonth=m;
+  document.querySelectorAll('.mtab').forEach(t=>t.classList.toggle('active',t.textContent===m));
+  renderMonth(m);
+}
+
+function renderMonth(m){
+  var data=allData.filter(d=>d.date&&d.date.replace(/\//g,'-').slice(0,7)===m);
+  if(!data.length){ document.getElementById('tb-stat').innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:20px">該月無記錄</td></tr>'; return; }
+  var totalJ=data.reduce((s,d)=>s+parseInt(d.jelly||0),0);
+  var totalA=data.reduce((s,d)=>s+parseInt(d.almond||0),0);
+  var totalJM=data.reduce((s,d)=>s+parseInt(d.jellyMilk||0),0);
+  var total=data.reduce((s,d)=>s+parseInt(d.total||0),0);
+  document.getElementById('ms-j').textContent=totalJ;
+  document.getElementById('ms-a').textContent=totalA;
+  document.getElementById('ms-jm').textContent=totalJM;
+  document.getElementById('ms-tot').textContent=total;
+  document.getElementById('ms-days').textContent=data.length;
+  document.getElementById('ms-avg').textContent=data.length?Math.round(total/data.length):'—';
+  // 長條圖
+  var maxT=Math.max(...data.map(d=>parseInt(d.total||0)),1);
+  document.getElementById('barChart').innerHTML=data.slice(0,31).map(d=>{
+    var t=parseInt(d.total||0);
+    var pct=Math.round(t/maxT*100);
+    var day=d.date?d.date.replace(/\//g,'-').slice(8):d.date;
+    return`<div class="bar-row"><span class="bar-label">${day}日</span><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:var(--blue)"></div></div><span class="bar-val">${t}</span></div>`;
+  }).join('');
+  document.getElementById('tb-stat').innerHTML=data.map(d=>`<tr><td>${d.date}</td><td>${d.jelly}</td><td>${d.almond}</td><td>${d.jellyMilk}</td><td><strong>${d.total}</strong></td></tr>`).join('');
+}
+</script>
+</body>
+</html>
