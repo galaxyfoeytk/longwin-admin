@@ -249,23 +249,8 @@ tbody tr:hover td{background:var(--bg);}
       </div>
     </div>
     <button class="login-btn" id="loginBtn" onclick="doLogin()">→ 登入</button>
-
-    <div class="api-setup">
-      <div class="api-label">
-        Apps Script 串接設定
-        <span class="api-status" id="apiStatusBadge">未設定</span>
-      </div>
-      <div class="pass-wrap">
-        <input class="f-input" type="password" id="apiUrlInput" placeholder="貼入 Apps Script 部署網址" style="padding-right:42px;font-family:var(--mono);font-size:11px;"/>
-        <button class="eye-btn" onclick="togglePw('apiUrlInput',this)" type="button">👁</button>
-      </div>
-      <div class="api-row">
-        <button class="api-btn save" onclick="saveApiUrl()">儲存網址</button>
-        <button class="api-btn test" onclick="testApiUrl()">測試連線</button>
-      </div>
-      <div class="api-result" id="apiResult"></div>
-    </div>
   </div>
+</div>
 </div>
 
 <!-- APP -->
@@ -504,7 +489,7 @@ tbody tr:hover td{background:var(--bg);}
 
 <script>
 // ── CONFIG ─────────────────────────────────────────────────────
-var API_URL = localStorage.getItem('longyinApiUrl') || '';
+var API_URL = localStorage.getItem('longyinApiUrl') || 'https://script.google.com/macros/s/AKfycbxZg8p4Aofjh_x43koax5MJfRmAWqewo6az9dEtLqImA6KM5bb6U7RvL5uPxy7Xy1Vn/exec';
 
 const ROLE_LABELS = {1:'系統最高管理員',2:'營運管理者',3:'店長',4:'副店長',5:'正職員工',6:'工讀生',7:'財務/會計',8:'外部顧問'};
 const ROLE_CLS    = {1:'rp-1',2:'rp-2',3:'rp-3',4:'rp-4',5:'rp-5',6:'rp-6',7:'rp-7',8:'rp-8'};
@@ -523,13 +508,12 @@ const MODULES = [
   {id:'report', emoji:'📊', cls:'mi-teal',   name:'報表分析',  desc:'杯數・叫貨・趨勢報表',                roles:[1,2,7,8]},
   {id:'users',  emoji:'👥', cls:'mi-gray',   name:'帳號管理',  desc:'帳號設定・角色指派',                  roles:[1]},
   {id:'logs',   emoji:'📋', cls:'mi-gray',   name:'操作紀錄',  desc:'所有操作完整保存',                    roles:[1,2,3]},
-  {id:'setup',  emoji:'⚙️', cls:'mi-blue',   name:'串接設定',  desc:'Apps Script 網址設定',               roles:[1]},
 ];
 const NAV_GROUPS = [
   {label:'現場記錄', ids:['tea','taste','temp','elec','filter']},
   {label:'庫存進貨', ids:['order']},
   {label:'數據統計', ids:['cups','market','hours','report']},
-  {label:'系統管理', ids:['users','logs','setup']},
+  {label:'系統管理', ids:['users','logs']},
 ];
 const PERM_LAYERS = [
   {label:'填寫權限', cls:'ptag-w', roles:[1,2,3,4,5,6]},
@@ -597,9 +581,7 @@ function updateApiStatus() {
   if(setupInput && API_URL) setupInput.value = API_URL;
 }
 
-function saveApiUrl() {
-  var v = document.getElementById('apiUrlInput').value.trim();
-  if(!v){ showApiResult('請填入網址','err'); return; }
+
   localStorage.setItem('longyinApiUrl', v);
   API_URL = v;
   updateApiStatus();
@@ -621,26 +603,12 @@ async function testApiUrl() {
   }
 }
 
-function showApiResult(msg, type) {
-  var el = document.getElementById('apiResult');
-  el.style.display='block';
-  el.textContent = msg;
-  if(type==='ok') { el.style.background='var(--green-l)'; el.style.color='var(--green)'; }
+
   else if(type==='err') { el.style.background='var(--red-l)'; el.style.color='var(--red)'; }
   else { el.style.background='var(--blue-l)'; el.style.color='var(--blue-d)'; }
 }
 
-function saveApiUrlFromSetup() {
-  var v = document.getElementById('setupApiUrl').value.trim();
-  if(!v) return;
-  localStorage.setItem('longyinApiUrl', v);
-  API_URL = v;
-  updateApiStatus();
-  var el = document.getElementById('setupTestResult');
-  el.style.display='block'; el.style.background='var(--green-l)'; el.style.color='var(--green)';
-  el.textContent='✓ 已儲存';
-  setTimeout(()=>el.style.display='none',1500);
-}
+
 
 async function testApiUrlFromSetup() {
   var v = document.getElementById('setupApiUrl').value.trim();
