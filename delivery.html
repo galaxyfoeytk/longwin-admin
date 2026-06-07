@@ -1145,8 +1145,7 @@ async function toggleStep(orderId, stepKey, orderName, shipDate) {
     // 發送 LINE 通知
     var stepDef = FLOW_STEPS.find(s => s.key === stepKey);
     if (stepDef && stepDef.notify && stepDef.notifyMsg) {
-      sendLineNotify(stepDef.notifyMsg(orderName) + '
-📅 出貨日：' + shipDate);
+      sendLineNotify(stepDef.notifyMsg(orderName) + '\n📅 出貨日：' + shipDate);
     }
   } else {
     delete state[stepKey + '_time'];
@@ -1230,9 +1229,7 @@ async function checkPickupReminder() {
 
   if (unpicked.length > 0) {
     _lastReminderHour = h;
-    var msg = `⏰ ${h}:00 提醒｜以下訂單尚未取件，請確認：
-` + unpicked.map(n => '・' + n).join('
-');
+    var msg = '⏰ ' + h + ':00 提醒｜以下訂單尚未取件，請確認：\n' + unpicked.map(function(n){ return '・' + n; }).join('\n');
     // 頁面通知
     if (Notification && Notification.permission === 'granted') {
       new Notification('龍吟出貨提醒', { body: unpicked.join('、') + ' 尚未取件', icon: '🚚' });
@@ -1472,8 +1469,7 @@ async function notifyAllToday() {
   Object.entries(itemTotals).forEach(([n,q]) => lines.push('  ' + n + '：' + q + '罐（' + calcBoxText(q) + '）'));
   lines.push('合計：' + totalQty + '罐 / ' + calcBoxText(totalQty));
 
-  var r = await api({ action: 'lineNotify', message: lines.join('
-') });
+  var r = await api({ action: 'lineNotify', message: lines.join('\n') });
   if (r.ok) {
     toast('✓ 今日出貨通知已發送到群組', 'ok');
     btn.textContent = '✓ 已發送';
