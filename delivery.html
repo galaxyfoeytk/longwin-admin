@@ -98,6 +98,10 @@
 .notify-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;background:#E8F5E9;color:#2E7D32;border-radius:20px;padding:2px 8px;font-weight:500;}
 
 
+
+/* ── 今日摘要列 ── */
+#todaySummaryBar{border-left:3px solid var(--teal);padding-left:12px;}
+
 /* ── 定期訂單 ── */
 .recur-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;margin-bottom:8px;}
 .recur-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px;}
@@ -141,6 +145,19 @@
 
   <!-- ═══════════════ 開單 ═══════════════ -->
   <div id="tab-order" class="tab-pane active">
+
+    <!-- 今日出貨摘要 -->
+    <div class="fc" id="todaySummaryBar" style="margin-bottom:0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">📅 今日出貨摘要 <span id="todayDateLabel" style="font-weight:400;color:var(--text-m);font-size:12px;"></span></div>
+          <div id="todaySummaryText" style="font-size:12px;color:var(--text-m);margin-top:4px;">載入中…</div>
+        </div>
+        <button class="sbtn g" style="height:34px;font-size:12px;" id="notifyAllBtn" onclick="notifyAllToday()" disabled>
+          📣 發送今日出貨通知
+        </button>
+      </div>
+    </div>
 
     <!-- 解析區 -->
     <div class="fc">
@@ -417,17 +434,25 @@ window.addEventListener('load', async () => {
   var u = buildSubHeader('宅配出貨', '開單・總表・品項管理');
   if (!u) return;
   sv('shipDate', today);
-  await loadProducts();
-  addItemRow();
   document.getElementById('filterDate').value = today;
   document.getElementById('flowFilterDate').value = today;
   // 讀取已儲存的 LINE Token
   var savedToken = localStorage.getItem('lw_line_token') || '';
   if (savedToken) document.getElementById('lineToken').value = savedToken;
-  // 啟動 16-18 點取件提醒檢查
+  // 載入品項（失敗用預設值繼續）
+  try { await loadProducts(); } catch(e) { console.warn('loadProducts failed', e); }
+  addItemRow();
+  // 啟動 16-18 點取件提醒
   startPickupReminder();
-  // 觸發今日定期訂單自動建立（每次開啟頁面時檢查）
-  autoCreateTodayRecurring();
+  // 觸發今日定期訂單自動建立
+  try { autoCreateTodayRecurring(); } catch(e) {}
+  // 預載今日訂單（首頁總表用）
+  try {
+    var r = await api({ action: 'deliveryGetAll' });
+    window._orders = r.ok ? (r.data||[]) : [];
+  } catch(e) { window._orders = []; }
+  // 預設顯示今日總表（改為開單頁預設含今日摘要）
+  renderTodaySummaryBar();
 });
 
 // ════════════════════════════════════════
@@ -721,6 +746,12 @@ async function submitOrder() {
   });
   if (r.ok) {
     toast('✓ 出貨單已建立', 'ok');
+    // 更新今日摘要
+    try {
+      var ro = await api({ action: 'deliveryGetAll' });
+      window._orders = ro.ok ? (ro.data||[]) : [];
+      renderTodaySummaryBar();
+    } catch(e) {}
     // 操作紀錄
     var u = JSON.parse(sessionStorage.getItem('longyinUser') || '{}');
     await api({ action: 'logSave', user: u.name || '', role: u.role || '', action: '新增', module: '宅配出貨', detail: name + ' ' + items.map(i => i.name + 'x' + i.qty).join('、') });
@@ -1362,6 +1393,79 @@ async function autoCreateTodayRecurring() {
     // 重新整理訂單快取
     var or = await api({ action: 'deliveryGetAll' });
     window._orders = or.ok ? (or.data||[]) : [];
+  }
+}
+
+
+// ════════════════════════════════════════════════════════
+// 今日出貨摘要列 & 一次發送通知
+// ════════════════════════════════════════════════════════
+function renderTodaySummaryBar() {
+  var orders = (window._orders || []).filter(o => o.shipDate === today);
+  var label = document.getElementById('todayDateLabel');
+  var text = document.getElementById('todaySummaryText');
+  var btn = document.getElementById('notifyAllBtn');
+  if (label) label.textContent = today;
+
+  if (!orders.length) {
+    if (text) text.textContent = '今日尚無出貨訂單';
+    if (btn) btn.disabled = true;
+    return;
+  }
+
+  // 統計品項
+  var itemTotals = {};
+  var totalQty = 0;
+  orders.forEach(o => {
+    var items = [];
+    try { items = JSON.parse(o.items||'[]'); } catch(e){}
+    items.forEach(it => {
+      itemTotals[it.name] = (itemTotals[it.name]||0) + it.qty;
+      totalQty += it.qty;
+    });
+  });
+  var itemStr = Object.entries(itemTotals).map(([n,q]) => n + ' ' + q + '罐').join('・');
+  if (text) text.innerHTML = `共 <strong>${orders.length}</strong> 張・${itemStr}・合計 <strong>${calcBoxText(totalQty)}</strong>`;
+  if (btn) btn.disabled = false;
+}
+
+async function notifyAllToday() {
+  var orders = (window._orders || []).filter(o => o.shipDate === today);
+  if (!orders.length) { toast('今日無出貨訂單', 'er'); return; }
+
+  var btn = document.getElementById('notifyAllBtn');
+  btn.disabled = true;
+  btn.textContent = '傳送中…';
+
+  // 組合今日出貨總覽訊息
+  var lines = ['📦 龍吟宅配出貨通知', '📅 出貨日期：' + today, '─────────────────'];
+  var itemTotals = {};
+  var totalQty = 0;
+  orders.forEach((o, idx) => {
+    var items = [];
+    try { items = JSON.parse(o.items||'[]'); } catch(e){}
+    var itemStr = items.map(i => i.name + '×' + i.qty).join('、');
+    lines.push((idx+1) + '. ' + o.name + '　' + itemStr);
+    if (o.note) lines.push('   備註：' + o.note);
+    items.forEach(it => {
+      itemTotals[it.name] = (itemTotals[it.name]||0) + it.qty;
+      totalQty += it.qty;
+    });
+  });
+  lines.push('─────────────────');
+  lines.push('📊 品項統計：');
+  Object.entries(itemTotals).forEach(([n,q]) => lines.push('  ' + n + '：' + q + '罐（' + calcBoxText(q) + '）'));
+  lines.push('合計：' + totalQty + '罐 / ' + calcBoxText(totalQty));
+
+  var r = await api({ action: 'lineNotify', message: lines.join('
+') });
+  if (r.ok) {
+    toast('✓ 今日出貨通知已發送到群組', 'ok');
+    btn.textContent = '✓ 已發送';
+  } else {
+    toast('發送失敗：' + (r.error||''), 'er');
+    btn.disabled = false;
+    btn.textContent = '📣 發送今日出貨通知';
   }
 }
 
