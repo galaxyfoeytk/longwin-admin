@@ -97,6 +97,17 @@
 .line-token-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;}
 .notify-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;background:#E8F5E9;color:#2E7D32;border-radius:20px;padding:2px 8px;font-weight:500;}
 
+
+/* ── 定期訂單 ── */
+.recur-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;margin-bottom:8px;}
+.recur-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px;}
+.recur-name{font-weight:600;font-size:14px;}
+.recur-meta{font-size:12px;color:var(--text-m);margin-top:2px;}
+.recur-days{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.day-pill{padding:3px 10px;border-radius:20px;font-size:12px;border:1px solid var(--border-md);background:var(--bg);color:var(--text-m);cursor:pointer;font-family:var(--font);}
+.day-pill.on{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:500;}
+.recur-actions{display:flex;gap:6px;flex-shrink:0;}
+
 /* ── spinner ── */
 .spin{width:13px;height:13px;border:2px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-2px;margin-right:5px;}
 </style>
@@ -125,6 +136,7 @@
     <button class="tab-btn" onclick="switchTab('summary')">📊 總表</button>
     <button class="tab-btn" onclick="switchTab('products')">🏷️ 品項設定</button>
     <button class="tab-btn" onclick="switchTab('flow')">🚚 出貨流程</button>
+    <button class="tab-btn" onclick="switchTab('recurring')">🔁 定期訂單</button>
   </div>
 
   <!-- ═══════════════ 開單 ═══════════════ -->
@@ -304,6 +316,87 @@
     </div>
   </div>
 
+
+  <!-- ═══════════════ 定期訂單 ═══════════════ -->
+  <div id="tab-recurring" class="tab-pane">
+    <div class="fc">
+      <div class="fct">🔁 定期訂單設定</div>
+      <div style="font-size:12px;color:var(--text-m);margin-bottom:12px;">設定後每週自動建立出貨單，產生的訂單可在「開單」頁面修改或刪除。</div>
+
+      <!-- 新增表單 -->
+      <div style="background:var(--bg);border:1px solid var(--border-md);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">＋ 新增定期客戶</div>
+        <div class="fr">
+          <div>
+            <label class="ffl">客戶姓名</label>
+            <input type="text" class="ffi" id="rc-name" placeholder="姓名">
+          </div>
+          <div>
+            <label class="ffl">聯絡電話</label>
+            <input type="text" class="ffi" id="rc-phone" placeholder="電話號碼">
+          </div>
+        </div>
+        <div class="fr one">
+          <div>
+            <label class="ffl">收件地址</label>
+            <input type="text" class="ffi" id="rc-address" placeholder="完整地址">
+          </div>
+        </div>
+        <div class="fr">
+          <div>
+            <label class="ffl">付款方式</label>
+            <select class="ffs" id="rc-payment">
+              <option value="ATM">ATM 轉帳</option>
+              <option value="貨到付款">貨到付款</option>
+              <option value="LINE Pay">LINE Pay</option>
+              <option value="現金">現金</option>
+              <option value="不收款">不收款</option>
+            </select>
+          </div>
+          <div>
+            <label class="ffl">備註</label>
+            <input type="text" class="ffi" id="rc-note" placeholder="選填">
+          </div>
+        </div>
+
+        <!-- 出貨品項 -->
+        <div style="margin:8px 0;">
+          <label class="ffl">出貨品項</label>
+          <table class="items-table">
+            <thead><tr>
+              <th style="width:50%">品項</th>
+              <th style="width:25%">數量（罐）</th>
+              <th style="width:25%"></th>
+            </tr></thead>
+            <tbody id="rc-itemsBody"></tbody>
+          </table>
+          <button class="sbtn" style="height:28px;font-size:12px;margin-top:4px;background:var(--gray);" onclick="addRcItemRow()">＋ 新增品項</button>
+        </div>
+
+        <!-- 出貨星期 -->
+        <div style="margin-bottom:10px;">
+          <label class="ffl">出貨星期（可多選）</label>
+          <div class="recur-days" id="rc-days">
+            <button type="button" class="day-pill" data-day="1" onclick="toggleDay(this)">週一</button>
+            <button type="button" class="day-pill" data-day="2" onclick="toggleDay(this)">週二</button>
+            <button type="button" class="day-pill" data-day="3" onclick="toggleDay(this)">週三</button>
+            <button type="button" class="day-pill" data-day="4" onclick="toggleDay(this)">週四</button>
+            <button type="button" class="day-pill" data-day="5" onclick="toggleDay(this)">週五</button>
+            <button type="button" class="day-pill" data-day="6" onclick="toggleDay(this)">週六</button>
+            <button type="button" class="day-pill" data-day="0" onclick="toggleDay(this)">週日</button>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="sbtn g" style="height:36px;" onclick="saveRecurring()">💾 儲存定期訂單</button>
+        </div>
+      </div>
+
+      <!-- 定期訂單列表 -->
+      <div id="recurringList"><div class="empty-tip">載入中…</div></div>
+    </div>
+  </div>
+
 </div><!-- /main -->
 
 <div class="toast" id="toast"></div>
@@ -333,6 +426,8 @@ window.addEventListener('load', async () => {
   if (savedToken) document.getElementById('lineToken').value = savedToken;
   // 啟動 16-18 點取件提醒檢查
   startPickupReminder();
+  // 觸發今日定期訂單自動建立（每次開啟頁面時檢查）
+  autoCreateTodayRecurring();
 });
 
 // ════════════════════════════════════════
@@ -342,11 +437,12 @@ function switchTab(name) {
   document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  var idx = ['order','summary','products','flow'].indexOf(name);
+  var idx = ['order','summary','products','flow','recurring'].indexOf(name);
   document.querySelectorAll('.tab-btn')[idx].classList.add('active');
   if (name === 'summary') loadAndRender();
   if (name === 'products') renderProducts();
   if (name === 'flow') loadAndRenderFlow();
+  if (name === 'recurring') loadRecurring();
 }
 
 // ════════════════════════════════════════
@@ -1100,6 +1196,172 @@ async function checkPickupReminder() {
     toast('⏰ ' + unpicked.length + ' 張訂單尚未取件！', 'er');
     // 發送 LINE 群組通知
     sendLineNotify(msg);
+  }
+}
+
+
+// ════════════════════════════════════════════════════════
+// 定期訂單
+// ════════════════════════════════════════════════════════
+var DAY_NAMES = ['週日','週一','週二','週三','週四','週五','週六'];
+
+function toggleDay(btn) {
+  btn.classList.toggle('on');
+}
+
+function addRcItemRow(name, qty) {
+  var tbody = document.getElementById('rc-itemsBody');
+  var tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><select>${getProductOptions(name)}</select></td>
+    <td><input type="number" min="1" value="${qty||12}" style="width:70px;"></td>
+    <td><button class="del-btn" onclick="this.closest('tr').remove()">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function getRcItemRows() {
+  return [...document.querySelectorAll('#rc-itemsBody tr')].map(tr => {
+    var sel = tr.querySelector('select');
+    var inp = tr.querySelector('input[type=number]');
+    return { name: sel ? sel.value : '', qty: parseInt(inp ? inp.value : 12) || 12 };
+  }).filter(it => it.qty > 0);
+}
+
+function getSelectedDays() {
+  return [...document.querySelectorAll('#rc-days .day-pill.on')].map(b => parseInt(b.dataset.day));
+}
+
+async function saveRecurring() {
+  var name = gv('rc-name').trim();
+  var phone = gv('rc-phone').trim();
+  var address = gv('rc-address').trim();
+  if (!name || !phone || !address) { toast('請填寫姓名、電話、地址', 'er'); return; }
+  var items = getRcItemRows();
+  if (!items.length) { toast('請至少填寫一個出貨品項', 'er'); return; }
+  var days = getSelectedDays();
+  if (!days.length) { toast('請選擇至少一個出貨星期', 'er'); return; }
+
+  var rec = {
+    id: Date.now(),
+    name, phone, address,
+    payment: gv('rc-payment'),
+    note: gv('rc-note').trim(),
+    items: JSON.stringify(items),
+    days: JSON.stringify(days),
+    active: true,
+    createdAt: new Date().toISOString().slice(0,10)
+  };
+
+  var r = await api({ action: 'recurringOrderSave', ...rec, items: rec.items, days: rec.days });
+  if (r.ok) {
+    toast('✓ 定期訂單已儲存', 'ok');
+    // 清空表單
+    ['rc-name','rc-phone','rc-address','rc-note'].forEach(id => sv(id, ''));
+    sv('rc-payment', 'ATM');
+    document.getElementById('rc-itemsBody').innerHTML = '';
+    document.querySelectorAll('#rc-days .day-pill').forEach(b => b.classList.remove('on'));
+    addRcItemRow();
+    loadRecurring();
+  } else {
+    toast('儲存失敗：' + (r.error||''), 'er');
+  }
+}
+
+async function loadRecurring() {
+  var r = await api({ action: 'recurringOrderGetAll' });
+  renderRecurring(r.ok ? (r.data||[]) : []);
+}
+
+function renderRecurring(list) {
+  var el = document.getElementById('recurringList');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-tip">尚無定期訂單，請新增</div>';
+    return;
+  }
+  el.innerHTML = list.map(rec => {
+    var items = [];
+    try { items = JSON.parse(rec.items||'[]'); } catch(e){}
+    var days = [];
+    try { days = JSON.parse(rec.days||'[]'); } catch(e){}
+    var itemStr = items.map(i => i.name + ' ×' + i.qty + '（' + calcBoxText(i.qty) + '）').join('、');
+    var dayStr = days.sort((a,b)=>a-b).map(d => DAY_NAMES[d]).join('・');
+    var totalQty = items.reduce((s,i) => s+i.qty, 0);
+    var isActive = rec.active === 'true' || rec.active === true;
+    return `<div class="recur-card" style="${isActive ? '' : 'opacity:.5'}">
+      <div class="recur-head">
+        <div>
+          <div class="recur-name">${rec.name}
+            <span style="font-size:11px;${isActive ? 'background:#E8F5E9;color:#2E7D32' : 'background:#F5F5F5;color:#999'};border-radius:20px;padding:1px 8px;margin-left:4px;font-weight:500;">
+              ${isActive ? '啟用中' : '已停用'}
+            </span>
+          </div>
+          <div class="recur-meta">${rec.phone} ・ ${rec.address}</div>
+          <div class="recur-meta" style="margin-top:3px;">${itemStr}</div>
+          <div class="recur-meta" style="margin-top:2px;">📦 共 ${calcBoxText(totalQty)} ・ 每 ${dayStr} 出貨 ・ ${rec.payment}</div>
+        </div>
+        <div class="recur-actions">
+          <button class="del-btn" onclick="toggleRecurring('${rec.id}')">${isActive ? '停用' : '啟用'}</button>
+          <button class="del-btn" onclick="deleteRecurring('${rec.id}')">刪除</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleRecurring(id) {
+  var r = await api({ action: 'recurringOrderToggle', id });
+  if (r.ok) loadRecurring();
+  else toast('操作失敗', 'er');
+}
+
+async function deleteRecurring(id) {
+  if (!confirm('確定刪除此定期訂單？')) return;
+  var r = await api({ action: 'recurringOrderDelete', id });
+  if (r.ok) { toast('已刪除', 'ok'); loadRecurring(); }
+  else toast('刪除失敗', 'er');
+}
+
+// ── 每次開啟頁面自動建立今日定期訂單 ────────────────────
+async function autoCreateTodayRecurring() {
+  var todayStr = new Date().toISOString().slice(0,10);
+  var todayDay = new Date().getDay(); // 0=日,1=一...
+  // 防重複：localStorage 記錄今天已建立過
+  var lastRun = localStorage.getItem('lw_recurring_last');
+  if (lastRun === todayStr) return;
+
+  var r = await api({ action: 'recurringOrderGetAll' });
+  if (!r.ok || !r.data || !r.data.length) return;
+
+  var created = 0;
+  for (var rec of r.data) {
+    var isActive = rec.active === 'true' || rec.active === true;
+    if (!isActive) continue;
+    var days = [];
+    try { days = JSON.parse(rec.days||'[]'); } catch(e){ continue; }
+    if (!days.includes(todayDay)) continue;
+
+    // 建立出貨單
+    var saveR = await api({
+      action: 'deliverySave',
+      shipDate: todayStr,
+      name: rec.name,
+      phone: rec.phone,
+      address: rec.address,
+      items: rec.items,
+      payment: rec.payment,
+      amount: '',
+      note: (rec.note ? rec.note + '・' : '') + '定期訂單自動建立',
+      rawMsg: ''
+    });
+    if (saveR.ok) created++;
+  }
+
+  localStorage.setItem('lw_recurring_last', todayStr);
+  if (created > 0) {
+    toast('✓ 已自動建立 ' + created + ' 張定期出貨單', 'ok');
+    // 重新整理訂單快取
+    var or = await api({ action: 'deliveryGetAll' });
+    window._orders = or.ok ? (or.data||[]) : [];
   }
 }
 
