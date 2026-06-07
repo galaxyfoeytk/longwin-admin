@@ -63,6 +63,40 @@
 /* ── highlight ── */
 .hl .ffi,.hl .ffs{border-color:var(--teal);background:#F0FBF7;}
 
+
+/* ── 出貨流程 ── */
+.flow-date-group{margin-bottom:1.5rem;}
+.flow-date-label{font-size:13px;font-weight:700;color:var(--text-m);padding:6px 0;border-bottom:2px solid var(--teal);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.flow-date-label span{background:var(--teal);color:#fff;border-radius:20px;padding:2px 10px;font-size:12px;}
+.flow-cards{display:flex;flex-direction:column;gap:12px;}
+.flow-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;}
+.flow-card-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+.flow-card-name{font-weight:700;font-size:14px;}
+.flow-card-meta{font-size:12px;color:var(--text-m);}
+.flow-card-progress{display:flex;align-items:center;gap:4px;}
+.flow-prog-bar{height:4px;border-radius:2px;background:var(--border);flex:1;min-width:60px;overflow:hidden;}
+.flow-prog-fill{height:100%;background:var(--teal);border-radius:2px;transition:width .3s;}
+.flow-prog-txt{font-size:11px;color:var(--teal);font-weight:600;min-width:28px;text-align:right;}
+.flow-steps{padding:10px 14px;display:flex;flex-direction:column;gap:6px;}
+.flow-step{display:flex;align-items:flex-start;gap:10px;padding:6px 8px;border-radius:var(--rx);transition:background .15s;}
+.flow-step:hover{background:var(--bg);}
+.flow-step.done{opacity:.7;}
+.flow-step-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border-md);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s;font-size:13px;}
+.flow-step.done .flow-step-check{background:var(--teal);border-color:var(--teal);color:#fff;}
+.flow-step-body{flex:1;}
+.flow-step-label{font-size:13px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:6px;}
+.flow-step.done .flow-step-label{text-decoration:line-through;color:var(--text-m);}
+.flow-step-time{font-size:11px;color:var(--text-h);margin-top:2px;}
+.flow-step-notify{font-size:10px;background:#FFF3CD;color:#856404;border-radius:4px;padding:1px 6px;font-weight:500;}
+.flow-step-photo{margin-top:6px;}
+.photo-upload-area{border:1.5px dashed var(--border-md);border-radius:var(--rx);padding:8px 12px;font-size:12px;color:var(--text-m);cursor:pointer;display:flex;align-items:center;gap:8px;transition:border-color .15s;}
+.photo-upload-area:hover{border-color:var(--teal);}
+.photo-thumb{width:60px;height:60px;object-fit:cover;border-radius:var(--rx);border:1px solid var(--border);cursor:pointer;}
+.photo-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.line-token-box{background:var(--bg);border:1px solid var(--border-md);border-radius:var(--rs);padding:12px 14px;margin-bottom:12px;}
+.line-token-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;}
+.notify-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;background:#E8F5E9;color:#2E7D32;border-radius:20px;padding:2px 8px;font-weight:500;}
+
 /* ── spinner ── */
 .spin{width:13px;height:13px;border:2px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-2px;margin-right:5px;}
 </style>
@@ -90,6 +124,7 @@
     <button class="tab-btn active" onclick="switchTab('order')">📋 開單</button>
     <button class="tab-btn" onclick="switchTab('summary')">📊 總表</button>
     <button class="tab-btn" onclick="switchTab('products')">🏷️ 品項設定</button>
+    <button class="tab-btn" onclick="switchTab('flow')">🚚 出貨流程</button>
   </div>
 
   <!-- ═══════════════ 開單 ═══════════════ -->
@@ -235,6 +270,40 @@
     </div>
   </div>
 
+
+  <!-- ═══════════════ 出貨流程 ═══════════════ -->
+  <div id="tab-flow" class="tab-pane">
+
+    <!-- LINE Token 設定 -->
+    <div class="fc">
+      <div class="fct">🔔 LINE 通知設定</div>
+      <div class="line-token-box">
+        <div style="font-size:12px;color:var(--text-m);margin-bottom:8px;">填入 LINE Notify Channel Access Token，步驟完成時自動推播通知到群組。</div>
+        <div class="line-token-row">
+          <div style="flex:1;min-width:200px;">
+            <label class="ffl">Channel Access Token</label>
+            <input type="password" class="ffi" id="lineToken" placeholder="填入後儲存即生效">
+          </div>
+          <button class="sbtn g" style="height:38px;" onclick="saveLineToken()">儲存</button>
+          <button class="sbtn" style="height:38px;background:var(--gray);" onclick="testLineToken()">測試發送</button>
+        </div>
+        <div id="lineTokenStatus" style="font-size:12px;margin-top:6px;color:var(--text-m);"></div>
+      </div>
+    </div>
+
+    <!-- 流程看板 -->
+    <div class="fc">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:13px;color:var(--text-m);">依出貨日期分組，每張訂單獨立追蹤</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="date" id="flowFilterDate" class="ffi" style="width:160px;height:34px;font-size:13px;" onchange="renderFlow()">
+          <button class="sbtn g" style="height:34px;font-size:12px;" onclick="loadAndRenderFlow()">🔄 重新整理</button>
+        </div>
+      </div>
+      <div id="flowContent"><div class="empty-tip">載入中…</div></div>
+    </div>
+  </div>
+
 </div><!-- /main -->
 
 <div class="toast" id="toast"></div>
@@ -258,6 +327,12 @@ window.addEventListener('load', async () => {
   await loadProducts();
   addItemRow();
   document.getElementById('filterDate').value = today;
+  document.getElementById('flowFilterDate').value = today;
+  // 讀取已儲存的 LINE Token
+  var savedToken = localStorage.getItem('lw_line_token') || '';
+  if (savedToken) document.getElementById('lineToken').value = savedToken;
+  // 啟動 16-18 點取件提醒檢查
+  startPickupReminder();
 });
 
 // ════════════════════════════════════════
@@ -267,10 +342,11 @@ function switchTab(name) {
   document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  var idx = ['order','summary','products'].indexOf(name);
+  var idx = ['order','summary','products','flow'].indexOf(name);
   document.querySelectorAll('.tab-btn')[idx].classList.add('active');
   if (name === 'summary') loadAndRender();
   if (name === 'products') renderProducts();
+  if (name === 'flow') loadAndRenderFlow();
 }
 
 // ════════════════════════════════════════
@@ -744,6 +820,293 @@ async function deleteProduct(idx) {
   if (r.ok) { renderProducts(); toast('已刪除', 'ok'); }
   else toast('刪除失敗', 'er');
 }
+
+
+// ════════════════════════════════════════════════════════
+// 出貨流程 – 步驟定義
+// ════════════════════════════════════════════════════════
+var FLOW_STEPS = [
+  { key:'confirmed',  emoji:'✅', label:'已確認',     notify:true,  notifyMsg: name => `✅ 龍吟出貨｜${name} 已確認，準備製作` },
+  { key:'produced',   emoji:'🍵', label:'已製作',     notify:false },
+  { key:'photo',      emoji:'📷', label:'封箱前拍照', notify:false, hasPhoto:true },
+  { key:'packed',     emoji:'📦', label:'已打包',     notify:false },
+  { key:'filled',     emoji:'📋', label:'已填單',     notify:false },
+  { key:'called',     emoji:'📞', label:'已致電',     notify:true,  notifyMsg: name => `📞 龍吟出貨｜${name} 已致電宅配，等待取件` },
+  { key:'picked',     emoji:'🚚', label:'已取件',     notify:true,  notifyMsg: name => `🚚 龍吟出貨｜${name} 已取件完成！` },
+];
+
+// ════════════════════════════════════════
+// LINE Token
+// ════════════════════════════════════════
+function getLineToken() {
+  return document.getElementById('lineToken').value.trim() || localStorage.getItem('lw_line_token') || '';
+}
+
+function saveLineToken() {
+  var t = document.getElementById('lineToken').value.trim();
+  if (!t) { document.getElementById('lineTokenStatus').innerHTML = '<span style="color:var(--red)">請輸入 Token</span>'; return; }
+  localStorage.setItem('lw_line_token', t);
+  document.getElementById('lineTokenStatus').innerHTML = '<span style="color:var(--teal)">✓ 已儲存</span>';
+}
+
+async function testLineToken() {
+  var token = getLineToken();
+  if (!token) { toast('請先填入 Token', 'er'); return; }
+  var r = await api({ action: 'lineNotify', token, message: '✅ 龍吟出貨通知測試成功！' });
+  if (r.ok) {
+    toast('測試通知已發送', 'ok');
+    document.getElementById('lineTokenStatus').innerHTML = '<span style="color:var(--teal)">✓ 通知發送成功</span>';
+  } else {
+    toast('發送失敗：' + (r.error || ''), 'er');
+    document.getElementById('lineTokenStatus').innerHTML = '<span style="color:var(--red)">✗ ' + (r.error || '失敗') + '</span>';
+  }
+}
+
+async function sendLineNotify(message) {
+  var token = getLineToken();
+  if (!token) return;
+  await api({ action: 'lineNotify', token, message });
+}
+
+// ════════════════════════════════════════
+// 流程狀態讀寫（存 Sheets）
+// ════════════════════════════════════════
+var _flowCache = {}; // orderId → steps obj
+
+async function loadFlowState(orderId) {
+  if (_flowCache[orderId]) return _flowCache[orderId];
+  var r = await api({ action: 'deliveryFlowGet', orderId });
+  var state = (r.ok && r.data) ? r.data : {};
+  _flowCache[orderId] = state;
+  return state;
+}
+
+async function saveFlowState(orderId, state) {
+  _flowCache[orderId] = state;
+  await api({ action: 'deliveryFlowSave', orderId, state: JSON.stringify(state) });
+}
+
+// ════════════════════════════════════════
+// 載入並渲染流程看板
+// ════════════════════════════════════════
+async function loadAndRenderFlow() {
+  document.getElementById('flowContent').innerHTML = '<div class="empty-tip">載入中…</div>';
+  _flowCache = {};
+  var r = await api({ action: 'deliveryGetAll' });
+  window._orders = r.ok ? (r.data || []) : [];
+  await renderFlow();
+}
+
+async function renderFlow() {
+  var filterDate = document.getElementById('flowFilterDate').value;
+  var orders = (window._orders || []).filter(o => !filterDate || o.shipDate === filterDate);
+  var container = document.getElementById('flowContent');
+
+  if (!orders.length) {
+    container.innerHTML = '<div class="empty-tip">此日期無出貨訂單</div>';
+    return;
+  }
+
+  // 依出貨日期分組
+  var groups = {};
+  orders.forEach(o => {
+    if (!groups[o.shipDate]) groups[o.shipDate] = [];
+    groups[o.shipDate].push(o);
+  });
+
+  // 預載所有流程狀態
+  for (var o of orders) {
+    await loadFlowState(o.id);
+  }
+
+  var html = '';
+  var sortedDates = Object.keys(groups).sort();
+  for (var date of sortedDates) {
+    var dayOrders = groups[date];
+    var totalSteps = dayOrders.length * FLOW_STEPS.length;
+    var doneSteps = dayOrders.reduce((s, o) => {
+      var state = _flowCache[o.id] || {};
+      return s + FLOW_STEPS.filter(st => state[st.key]).length;
+    }, 0);
+
+    html += `<div class="flow-date-group">
+      <div class="flow-date-label">📅 ${date} <span>${dayOrders.length} 張訂單</span>
+        <div style="flex:1;"></div>
+        <div class="flow-card-progress" style="min-width:120px;">
+          <div class="flow-prog-bar"><div class="flow-prog-fill" style="width:${Math.round(doneSteps/totalSteps*100)}%"></div></div>
+          <span class="flow-prog-txt">${doneSteps}/${totalSteps}</span>
+        </div>
+      </div>
+      <div class="flow-cards">`;
+
+    for (var order of dayOrders) {
+      var state = _flowCache[order.id] || {};
+      var items = [];
+      try { items = JSON.parse(order.items || '[]'); } catch(e) {}
+      var itemStr = items.map(i => i.name + '×' + i.qty).join('、');
+      var doneCount = FLOW_STEPS.filter(st => state[st.key]).length;
+      var prog = Math.round(doneCount / FLOW_STEPS.length * 100);
+      var allDone = doneCount === FLOW_STEPS.length;
+
+      html += `<div class="flow-card" id="fc-${order.id}">
+        <div class="flow-card-head">
+          <div>
+            <div class="flow-card-name">${order.name} ${allDone ? '<span style="font-size:11px;background:#E8F5E9;color:#2E7D32;border-radius:20px;padding:1px 8px;">完成</span>' : ''}</div>
+            <div class="flow-card-meta">${order.phone} ・ ${itemStr} ・ ${order.payment}</div>
+          </div>
+          <div class="flow-card-progress">
+            <div class="flow-prog-bar" style="min-width:80px;"><div class="flow-prog-fill" style="width:${prog}%"></div></div>
+            <span class="flow-prog-txt">${doneCount}/${FLOW_STEPS.length}</span>
+          </div>
+        </div>
+        <div class="flow-steps">`;
+
+      FLOW_STEPS.forEach((step, idx) => {
+        var done = !!state[step.key];
+        var doneTime = state[step.key + '_time'] || '';
+        var photos = state[step.key + '_photos'] || [];
+        var notifyBadge = step.notify ? '<span class="flow-step-notify">LINE 通知</span>' : '';
+
+        html += `<div class="flow-step${done ? ' done' : ''}" id="fs-${order.id}-${step.key}">
+          <div class="flow-step-check" onclick="toggleStep('${order.id}','${step.key}','${order.name}','${date}')">${done ? '✓' : ''}</div>
+          <div class="flow-step-body">
+            <div class="flow-step-label">${step.emoji} ${step.label} ${notifyBadge}</div>
+            ${doneTime ? `<div class="flow-step-time">完成時間：${doneTime}</div>` : ''}
+            ${step.hasPhoto ? `<div class="flow-step-photo">
+              <div class="photo-list" id="photos-${order.id}">
+                ${photos.map(p => `<img src="${p}" class="photo-thumb" onclick="viewPhoto('${p}')">`).join('')}
+              </div>
+              <label class="photo-upload-area" style="margin-top:${photos.length?'6':'0'}px;">
+                <input type="file" accept="image/*" multiple style="display:none;" onchange="uploadPhotos(this,'${order.id}')">
+                📷 點此上傳照片
+              </label>
+            </div>` : ''}
+          </div>
+        </div>`;
+      });
+
+      html += `</div></div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+// ════════════════════════════════════════
+// 切換步驟
+// ════════════════════════════════════════
+async function toggleStep(orderId, stepKey, orderName, shipDate) {
+  var state = await loadFlowState(orderId);
+  var wasDone = !!state[stepKey];
+  state[stepKey] = !wasDone;
+  if (!wasDone) {
+    // 標記完成時間
+    var now = new Date();
+    state[stepKey + '_time'] = now.toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' });
+    // 發送 LINE 通知
+    var stepDef = FLOW_STEPS.find(s => s.key === stepKey);
+    if (stepDef && stepDef.notify && stepDef.notifyMsg) {
+      sendLineNotify(stepDef.notifyMsg(orderName) + '
+📅 出貨日：' + shipDate);
+    }
+  } else {
+    delete state[stepKey + '_time'];
+  }
+  await saveFlowState(orderId, state);
+  // 只更新這張卡的 DOM，不重新載入全部
+  await refreshFlowCard(orderId, orderName, shipDate);
+}
+
+async function refreshFlowCard(orderId, orderName, shipDate) {
+  // 重新讀取並更新單張卡
+  var r = await api({ action: 'deliveryGetAll' });
+  window._orders = r.ok ? (r.data || []) : [];
+  _flowCache[orderId] = null; // 清快取
+  await renderFlow();
+}
+
+// ════════════════════════════════════════
+// 照片上傳
+// ════════════════════════════════════════
+async function uploadPhotos(input, orderId) {
+  var files = Array.from(input.files);
+  if (!files.length) return;
+  toast('上傳中…');
+
+  var state = await loadFlowState(orderId);
+  if (!state['photo_photos']) state['photo_photos'] = [];
+
+  for (var file of files) {
+    var b64 = await new Promise((res, rej) => {
+      var r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+    // 儲存到 Apps Script（base64）
+    var resp = await api({ action: 'deliveryPhotoSave', orderId, photo: b64 });
+    if (resp.ok && resp.url) {
+      state['photo_photos'].push(resp.url);
+    }
+  }
+
+  await saveFlowState(orderId, state);
+  toast('照片已上傳', 'ok');
+  await renderFlow();
+}
+
+function viewPhoto(url) {
+  window.open(url, '_blank');
+}
+
+// ════════════════════════════════════════
+// 16-18 點取件提醒
+// ════════════════════════════════════════
+var _lastReminderHour = -1;
+
+function startPickupReminder() {
+  setInterval(checkPickupReminder, 60000); // 每分鐘檢查
+  checkPickupReminder();
+}
+
+async function checkPickupReminder() {
+  var now = new Date();
+  var h = now.getHours();
+  var m = now.getMinutes();
+  // 只在 16、17、18 點的 0-5 分內觸發，且每小時只觸發一次
+  if (h < 16 || h > 18) return;
+  if (m > 5) return;
+  if (_lastReminderHour === h) return;
+
+  // 取得今天的訂單，找出尚未取件的
+  var todayStr = new Date().toISOString().slice(0, 10);
+  var orders = (window._orders || []).filter(o => o.shipDate === todayStr);
+  if (!orders.length) return;
+
+  var unpicked = [];
+  for (var o of orders) {
+    var state = await loadFlowState(o.id);
+    if (!state['picked']) unpicked.push(o.name);
+  }
+
+  if (unpicked.length > 0) {
+    _lastReminderHour = h;
+    var msg = `⏰ ${h}:00 提醒｜以下訂單尚未取件，請確認：
+` + unpicked.map(n => '・' + n).join('
+');
+    // 頁面通知
+    if (Notification && Notification.permission === 'granted') {
+      new Notification('龍吟出貨提醒', { body: unpicked.join('、') + ' 尚未取件', icon: '🚚' });
+    } else if (Notification && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+    toast('⏰ ' + unpicked.length + ' 張訂單尚未取件！', 'er');
+    // 發送 LINE 群組通知
+    sendLineNotify(msg);
+  }
+}
+
 </script>
 </body>
 </html>
