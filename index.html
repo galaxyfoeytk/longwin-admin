@@ -348,7 +348,9 @@ function buildApp() {
       // 傳遞登入資訊到子頁面
       if(ok) {
         a.addEventListener('click', function(e) {
+          e.preventDefault();
           sessionStorage.setItem('longyinUser', JSON.stringify(CU));
+          location.href = m.href;
         });
       }
       a.innerHTML = `<div class="card-icon ${m.cl}">${m.e}</div><div class="card-name">${m.n}</div><div class="card-desc">${m.d}</div><span class="card-badge ${ok?'b-ok':'b-no'}">${ok?'可使用':'無權限'}</span>`;
