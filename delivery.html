@@ -745,17 +745,20 @@ async function submitOrder() {
   });
   if (r.ok) {
     toast('✓ 出貨單已建立', 'ok');
+    // 發送「已確認」通知
+    var itemStr = items.map(i => i.name + 'x' + i.qty).join('、');
+    var totalQty = items.reduce((s,i) => s+i.qty, 0);
+    sendLineNotify('✅ 龍吟出貨 | 新增訂單\n👤 ' + name + '  ' + phone + '\n📦 ' + itemStr + '（' + calcBoxText(totalQty) + '）\n📅 出貨日：' + shipDate);
     // 更新今日摘要
     try {
       var ro = await api({ action: 'deliveryGetAll' });
       window._orders = ro.ok ? (ro.data||[]) : [];
       renderTodaySummaryBar();
-  // 預設顯示出貨流程（第一分頁）
-  loadAndRenderFlow();
+      loadAndRenderFlow();
     } catch(e) {}
     // 操作紀錄
     var u = JSON.parse(sessionStorage.getItem('longyinUser') || '{}');
-    await api({ action: 'logSave', user: u.name || '', role: u.role || '', action: '新增', module: '宅配出貨', detail: name + ' ' + items.map(i => i.name + 'x' + i.qty).join('、') });
+    api({ action: 'logSave', user: u.name || '', role: u.role || '', action: '新增', module: '宅配出貨', detail: name + ' ' + itemStr });
     resetForm();
   } else {
     toast('✗ ' + (r.error || '儲存失敗'), 'er');
@@ -959,13 +962,12 @@ async function deleteProduct(idx) {
 // 出貨流程 – 步驟定義
 // ════════════════════════════════════════════════════════
 var FLOW_STEPS = [
-  { key:'confirmed',  emoji:'✅', label:'已確認',     notify:true,  notifyMsg: name => `✅ 龍吟出貨｜${name} 已確認，準備製作` },
   { key:'produced',   emoji:'🍵', label:'已製作',     notify:false },
   { key:'photo',      emoji:'📷', label:'封箱前拍照', notify:false, hasPhoto:true },
   { key:'packed',     emoji:'📦', label:'已打包',     notify:false },
   { key:'filled',     emoji:'📋', label:'已填單',     notify:false },
-  { key:'called',     emoji:'📞', label:'已致電',     notify:true,  notifyMsg: name => `📞 龍吟出貨｜${name} 已致電宅配，等待取件` },
-  { key:'picked',     emoji:'🚚', label:'已取件',     notify:true,  notifyMsg: name => `🚚 龍吟出貨｜${name} 已取件完成！` },
+  { key:'called',     emoji:'📞', label:'已致電',     notify:'batch' },
+  { key:'picked',     emoji:'🚚', label:'已取件',     notify:'batch' },
 ];
 
 // ════════════════════════════════════════
@@ -995,6 +997,32 @@ async function testLineToken() {
 
 async function sendLineNotify(message) {
   await api({ action: 'lineNotify', message });
+}
+
+async function sendBatchStepNotify(stepKey, shipDate) {
+  var stepDef = FLOW_STEPS.find(s => s.key === stepKey);
+  if (!stepDef) return;
+  var label = stepDef.label;
+  var emoji = stepDef.emoji;
+
+  // 找當日所有訂單，列出已完成此步驟的
+  var todayOrders = (window._orders || []).filter(o => o.shipDate === shipDate);
+  var doneNames = [];
+  var pendingNames = [];
+  todayOrders.forEach(o => {
+    var state = _flowCache[o.id] || {};
+    if (state[stepKey]) doneNames.push(o.name);
+    else pendingNames.push(o.name);
+  });
+
+  var lines = [emoji + ' 龍吟出貨 | ' + label, '📅 出貨日：' + shipDate, '─────────────'];
+  lines.push('已完成（' + doneNames.length + '/' + todayOrders.length + '）：');
+  doneNames.forEach(n => lines.push('  ✓ ' + n));
+  if (pendingNames.length > 0) {
+    lines.push('尚未完成：');
+    pendingNames.forEach(n => lines.push('  ・' + n));
+  }
+  sendLineNotify(lines.join('\n'));
 }
 
 // ════════════════════════════════════════
@@ -1165,8 +1193,9 @@ async function toggleStep(orderId, stepKey, orderName, shipDate) {
   saveFlowState(orderId, state);
   if (!wasDone) {
     var stepDef = FLOW_STEPS.find(s => s.key === stepKey);
-    if (stepDef && stepDef.notify && stepDef.notifyMsg) {
-      sendLineNotify(stepDef.notifyMsg(orderName) + '\n📅 出貨日：' + shipDate);
+    if (stepDef && stepDef.notify === 'batch') {
+      // 批次通知：整合當日所有訂單該步驟的狀態一起發
+      sendBatchStepNotify(stepKey, shipDate);
     }
   }
 }
