@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>宅配出貨 — 龍吟後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+/* ── 分頁 ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1rem;background:var(--surface);border-radius:var(--r) var(--r) 0 0;padding:0 1rem;}
+.tab-btn{padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text-m);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--font);}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
+.tab-pane{display:none;}.tab-pane.active{display:block;}
+
+/* ── 品項列 ── */
+.items-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px;}
+.items-table th{font-size:12px;font-weight:500;color:var(--text-m);padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;}
+.items-table td{padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.items-table select,.items-table input[type=number]{font-size:13px;font-family:var(--font);color:var(--text);background:var(--surface);border:1px solid var(--border-md);border-radius:var(--rx);padding:5px 7px;outline:none;}
+.items-table select{width:100%;}
+.items-table input[type=number]{width:70px;}
+.items-table select:focus,.items-table input:focus{border-color:var(--blue);}
+.box-cell{font-size:12px;color:var(--teal);font-weight:600;}
+.box-badge{display:inline-flex;align-items:center;gap:5px;background:var(--teal-l);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;margin-top:6px;}
+
+/* ── 金額欄 ── */
+.amount-row{display:none;}
+
+/* ── 解析區 ── */
+.parse-box{background:var(--bg);border:1px solid var(--border-md);border-radius:var(--rs);padding:10px 12px;margin-bottom:6px;}
+.parse-box textarea{width:100%;background:transparent;border:none;outline:none;font-family:var(--font);font-size:13px;color:var(--text);resize:none;line-height:1.7;}
+.parse-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px;}
+.status-msg{font-size:12px;color:var(--text-m);min-height:20px;margin-bottom:8px;}
+.status-msg.ok{color:var(--teal);}
+.status-msg.er{color:var(--red);}
+
+/* ── 總表 ── */
+.period-bar{display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap;}
+.prd-btn{padding:5px 14px;font-size:12px;border-radius:20px;cursor:pointer;border:1px solid var(--border-md);background:transparent;color:var(--text-m);font-family:var(--font);}
+.prd-btn.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;}
+.sc-label{font-size:11px;color:var(--text-m);margin-bottom:4px;}
+.sc-val{font-size:22px;font-weight:700;color:var(--text);}
+.sc-sub{font-size:11px;color:var(--text-m);margin-top:2px;}
+.order-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;margin-bottom:8px;}
+.oc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
+.oc-name{font-weight:600;font-size:14px;}
+.oc-date{font-size:12px;color:var(--text-m);}
+.oc-items{font-size:13px;color:var(--text-m);margin-bottom:3px;}
+.oc-box{font-size:11px;color:var(--teal);background:var(--teal-l);border-radius:20px;padding:1px 9px;display:inline-block;font-weight:600;}
+.oc-pay{font-size:12px;color:var(--text-m);margin-top:3px;}
+.del-btn{height:26px;padding:0 9px;font-size:11px;border:1px solid var(--border-md);border-radius:var(--rx);background:transparent;color:var(--text-m);cursor:pointer;font-family:var(--font);}
+.del-btn:hover{background:var(--red-l);color:var(--red);border-color:var(--red);}
+.empty-tip{text-align:center;padding:2rem 0;color:var(--text-h);font-size:13px;}
+
+/* ── 品項設定 ── */
+.prod-row{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:var(--rs);padding:8px 12px;margin-bottom:6px;font-size:13px;}
+.prod-name{font-weight:600;min-width:100px;}
+.prod-alias{flex:1;color:var(--text-m);font-size:12px;}
+
+/* ── highlight ── */
+.hl .ffi,.hl .ffs{border-color:var(--teal);background:#F0FBF7;}
+
+/* ── spinner ── */
+.spin{width:13px;height:13px;border:2px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-2px;margin-right:5px;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="tb">
+  <div class="tbl" onclick="goHome()">📦</div>
+  <div class="page-title-wrap">
+    <div class="page-title-main" id="page-title">宅配出貨</div>
+    <div class="page-title-sub" id="page-sub">開單・總表・品項管理</div>
+  </div>
+  <div class="tbr">
+    <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
+    <button class="lgb" onclick="goHome()">🏠 主頁</button>
+    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- 分頁按鈕 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('order')">📋 開單</button>
+    <button class="tab-btn" onclick="switchTab('summary')">📊 總表</button>
+    <button class="tab-btn" onclick="switchTab('products')">🏷️ 品項設定</button>
+  </div>
+
+  <!-- ═══════════════ 開單 ═══════════════ -->
+  <div id="tab-order" class="tab-pane active">
+
+    <!-- 解析區 -->
+    <div class="fc">
+      <div class="fct">📩 貼入客戶訊息自動解析</div>
+      <div class="parse-box">
+        <textarea id="rawMsg" rows="5" placeholder="例如：&#10;台北市士林區中山北路七段191巷23號2樓&#10;廖渙傑&#10;0918455099&#10;仙草*6 杏仁*6&#10;ATM 下午到 週二寄"></textarea>
+      </div>
+      <div class="parse-actions">
+        <button class="sbtn" style="background:var(--gray);height:34px;font-size:12px;" onclick="clearAll()">清除</button>
+        <button class="sbtn g" style="height:34px;font-size:12px;" id="parseBtn" onclick="parseMessage()">✨ 自動解析</button>
+      </div>
+      <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <!-- 出貨資訊表單 -->
+    <div class="fc">
+      <div class="fct">📦 出貨資訊</div>
+
+      <div class="fr one">
+        <div id="wrap-address">
+          <label class="ffl">收件地址</label>
+          <input type="text" class="ffi" id="address" placeholder="完整地址">
+        </div>
+      </div>
+
+      <div class="fr">
+        <div id="wrap-name">
+          <label class="ffl">收件姓名</label>
+          <input type="text" class="ffi" id="name" placeholder="姓名">
+        </div>
+        <div id="wrap-phone">
+          <label class="ffl">聯絡電話</label>
+          <input type="text" class="ffi" id="phone" placeholder="電話號碼">
+        </div>
+      </div>
+
+      <div class="fr">
+        <div id="wrap-date">
+          <label class="ffl">出貨日期</label>
+          <input type="date" class="ffi" id="shipDate">
+        </div>
+        <div id="wrap-payment">
+          <label class="ffl">付款方式</label>
+          <select class="ffs" id="payment" onchange="onPaymentChange()">
+            <option value="">請選擇</option>
+            <option value="ATM">ATM 轉帳</option>
+            <option value="貨到付款">貨到付款</option>
+            <option value="LINE Pay">LINE Pay</option>
+            <option value="現金">現金</option>
+            <option value="不收款">不收款</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 金額欄（貨到付款才顯示） -->
+      <div class="fr amount-row" id="amountRow">
+        <div>
+          <label class="ffl">收款金額（元）</label>
+          <input type="number" class="ffi" id="amount" placeholder="0" min="0">
+        </div>
+        <div></div>
+      </div>
+
+      <!-- 品項 -->
+      <div style="margin-bottom:10px;">
+        <label class="ffl">出貨品項</label>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th style="width:44%">品項</th>
+              <th style="width:22%">數量（罐）</th>
+              <th style="width:22%">箱數換算</th>
+              <th style="width:12%"></th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+        <div id="boxSummary"></div>
+        <button class="sbtn" style="height:30px;font-size:12px;margin-top:6px;background:var(--gray);" onclick="addItemRow()">＋ 新增品項</button>
+      </div>
+
+      <div class="fr one">
+        <div>
+          <label class="ffl">備註</label>
+          <input type="text" class="ffi" id="note" placeholder="配送時間、特殊要求…">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+        <button class="sbtn" style="background:var(--gray);height:36px;" onclick="resetForm()">重填</button>
+        <button class="sbtn g" style="height:36px;" onclick="submitOrder()">💾 確認送出</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ 總表 ═══════════════ -->
+  <div id="tab-summary" class="tab-pane">
+    <div class="fc">
+      <div class="period-bar">
+        <button class="prd-btn active" id="btn-daily" onclick="switchPeriod('daily')">日報</button>
+        <button class="prd-btn" id="btn-monthly" onclick="switchPeriod('monthly')">月報</button>
+        <input type="date" id="filterDate" class="ffi" style="width:160px;height:34px;font-size:13px;" onchange="renderSummary()">
+        <button class="sbtn g" style="height:34px;font-size:12px;" onclick="loadAndRender()">🔄 重新整理</button>
+      </div>
+      <div id="summaryContent"><div class="empty-tip">載入中…</div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ 品項設定 ═══════════════ -->
+  <div id="tab-products" class="tab-pane">
+    <div class="fc">
+      <div class="fct">🏷️ 品項清單（解析時自動匹配）</div>
+      <div id="prodList" style="margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+          <label class="ffl">品項名稱</label>
+          <input type="text" class="ffi" id="newProdName" placeholder="如：微糖仙草茶" style="width:150px;">
+        </div>
+        <div style="flex:1;min-width:180px;">
+          <label class="ffl">別名（逗號分隔）</label>
+          <input type="text" class="ffi" id="newProdAlias" placeholder="如：仙草,草茶,微糖">
+        </div>
+        <button class="sbtn g" style="height:38px;" onclick="addProduct()">＋ 新增</button>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text-m);">
+        ⚠️ 品項設定儲存於 Google Sheets，所有裝置共用。
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div class="toast" id="toast"></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・宅配出貨系統</span></div>
+
+<script src="base.js"></script>
+<script>
+// ════════════════════════════════════════
+// 狀態
+// ════════════════════════════════════════
+var PRODUCTS = [];
+var currentPeriod = 'daily';
+
+// ════════════════════════════════════════
+// 初始化
+// ════════════════════════════════════════
+window.addEventListener('load', async () => {
+  var u = buildSubHeader('宅配出貨', '開單・總表・品項管理');
+  if (!u) return;
+  sv('shipDate', today);
+  await loadProducts();
+  addItemRow();
+  document.getElementById('filterDate').value = today;
+});
+
+// ════════════════════════════════════════
+// 分頁切換
+// ════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  var idx = ['order','summary','products'].indexOf(name);
+  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  if (name === 'summary') loadAndRender();
+  if (name === 'products') renderProducts();
+}
+
+// ════════════════════════════════════════
+// 付款方式
+// ════════════════════════════════════════
+function onPaymentChange() {
+  var v = gv('payment');
+  var row = document.getElementById('amountRow');
+  row.style.display = (v === '貨到付款') ? 'grid' : 'none';
+  if (v !== '貨到付款') sv('amount', '');
+}
+
+// ════════════════════════════════════════
+// 品項列操作
+// ════════════════════════════════════════
+function getProductOptions(selected) {
+  return PRODUCTS.map(p =>
+    `<option value="${p.name}"${p.name === selected ? ' selected' : ''}>${p.name}</option>`
+  ).join('');
+}
+
+function addItemRow(name, qty) {
+  var tbody = document.getElementById('itemsBody');
+  var tr = document.createElement('tr');
+  var qtyVal = qty || '';
+  tr.innerHTML = `
+    <td><select onchange="updateBoxes(this)">${getProductOptions(name)}</select></td>
+    <td><input type="number" min="0" value="${qtyVal}" placeholder="0" oninput="updateBoxes(this)" style="width:70px;"></td>
+    <td class="box-cell"></td>
+    <td><button class="del-btn" onclick="this.closest('tr').remove();updateTotalBoxes()">✕</button></td>`;
+  if (qty) {
+    var bc = tr.querySelector('.box-cell');
+    bc.textContent = calcBoxText(parseInt(qty));
+  }
+  tbody.appendChild(tr);
+  updateTotalBoxes();
+}
+
+function calcBoxText(qty) {
+  if (!qty || qty <= 0) return '';
+  var b = Math.floor(qty / 12), r = qty % 12;
+  if (b > 0 && r > 0) return b + '箱' + r + '罐';
+  if (b > 0) return b + '箱';
+  return r + '罐';
+}
+
+function updateBoxes(el) {
+  var row = el.closest('tr');
+  var qty = parseInt(row.querySelector('input[type=number]').value) || 0;
+  row.querySelector('.box-cell').textContent = calcBoxText(qty);
+  updateTotalBoxes();
+}
+
+function updateTotalBoxes() {
+  var total = 0;
+  document.querySelectorAll('#itemsBody input[type=number]').forEach(inp => {
+    total += parseInt(inp.value) || 0;
+  });
+  var el = document.getElementById('boxSummary');
+  if (total > 0) {
+    el.innerHTML = `<div class="box-badge">📦 共 ${calcBoxText(total)}（${total} 罐）</div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function getItemRows() {
+  return [...document.querySelectorAll('#itemsBody tr')].map(tr => {
+    var sel = tr.querySelector('select');
+    var inp = tr.querySelector('input[type=number]');
+    return { name: sel ? sel.value : '', qty: parseInt(inp ? inp.value : 0) || 0 };
+  }).filter(it => it.qty > 0);
+}
+
+// ════════════════════════════════════════
+// 品項解析邏輯
+// ════════════════════════════════════════
+function matchProduct(text) {
+  // 無糖優先：別名越長的越優先
+  var sorted = [...PRODUCTS].sort((a, b) => {
+    var maxA = Math.max(...a.aliases.map(x => x.length));
+    var maxB = Math.max(...b.aliases.map(x => x.length));
+    return maxB - maxA;
+  });
+  for (var p of sorted) {
+    for (var alias of p.aliases) {
+      if (text.includes(alias)) return p.name;
+    }
+  }
+  return PRODUCTS[0] ? PRODUCTS[0].name : '';
+}
+
+function getNextWeekday(dayName) {
+  var days = { '日': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6 };
+  var target = days[dayName];
+  if (target === undefined) return null;
+  var now = new Date();
+  var diff = target - now.getDay();
+  if (diff <= 0) diff += 7;
+  var r = new Date(now);
+  r.setDate(now.getDate() + diff);
+  return r.toISOString().slice(0, 10);
+}
+
+function localParse(raw) {
+  var result = { address: '', name: '', phone: '', items: [], shipDate: '', payment: '', note: '' };
+  var lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  var usedIdx = new Set();
+
+  lines.forEach((line, i) => {
+    if (/^09\d{8}$/.test(line.replace(/[-\s]/g, ''))) {
+      result.phone = line.replace(/[-\s]/g, ''); usedIdx.add(i);
+    } else if (/[縣市區鄉鎮村里街路巷弄號樓]/.test(line) && !result.address) {
+      result.address = line; usedIdx.add(i);
+    } else if (/^[\u4e00-\u9fa5]{2,4}$/.test(line) && !result.name) {
+      result.name = line; usedIdx.add(i);
+    }
+  });
+
+  // 品項解析：支援 仙草*6 仙草x6 仙草×6 仙草6罐 仙草（6）
+  var itemPatterns = [
+    /([^\s\d\*x×,，\*]+)\s*[\*x×]\s*(\d+)/g,
+    /([^\s\d\*x×,，]+)\s*(\d+)\s*(?:罐|瓶|盒|箱|包)/g,
+    /([^\s\d\*x×,，]+)（(\d+)）/g,
+  ];
+  lines.forEach((line, i) => {
+    var found = false;
+    for (var pat of itemPatterns) {
+      pat.lastIndex = 0;
+      var m;
+      while ((m = pat.exec(line)) !== null) {
+        var pname = matchProduct(m[1]);
+        var qty = parseInt(m[2]);
+        if (qty > 0) { result.items.push({ name: pname, qty }); found = true; }
+      }
+      if (found) break;
+    }
+    if (found) usedIdx.add(i);
+  });
+
+  var fullText = raw;
+  if (/ATM/i.test(fullText)) result.payment = 'ATM';
+  else if (/貨到付款|取貨付款/.test(fullText)) result.payment = '貨到付款';
+  else if (/LINE\s*Pay/i.test(fullText)) result.payment = 'LINE Pay';
+  else if (/不收款/.test(fullText)) result.payment = '不收款';
+  else if (/現金/.test(fullText)) result.payment = '現金';
+
+  var wm = fullText.match(/週([一二三四五六日])/);
+  if (wm) result.shipDate = getNextWeekday(wm[1]) || '';
+
+  var notes = [];
+  lines.forEach((line, i) => {
+    if (usedIdx.has(i)) return;
+    if (/ATM|LINE\s*Pay|貨到付款|不收款|現金|週[一二三四五六日]/i.test(line)) return;
+    notes.push(line);
+  });
+  result.note = notes.join(' ').trim();
+  return result;
+}
+
+// ════════════════════════════════════════
+// 自動解析（AI + 本地備援）
+// ════════════════════════════════════════
+async function parseMessage() {
+  var raw = gv('rawMsg').trim();
+  if (!raw) { toast('請先貼入客戶訊息', 'er'); return; }
+  var btn = document.getElementById('parseBtn');
+  btn.disabled = true;
+  setStatus('<span class="spin"></span> 解析中…');
+
+  var todayStr = new Date().toISOString().slice(0, 10);
+  var prodList = PRODUCTS.map(p => p.name + '（別名：' + p.aliases.join('、') + '）').join('；');
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: `從客戶訊息提取宅配資訊，只回傳JSON不要任何說明。
+品項清單：${prodList}
+今天：${todayStr}，週X請推算最近的那天。
+回傳格式：{"address":"","name":"","phone":"","items":[{"name":"需完全符合品項清單名稱","qty":數量}],"shipDate":"YYYY-MM-DD或空","payment":"ATM或貨到付款或LINE Pay或不收款或現金或空","note":""}
+客戶訊息：\n${raw}` }]
+      })
+    });
+    if (!res.ok) throw new Error('api_fail');
+    var data = await res.json();
+    var text = (data.content || []).find(c => c.type === 'text')?.text || '';
+    var parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+    applyParsed(parsed, false);
+  } catch (e) {
+    applyParsed(localParse(raw), true);
+  }
+  btn.disabled = false;
+}
+
+function applyParsed(parsed, isFallback) {
+  var filled = 0;
+  var fields = ['address', 'name', 'phone', 'date', 'payment'];
+
+  function setField(wrapId, inputId, val) {
+    var wrap = document.getElementById(wrapId);
+    if (val) { sv(inputId, val); wrap.classList.add('hl'); filled++; }
+    else wrap.classList.remove('hl');
+  }
+
+  setField('wrap-address', 'address', parsed.address);
+  setField('wrap-name', 'name', parsed.name);
+  setField('wrap-phone', 'phone', parsed.phone);
+  setField('wrap-date', 'shipDate', parsed.shipDate);
+  if (parsed.payment) {
+    setField('wrap-payment', 'payment', parsed.payment);
+    onPaymentChange();
+  } else {
+    document.getElementById('wrap-payment').classList.remove('hl');
+  }
+  if (parsed.note) { sv('note', parsed.note); filled++; }
+
+  document.getElementById('itemsBody').innerHTML = '';
+  if (parsed.items && parsed.items.length > 0) {
+    parsed.items.forEach(it => addItemRow(it.name, it.qty));
+    filled++;
+  } else {
+    addItemRow();
+  }
+
+  var label = isFallback ? '規則解析' : 'AI 解析';
+  setStatus(`✓ ${label}完成，填入 ${filled} 個欄位，請確認後修改`, 'ok');
+}
+
+function setStatus(html, cls) {
+  var el = document.getElementById('statusMsg');
+  el.innerHTML = html;
+  el.className = 'status-msg' + (cls ? ' ' + cls : '');
+}
+
+// ════════════════════════════════════════
+// 送出
+// ════════════════════════════════════════
+async function submitOrder() {
+  var address = gv('address').trim();
+  var name = gv('name').trim();
+  var phone = gv('phone').trim();
+  if (!address || !name || !phone) { toast('請填寫地址、姓名、電話', 'er'); return; }
+  var items = getItemRows();
+  if (items.length === 0) { toast('請至少填寫一個出貨品項', 'er'); return; }
+
+  var payment = gv('payment');
+  var amount = payment === '貨到付款' ? (parseInt(gv('amount')) || 0) : '';
+  var shipDate = gv('shipDate') || today;
+
+  toast('儲存中…');
+  var r = await api({
+    action: 'deliverySave',
+    address, name, phone, shipDate, payment,
+    amount: String(amount),
+    note: gv('note').trim(),
+    items: JSON.stringify(items),
+    rawMsg: gv('rawMsg').trim()
+  });
+  if (r.ok) {
+    toast('✓ 出貨單已建立', 'ok');
+    // 操作紀錄
+    var u = JSON.parse(sessionStorage.getItem('longyinUser') || '{}');
+    await api({ action: 'logSave', user: u.name || '', role: u.role || '', action: '新增', module: '宅配出貨', detail: name + ' ' + items.map(i => i.name + 'x' + i.qty).join('、') });
+    resetForm();
+  } else {
+    toast('✗ ' + (r.error || '儲存失敗'), 'er');
+  }
+}
+
+function clearAll() {
+  sv('rawMsg', '');
+  resetForm();
+  setStatus('');
+}
+
+function resetForm() {
+  ['address', 'name', 'phone', 'note', 'amount'].forEach(id => sv(id, ''));
+  sv('shipDate', today);
+  sv('payment', '');
+  document.getElementById('amountRow').style.display = 'none';
+  document.getElementById('itemsBody').innerHTML = '';
+  document.getElementById('boxSummary').innerHTML = '';
+  ['wrap-address', 'wrap-name', 'wrap-phone', 'wrap-date', 'wrap-payment'].forEach(id => {
+    document.getElementById(id).classList.remove('hl');
+  });
+  setStatus('');
+  addItemRow();
+}
+
+// ════════════════════════════════════════
+// 總表
+// ════════════════════════════════════════
+function switchPeriod(p) {
+  currentPeriod = p;
+  document.getElementById('btn-daily').classList.toggle('active', p === 'daily');
+  document.getElementById('btn-monthly').classList.toggle('active', p === 'monthly');
+  var fi = document.getElementById('filterDate');
+  if (p === 'monthly') { fi.type = 'month'; fi.value = today.slice(0, 7); }
+  else { fi.type = 'date'; fi.value = today; }
+  renderSummary();
+}
+
+async function loadAndRender() {
+  document.getElementById('summaryContent').innerHTML = '<div class="empty-tip">載入中…</div>';
+  var r = await api({ action: 'deliveryGetAll' });
+  if (!r.ok) { document.getElementById('summaryContent').innerHTML = '<div class="empty-tip">載入失敗</div>'; return; }
+  window._orders = r.data || [];
+  renderSummary();
+}
+
+function renderSummary() {
+  var orders = window._orders || [];
+  var filterVal = gv('filterDate');
+  var filtered = orders;
+  if (filterVal) {
+    if (currentPeriod === 'daily') filtered = orders.filter(o => o.shipDate === filterVal);
+    else filtered = orders.filter(o => o.shipDate && o.shipDate.startsWith(filterVal));
+  }
+
+  var container = document.getElementById('summaryContent');
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty-tip">此期間無出貨記錄</div>';
+    return;
+  }
+
+  var totalQty = 0;
+  var itemTotals = {};
+  filtered.forEach(o => {
+    var items = [];
+    try { items = JSON.parse(o.items || '[]'); } catch (e) {}
+    items.forEach(it => {
+      totalQty += it.qty;
+      itemTotals[it.name] = (itemTotals[it.name] || 0) + it.qty;
+    });
+  });
+
+  var html = `<div class="stat-row">
+    <div class="stat-card"><div class="sc-label">出貨單數</div><div class="sc-val">${filtered.length}</div><div class="sc-sub">張</div></div>
+    <div class="stat-card"><div class="sc-label">總出貨量</div><div class="sc-val">${totalQty}</div><div class="sc-sub">罐 ≈ ${calcBoxText(totalQty)}</div></div>
+  </div>`;
+
+  // 品項分解
+  html += `<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:1rem;">
+    <thead><tr><th style="padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;color:var(--text-m);">品項</th><th style="padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;color:var(--text-m);">數量</th><th style="padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;color:var(--text-m);">換算</th></tr></thead><tbody>`;
+  Object.entries(itemTotals).sort((a, b) => b[1] - a[1]).forEach(([name, qty]) => {
+    html += `<tr><td style="padding:5px 8px;border-bottom:1px solid var(--border);">${name}</td><td style="padding:5px 8px;border-bottom:1px solid var(--border);">${qty} 罐</td><td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--teal);font-weight:600;">${calcBoxText(qty)}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+
+  html += `<div style="font-size:12px;font-weight:600;color:var(--text-m);margin-bottom:8px;">出貨明細</div>`;
+  filtered.forEach(o => {
+    var items = [];
+    try { items = JSON.parse(o.items || '[]'); } catch (e) {}
+    var qty = items.reduce((s, i) => s + i.qty, 0);
+    var itemStr = items.map(i => i.name + ' ×' + i.qty).join('、');
+    var payStr = o.payment + (o.amount && o.amount !== '0' ? '  $' + o.amount : '');
+    html += `<div class="order-card">
+      <div class="oc-head">
+        <div>
+          <div class="oc-name">${o.name}</div>
+          <div class="oc-date">${o.shipDate} &nbsp; ${o.phone}</div>
+        </div>
+        <button class="del-btn" onclick="deleteOrder('${o.id}')">刪除</button>
+      </div>
+      <div class="oc-items">${o.address}</div>
+      <div class="oc-items" style="margin-top:3px;">${itemStr}</div>
+      <div style="margin-top:4px;">
+        <span class="oc-box">📦 ${calcBoxText(qty)}</span>
+      </div>
+      <div class="oc-pay">${payStr}${o.note ? '・' + o.note : ''}</div>
+    </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+async function deleteOrder(id) {
+  if (!confirm('確定要刪除這筆出貨單？')) return;
+  var r = await api({ action: 'deliveryDelete', id });
+  if (r.ok) { toast('已刪除', 'ok'); loadAndRender(); }
+  else toast('刪除失敗', 'er');
+}
+
+// ════════════════════════════════════════
+// 品項設定
+// ════════════════════════════════════════
+async function loadProducts() {
+  var r = await api({ action: 'deliveryProductsGet' });
+  if (r.ok && r.data && r.data.length > 0) {
+    PRODUCTS = r.data;
+  } else {
+    // 預設品項
+    PRODUCTS = [
+      { name: '微糖仙草茶', aliases: ['仙草', '仙草茶', '草茶', '微糖仙草'] },
+      { name: '無糖仙草茶', aliases: ['無糖仙草', '無糖草茶', '仙草無糖', '仙草茶無糖'] },
+      { name: '杏仁茶',    aliases: ['杏仁', '杏仁茶'] },
+      { name: '大杏仁粉',  aliases: ['大杏仁粉', '大杏仁', '大杏'] },
+      { name: '小杏仁粉',  aliases: ['小杏仁粉', '小杏仁', '小杏'] },
+    ];
+  }
+}
+
+function renderProducts() {
+  var list = document.getElementById('prodList');
+  if (!PRODUCTS.length) { list.innerHTML = '<div style="color:var(--text-h);font-size:13px;">尚無品項，請新增</div>'; return; }
+  list.innerHTML = PRODUCTS.map((p, i) => `
+    <div class="prod-row">
+      <span class="prod-name">${p.name}</span>
+      <span class="prod-alias">別名：${p.aliases.join('、')}</span>
+      <button class="del-btn" onclick="deleteProduct(${i})">刪除</button>
+    </div>`).join('');
+}
+
+async function addProduct() {
+  var name = gv('newProdName').trim();
+  var aliasStr = gv('newProdAlias').trim();
+  if (!name) { toast('請輸入品項名稱', 'er'); return; }
+  var aliases = aliasStr ? aliasStr.split(/[,，]/).map(a => a.trim()).filter(Boolean) : [];
+  if (!aliases.includes(name)) aliases.unshift(name);
+  PRODUCTS.push({ name, aliases });
+  var r = await api({ action: 'deliveryProductsSave', products: JSON.stringify(PRODUCTS) });
+  if (r.ok) {
+    sv('newProdName', ''); sv('newProdAlias', '');
+    renderProducts();
+    toast('品項已新增', 'ok');
+  } else {
+    PRODUCTS.pop();
+    toast('儲存失敗', 'er');
+  }
+}
+
+async function deleteProduct(idx) {
+  if (!confirm('確定刪除「' + PRODUCTS[idx].name + '」？')) return;
+  PRODUCTS.splice(idx, 1);
+  var r = await api({ action: 'deliveryProductsSave', products: JSON.stringify(PRODUCTS) });
+  if (r.ok) { renderProducts(); toast('已刪除', 'ok'); }
+  else toast('刪除失敗', 'er');
+}
+</script>
+</body>
+</html>
