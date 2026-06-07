@@ -5,7 +5,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>週排程日曆 — 龍吟後台</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="_base.css">
+<link rel="stylesheet" href="base.css">
 <style>
 .cal-nav{display:flex;align-items:center;gap:12px;margin-bottom:1rem;}
 .cal-nav-btn{height:34px;padding:0 14px;border:1px solid var(--border-md);border-radius:var(--rs);background:var(--surface);cursor:pointer;font-family:var(--font);font-size:13px;}
@@ -104,7 +104,7 @@
 
 <div class="toast" id="toast"></div>
 <div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・週排程日曆</span></div>
-<script src="_base.js"></script>
+<script src="base.js"></script>
 <script>
 var weekOffset = 0;
 var events = JSON.parse(localStorage.getItem('longyinEvents')||'[]');
