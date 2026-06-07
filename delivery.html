@@ -1147,32 +1147,91 @@ async function renderFlow() {
 // 切換步驟
 // ════════════════════════════════════════
 async function toggleStep(orderId, stepKey, orderName, shipDate) {
-  var state = await loadFlowState(orderId);
+  var state = _flowCache[orderId] || {};
   var wasDone = !!state[stepKey];
+
+  // 1. 立即更新 DOM（不等 API）
   state[stepKey] = !wasDone;
   if (!wasDone) {
-    // 標記完成時間
     var now = new Date();
     state[stepKey + '_time'] = now.toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' });
-    // 發送 LINE 通知
+  } else {
+    delete state[stepKey + '_time'];
+  }
+  _flowCache[orderId] = state;
+  updateFlowCardDOM(orderId);
+
+  // 2. 背景儲存 + LINE 通知（不阻擋 UI）
+  saveFlowState(orderId, state);
+  if (!wasDone) {
     var stepDef = FLOW_STEPS.find(s => s.key === stepKey);
     if (stepDef && stepDef.notify && stepDef.notifyMsg) {
       sendLineNotify(stepDef.notifyMsg(orderName) + '\n📅 出貨日：' + shipDate);
     }
-  } else {
-    delete state[stepKey + '_time'];
   }
-  await saveFlowState(orderId, state);
-  // 只更新這張卡的 DOM，不重新載入全部
-  await refreshFlowCard(orderId, orderName, shipDate);
+}
+
+function updateFlowCardDOM(orderId) {
+  var state = _flowCache[orderId] || {};
+  var order = (window._orders || []).find(o => o.id === orderId);
+  if (!order) return;
+
+  var doneCount = FLOW_STEPS.filter(st => state[st.key]).length;
+  var prog = Math.round(doneCount / FLOW_STEPS.length * 100);
+
+  // 更新進度條
+  var card = document.getElementById('fc-' + orderId);
+  if (!card) return;
+  var fill = card.querySelector('.flow-prog-fill');
+  var txt  = card.querySelector('.flow-prog-txt');
+  if (fill) fill.style.width = prog + '%';
+  if (txt)  txt.textContent = doneCount + '/' + FLOW_STEPS.length;
+
+  // 更新各步驟狀態
+  FLOW_STEPS.forEach(step => {
+    var row = document.getElementById('fs-' + orderId + '-' + step.key);
+    if (!row) return;
+    var done = !!state[step.key];
+    row.classList.toggle('done', done);
+    var circle = row.querySelector('.flow-step-check');
+    if (circle) circle.textContent = done ? '✓' : '';
+    var timeEl = row.querySelector('.flow-step-time');
+    var doneTime = state[step.key + '_time'] || '';
+    if (done && doneTime) {
+      if (timeEl) {
+        timeEl.textContent = '完成時間：' + doneTime;
+      } else {
+        var body = row.querySelector('.flow-step-body');
+        if (body) {
+          var t = document.createElement('div');
+          t.className = 'flow-step-time';
+          t.textContent = '完成時間：' + doneTime;
+          body.appendChild(t);
+        }
+      }
+    } else if (timeEl) {
+      timeEl.textContent = '';
+    }
+  });
+
+  // 更新完成標籤
+  var nameEl = card.querySelector('.flow-card-name');
+  if (nameEl) {
+    var allDone = doneCount === FLOW_STEPS.length;
+    var badge = nameEl.querySelector('span');
+    if (allDone && !badge) {
+      var sp = document.createElement('span');
+      sp.style.cssText = 'font-size:11px;background:#E8F5E9;color:#2E7D32;border-radius:20px;padding:1px 8px;margin-left:4px;font-weight:500;';
+      sp.textContent = '完成';
+      nameEl.appendChild(sp);
+    } else if (!allDone && badge) {
+      badge.remove();
+    }
+  }
 }
 
 async function refreshFlowCard(orderId, orderName, shipDate) {
-  // 重新讀取並更新單張卡
-  var r = await api({ action: 'deliveryGetAll' });
-  window._orders = r.ok ? (r.data || []) : [];
-  _flowCache[orderId] = null; // 清快取
-  await renderFlow();
+  updateFlowCardDOM(orderId);
 }
 
 // ════════════════════════════════════════
