@@ -430,29 +430,39 @@ var currentPeriod = 'daily';
 // ════════════════════════════════════════
 // 初始化
 // ════════════════════════════════════════
-window.addEventListener('load', async () => {
+window.addEventListener('load', () => {
+  // 1. 同步初始化：先讓頁面完全可用
   var u = buildSubHeader('宅配出貨', '開單・總表・品項管理');
   if (!u) return;
+
   sv('shipDate', today);
   document.getElementById('filterDate').value = today;
   document.getElementById('flowFilterDate').value = today;
-  // 讀取已儲存的 LINE Token
+
   var savedToken = localStorage.getItem('lw_line_token') || '';
   if (savedToken) document.getElementById('lineToken').value = savedToken;
-  // 載入品項（失敗用預設值繼續）
-  try { await loadProducts(); } catch(e) { console.warn('loadProducts failed', e); }
+
+  // 先用預設品項讓品項列可用
+  setDefaultProducts();
   addItemRow();
-  // 啟動 16-18 點取件提醒
   startPickupReminder();
-  // 觸發今日定期訂單自動建立
-  try { autoCreateTodayRecurring(); } catch(e) {}
-  // 預載今日訂單（首頁總表用）
-  try {
-    var r = await api({ action: 'deliveryGetAll' });
-    window._orders = r.ok ? (r.data||[]) : [];
-  } catch(e) { window._orders = []; }
-  // 預設顯示今日總表（改為開單頁預設含今日摘要）
   renderTodaySummaryBar();
+
+  // 2. 非同步背景載入，完成後更新 UI，不阻擋任何操作
+  setTimeout(() => {
+    loadProducts().then(() => {
+      // 重建品項列（套用真實品項）
+      document.getElementById('itemsBody').innerHTML = '';
+      addItemRow();
+    }).catch(() => {});
+
+    api({ action: 'deliveryGetAll' }).then(r => {
+      window._orders = r.ok ? (r.data||[]) : [];
+      renderTodaySummaryBar();
+    }).catch(() => {});
+
+    autoCreateTodayRecurring().catch(() => {});
+  }, 100);
 });
 
 // ════════════════════════════════════════
@@ -895,12 +905,8 @@ async function deleteOrder(id) {
 // ════════════════════════════════════════
 // 品項設定
 // ════════════════════════════════════════
-async function loadProducts() {
-  var r = await api({ action: 'deliveryProductsGet' });
-  if (r.ok && r.data && r.data.length > 0) {
-    PRODUCTS = r.data;
-  } else {
-    // 預設品項
+function setDefaultProducts() {
+  if (PRODUCTS.length === 0) {
     PRODUCTS = [
       { name: '微糖仙草茶', aliases: ['仙草', '仙草茶', '草茶', '微糖仙草'] },
       { name: '無糖仙草茶', aliases: ['無糖仙草', '無糖草茶', '仙草無糖', '仙草茶無糖'] },
@@ -908,6 +914,15 @@ async function loadProducts() {
       { name: '大杏仁粉',  aliases: ['大杏仁粉', '大杏仁', '大杏'] },
       { name: '小杏仁粉',  aliases: ['小杏仁粉', '小杏仁', '小杏'] },
     ];
+  }
+}
+
+async function loadProducts() {
+  var r = await api({ action: 'deliveryProductsGet' });
+  if (r.ok && r.data && r.data.length > 0) {
+    PRODUCTS = r.data;
+  } else {
+    setDefaultProducts();
   }
 }
 
