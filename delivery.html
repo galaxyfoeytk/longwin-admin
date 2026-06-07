@@ -178,7 +178,18 @@
       <div class="fr one">
         <div>
           <label class="ffl">備註</label>
-          <input type="text" class="ffi" id="note" placeholder="配送時間、特殊要求…">
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;align-items:center;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" id="note_morning" onchange="syncNote()" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer;">早上到
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" id="note_afternoon" onchange="syncNote()" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer;">下午到
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" id="note_call" onchange="syncNote()" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer;">到貨前電聯
+            </label>
+          </div>
+          <input type="text" class="ffi" id="note" placeholder="其他備註（選填）">
         </div>
       </div>
 
@@ -338,7 +349,7 @@ function getItemRows() {
 // 品項解析邏輯
 // ════════════════════════════════════════
 function matchProduct(text) {
-  // 無糖優先：別名越長的越優先
+  // 先用完整文字比對（含無糖/微糖等修飾詞），別名越長的越優先
   var sorted = [...PRODUCTS].sort((a, b) => {
     var maxA = Math.max(...a.aliases.map(x => x.length));
     var maxB = Math.max(...b.aliases.map(x => x.length));
@@ -379,11 +390,15 @@ function localParse(raw) {
     }
   });
 
-  // 品項解析：支援 仙草*6 仙草x6 仙草×6 仙草6罐 仙草（6）
+  // 品項解析：支援 仙草茶無糖12瓶 / 仙草*6 / 仙草x6 / 仙草6罐 / 仙草（6）
+  // pattern 會捕捉「品項文字（含無糖/微糖修飾）」+ 數量
   var itemPatterns = [
-    /([^\s\d\*x×,，\*]+)\s*[\*x×]\s*(\d+)/g,
-    /([^\s\d\*x×,，]+)\s*(\d+)\s*(?:罐|瓶|盒|箱|包)/g,
-    /([^\s\d\*x×,，]+)（(\d+)）/g,
+    // 品項文字 * 數字，如「仙草茶無糖*12」「仙草*6」
+    /([\u4e00-\u9fa5a-zA-Z]+)\s*[\*x×]\s*(\d+)/g,
+    // 品項文字 數字 單位，如「仙草茶無糖12瓶」「仙草6罐」
+    /([\u4e00-\u9fa5a-zA-Z]+)\s*(\d+)\s*(?:罐|瓶|盒|箱|包|平)/g,
+    // 品項文字（數字），如「仙草（6）」
+    /([\u4e00-\u9fa5a-zA-Z]+)（(\d+)）/g,
   ];
   lines.forEach((line, i) => {
     var found = false;
@@ -391,6 +406,7 @@ function localParse(raw) {
       pat.lastIndex = 0;
       var m;
       while ((m = pat.exec(line)) !== null) {
+        // m[1] 是品項關鍵字（含無糖/微糖），傳完整字串比對
         var pname = matchProduct(m[1]);
         var qty = parseInt(m[2]);
         if (qty > 0) { result.items.push({ name: pname, qty }); found = true; }
@@ -442,6 +458,7 @@ async function parseMessage() {
         max_tokens: 1000,
         messages: [{ role: 'user', content: `從客戶訊息提取宅配資訊，只回傳JSON不要任何說明。
 品項清單：${prodList}
+注意：「無糖」和「微糖」是不同品項，請仔細區分，並以完整品項名稱（如「無糖仙草茶」vs「微糖仙草茶」）回傳。
 今天：${todayStr}，週X請推算最近的那天。
 回傳格式：{"address":"","name":"","phone":"","items":[{"name":"需完全符合品項清單名稱","qty":數量}],"shipDate":"YYYY-MM-DD或空","payment":"ATM或貨到付款或LINE Pay或不收款或現金或空","note":""}
 客戶訊息：\n${raw}` }]
@@ -478,7 +495,15 @@ function applyParsed(parsed, isFallback) {
   } else {
     document.getElementById('wrap-payment').classList.remove('hl');
   }
-  if (parsed.note) { sv('note', parsed.note); filled++; }
+  if (parsed.note) {
+    var noteText = parsed.note;
+    // 自動勾選快選項
+    if (/早上到/.test(noteText)) { document.getElementById('note_morning').checked = true; noteText = noteText.replace(/早上到[、,，]?/g, '').trim(); }
+    if (/下午到/.test(noteText)) { document.getElementById('note_afternoon').checked = true; noteText = noteText.replace(/下午到[、,，]?/g, '').trim(); }
+    if (/到貨前電聯|電聯/.test(noteText)) { document.getElementById('note_call').checked = true; noteText = noteText.replace(/到貨前電聯[、,，]?|電聯[、,，]?/g, '').trim(); }
+    sv('note', noteText);
+    filled++;
+  }
 
   document.getElementById('itemsBody').innerHTML = '';
   if (parsed.items && parsed.items.length > 0) {
@@ -518,7 +543,7 @@ async function submitOrder() {
     action: 'deliverySave',
     address, name, phone, shipDate, payment,
     amount: String(amount),
-    note: gv('note').trim(),
+    note: getNoteValue(),
     items: JSON.stringify(items),
     rawMsg: gv('rawMsg').trim()
   });
@@ -539,10 +564,27 @@ function clearAll() {
   setStatus('');
 }
 
+function syncNote() {
+  // 把勾選項目組合進 note 欄（顯示用），送出時再合併
+}
+
+function getNoteValue() {
+  var checks = [];
+  if (document.getElementById('note_morning').checked) checks.push('早上到');
+  if (document.getElementById('note_afternoon').checked) checks.push('下午到');
+  if (document.getElementById('note_call').checked) checks.push('到貨前電聯');
+  var extra = document.getElementById('note').value.trim();
+  if (extra) checks.push(extra);
+  return checks.join('、');
+}
+
 function resetForm() {
   ['address', 'name', 'phone', 'note', 'amount'].forEach(id => sv(id, ''));
   sv('shipDate', today);
   sv('payment', '');
+  document.getElementById('note_morning').checked = false;
+  document.getElementById('note_afternoon').checked = false;
+  document.getElementById('note_call').checked = false;
   document.getElementById('amountRow').style.display = 'none';
   document.getElementById('itemsBody').innerHTML = '';
   document.getElementById('boxSummary').innerHTML = '';
