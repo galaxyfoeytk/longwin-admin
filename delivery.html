@@ -850,9 +850,7 @@ function saveLineToken() {
 }
 
 async function testLineToken() {
-  var token = getLineToken();
-  if (!token) { toast('請先填入 Token', 'er'); return; }
-  var r = await api({ action: 'lineNotify', token, message: '✅ 龍吟出貨通知測試成功！' });
+  var r = await api({ action: 'lineNotify', message: '✅ 龍吟出貨通知測試成功！龍吟出貨系統已串接 LINE。' });
   if (r.ok) {
     toast('測試通知已發送', 'ok');
     document.getElementById('lineTokenStatus').innerHTML = '<span style="color:var(--teal)">✓ 通知發送成功</span>';
@@ -863,9 +861,7 @@ async function testLineToken() {
 }
 
 async function sendLineNotify(message) {
-  var token = getLineToken();
-  if (!token) return;
-  await api({ action: 'lineNotify', token, message });
+  await api({ action: 'lineNotify', message });
 }
 
 // ════════════════════════════════════════
