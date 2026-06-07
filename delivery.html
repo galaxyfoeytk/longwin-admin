@@ -302,30 +302,15 @@
 
   <!-- ═══════════════ 出貨流程 ═══════════════ -->
   <div id="tab-flow" class="tab-pane">
-
-    <!-- LINE Token 設定 -->
-    <div class="fc">
-      <div class="fct">🔔 LINE 通知設定</div>
-      <div class="line-token-box">
-        <div style="font-size:12px;color:var(--text-m);margin-bottom:8px;">填入 LINE Notify Channel Access Token，步驟完成時自動推播通知到群組。</div>
-        <div class="line-token-row">
-          <div style="flex:1;min-width:200px;">
-            <label class="ffl">Channel Access Token</label>
-            <input type="password" class="ffi" id="lineToken" placeholder="填入後儲存即生效">
-          </div>
-          <button class="sbtn g" style="height:38px;" onclick="saveLineToken()">儲存</button>
-          <button class="sbtn" style="height:38px;background:var(--gray);" onclick="testLineToken()">測試發送</button>
-        </div>
-        <div id="lineTokenStatus" style="font-size:12px;margin-top:6px;color:var(--text-m);"></div>
-      </div>
-    </div>
-
-    <!-- 流程看板 -->
+  <!-- 流程看板 -->
     <div class="fc">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
         <div style="font-size:13px;color:var(--text-m);">依出貨日期分組，每張訂單獨立追蹤</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="date" id="flowFilterDate" class="ffi" style="width:160px;height:34px;font-size:13px;" onchange="renderFlow()">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="sbtn" style="height:34px;font-size:12px;background:var(--gray);" onclick="setFlowFilter('today')">今天</button>
+          <button class="sbtn" style="height:34px;font-size:12px;background:var(--gray);" onclick="setFlowFilter('week')">近 7 天</button>
+          <button class="sbtn" style="height:34px;font-size:12px;background:var(--gray);" onclick="setFlowFilter('all')">全部</button>
+          <input type="date" id="flowFilterDate" class="ffi" style="width:150px;height:34px;font-size:13px;" onchange="renderFlow()">
           <button class="sbtn g" style="height:34px;font-size:12px;" onclick="loadAndRenderFlow()">🔄 重新整理</button>
         </div>
       </div>
@@ -437,7 +422,7 @@ window.addEventListener('load', () => {
 
   sv('shipDate', today);
   document.getElementById('filterDate').value = today;
-  document.getElementById('flowFilterDate').value = today;
+  document.getElementById('flowFilterDate').value = ''; // 預設顯示近 7 天
 
   var savedToken = localStorage.getItem('lw_line_token') || '';
   if (savedToken) document.getElementById('lineToken').value = savedToken;
@@ -1027,6 +1012,17 @@ async function saveFlowState(orderId, state) {
 // ════════════════════════════════════════
 // 載入並渲染流程看板
 // ════════════════════════════════════════
+function setFlowFilter(mode) {
+  if (mode === 'today') {
+    document.getElementById('flowFilterDate').value = today;
+  } else if (mode === 'week') {
+    document.getElementById('flowFilterDate').value = '';
+  } else {
+    document.getElementById('flowFilterDate').value = '';
+  }
+  renderFlow();
+}
+
 async function loadAndRenderFlow() {
   document.getElementById('flowContent').innerHTML = '<div class="empty-tip">載入中…</div>';
   _flowCache = {};
@@ -1037,7 +1033,17 @@ async function loadAndRenderFlow() {
 
 async function renderFlow() {
   var filterDate = document.getElementById('flowFilterDate').value;
-  var orders = (window._orders || []).filter(o => !filterDate || o.shipDate === filterDate);
+  var orders = (window._orders || []).filter(o => {
+    if (!filterDate) {
+      // 空值：顯示近 7 天（今天往後 6 天）
+      var d = new Date(today);
+      var d7 = new Date(today);
+      d7.setDate(d7.getDate() + 6);
+      var oDate = new Date(o.shipDate);
+      return oDate >= d && oDate <= d7;
+    }
+    return o.shipDate === filterDate;
+  });
   var container = document.getElementById('flowContent');
 
   if (!orders.length) {
