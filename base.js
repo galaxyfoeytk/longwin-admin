@@ -13,8 +13,14 @@ function getUser() {
 }
 
 async function api(params) {
-  var url = API + '?' + Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v||'')).join('&');
-  try { var r = await fetch(url); return await r.json(); } catch(e) { return {ok:false,error:e.message}; }
+  try {
+    var r = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    });
+    return await r.json();
+  } catch(e) { return { ok: false, error: e.message }; }
 }
 
 function toast(msg, type) {
