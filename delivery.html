@@ -115,7 +115,24 @@
 /* ── spinner ── */
 .spin{width:13px;height:13px;border:2px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-2px;margin-right:5px;}
 
-/* ── 取消訂單 ── */
+/* ── 常訂客戶卡片 ── */
+.customer-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;}
+.customer-card:hover{border-color:var(--border-md);}
+.cc-avatar{width:38px;height:38px;border-radius:50%;background:var(--teal-l);color:var(--teal);font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cc-body{flex:1;min-width:0;}
+.cc-name{font-size:14px;font-weight:700;margin-bottom:2px;}
+.cc-meta{font-size:12px;color:var(--text-m);line-height:1.6;}
+.cc-items{font-size:11px;color:var(--teal);margin-top:3px;}
+.cc-count{font-size:11px;background:var(--bg);border-radius:20px;padding:2px 8px;color:var(--text-m);margin-top:4px;display:inline-block;}
+.cc-actions{display:flex;gap:6px;flex-shrink:0;align-items:flex-start;}
+
+/* ── 客戶下拉 ── */
+.cd-item{padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);}
+.cd-item:last-child{border-bottom:none;}
+.cd-item:hover{background:var(--teal-l);}
+.cd-name{font-weight:600;}
+.cd-meta{font-size:11px;color:var(--text-m);margin-top:1px;}
+
 .flow-card.cancelled{opacity:.5;background:var(--bg);}
 .flow-card.cancelled .flow-step-check{pointer-events:none;cursor:default;}
 .cancelled-badge{display:inline-flex;align-items:center;font-size:11px;background:#FDECEA;color:#C62828;border-radius:20px;padding:2px 9px;font-weight:600;margin-left:4px;}
@@ -153,12 +170,27 @@
     <button class="tab-btn active" onclick="switchTab('flow')">🚚 出貨流程</button>
     <button class="tab-btn" onclick="switchTab('order')">📋 開單</button>
     <button class="tab-btn" onclick="switchTab('summary')">📊 總表</button>
+    <button class="tab-btn" onclick="switchTab('customers')">👤 常訂客戶</button>
     <button class="tab-btn" onclick="switchTab('products')">🏷️ 品項設定</button>
     <button class="tab-btn" onclick="switchTab('recurring')">🔁 定期訂單</button>
   </div>
 
   <!-- ═══════════════ 開單 ═══════════════ -->
   <div id="tab-order" class="tab-pane">
+
+    <!-- 常訂客戶快速帶入 -->
+    <div class="fc" id="customerQuickBar" style="margin-bottom:0;padding:10px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:12px;font-weight:600;color:var(--text-m);white-space:nowrap;">👤 快速帶入</span>
+        <div style="position:relative;flex:1;min-width:160px;">
+          <input type="text" class="ffi" id="customerSearch" placeholder="輸入姓名或電話搜尋常訂客戶…"
+            style="height:32px;font-size:12px;padding-right:28px;"
+            oninput="filterCustomerDropdown()" onfocus="showCustomerDropdown()" autocomplete="off">
+          <div id="customerDropdown" style="display:none;position:absolute;top:34px;left:0;right:0;background:var(--surface);border:1px solid var(--border-md);border-radius:var(--rs);box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:200;max-height:220px;overflow-y:auto;"></div>
+        </div>
+        <button class="sbtn" style="height:32px;font-size:12px;background:var(--gray);white-space:nowrap;" onclick="switchTab('customers')">管理客戶 ›</button>
+      </div>
+    </div>
 
     <!-- 今日出貨摘要 -->
     <div class="fc" id="todaySummaryBar" style="margin-bottom:0;">
@@ -333,6 +365,77 @@
   </div>
 
 
+  <!-- ═══════════════ 常訂客戶 ═══════════════ -->
+  <div id="tab-customers" class="tab-pane">
+    <!-- 新增/編輯表單 -->
+    <div class="fc" id="customerForm">
+      <div class="fct" id="customerFormTitle">👤 新增常訂客戶</div>
+      <input type="hidden" id="editCustomerId">
+      <div class="fr">
+        <div>
+          <label class="ffl">姓名 <span style="color:var(--red)">*</span></label>
+          <input type="text" class="ffi" id="cName" placeholder="客戶姓名">
+        </div>
+        <div>
+          <label class="ffl">聯絡電話 <span style="color:var(--red)">*</span></label>
+          <input type="text" class="ffi" id="cPhone" placeholder="電話號碼">
+        </div>
+      </div>
+      <div class="fr one">
+        <div>
+          <label class="ffl">收件地址</label>
+          <input type="text" class="ffi" id="cAddress" placeholder="常用收件地址">
+        </div>
+      </div>
+      <div class="fr">
+        <div>
+          <label class="ffl">付款方式</label>
+          <select class="ffs" id="cPayment">
+            <option value="">請選擇</option>
+            <option value="ATM">ATM 轉帳</option>
+            <option value="貨到付款">貨到付款</option>
+            <option value="LINE Pay">LINE Pay</option>
+            <option value="現金">現金</option>
+            <option value="不收款">不收款</option>
+          </select>
+        </div>
+        <div>
+          <label class="ffl">備註</label>
+          <input type="text" class="ffi" id="cNote" placeholder="如：下午到、到貨前電聯">
+        </div>
+      </div>
+      <!-- 常買品項 -->
+      <div style="margin-bottom:10px;">
+        <label class="ffl">常買品項（開單時自動帶入）</label>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th style="width:50%">品項</th>
+              <th style="width:30%">常買數量（罐）</th>
+              <th style="width:20%"></th>
+            </tr>
+          </thead>
+          <tbody id="cItemsBody"></tbody>
+        </table>
+        <button class="sbtn" style="height:30px;font-size:12px;margin-top:6px;background:var(--gray);" onclick="addCItemRow()">＋ 新增品項</button>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+        <button class="sbtn" style="background:var(--gray);height:36px;" id="cancelEditBtn" onclick="cancelEditCustomer()" style="display:none;">取消編輯</button>
+        <button class="sbtn g" style="height:36px;" onclick="saveCustomer()">💾 儲存客戶</button>
+      </div>
+    </div>
+
+    <!-- 客戶列表 -->
+    <div class="fc">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <div class="fct" style="margin-bottom:0;">📋 客戶名單</div>
+        <input type="text" class="ffi" id="customerListSearch" placeholder="搜尋姓名或電話…"
+          style="width:200px;height:32px;font-size:12px;" oninput="renderCustomerList()">
+      </div>
+      <div id="customerList"><div class="empty-tip">載入中…</div></div>
+    </div>
+  </div>
+
   <!-- ═══════════════ 定期訂單 ═══════════════ -->
   <div id="tab-recurring" class="tab-pane">
     <div class="fc">
@@ -465,6 +568,7 @@ window.addEventListener('load', () => {
     }).catch(() => {});
 
     autoCreateTodayRecurring().catch(() => {});
+    loadCustomers().catch(() => {});
   }, 100);
 });
 
@@ -475,12 +579,13 @@ function switchTab(name) {
   document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  var idx = ['flow','order','summary','products','recurring'].indexOf(name);
-  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  var idx = ['flow','order','summary','customers','products','recurring'].indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
   if (name === 'summary') loadAndRender();
   if (name === 'products') renderProducts();
   if (name === 'flow') loadAndRenderFlow();
   if (name === 'recurring') loadRecurring();
+  if (name === 'customers') { loadCustomers(); cancelEditCustomer(); }
 }
 
 // ════════════════════════════════════════
@@ -768,6 +873,9 @@ async function submitOrder() {
       loadAndRenderFlow();
     } catch(e) {}
 
+    // 更新客戶訂單計數（若是常訂客戶）
+    incrementCustomerOrderCount(name, phone);
+
     // 發送接龍訊息（當日出貨日期下所有訂單的完整狀態）
     sendChainNotify(shipDate);
 
@@ -935,8 +1043,226 @@ async function deleteOrder(id) {
 }
 
 // ════════════════════════════════════════
-// 取消訂單
+// 常訂客戶
 // ════════════════════════════════════════
+var _customers = [];
+
+async function loadCustomers() {
+  var r = await api({ action: 'customersGetAll' });
+  _customers = r.ok ? (r.data || []) : [];
+  renderCustomerList();
+}
+
+function renderCustomerList() {
+  var q = (document.getElementById('customerListSearch')?.value || '').trim().toLowerCase();
+  var list = q
+    ? _customers.filter(c => c.name.includes(q) || (c.phone||'').includes(q))
+    : _customers;
+
+  var el = document.getElementById('customerList');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-tip">' + (q ? '查無符合客戶' : '尚無常訂客戶，請新增') + '</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(c => {
+    var items = [];
+    try { items = JSON.parse(c.items || '[]'); } catch(e) {}
+    var itemStr = items.length ? items.map(i => i.name + '×' + i.qty).join('、') : '未設定常買品項';
+    var initial = (c.name || '?')[0];
+    var orderCount = parseInt(c.orderCount) || 0;
+
+    return `<div class="customer-card">
+      <div class="cc-avatar">${initial}</div>
+      <div class="cc-body">
+        <div class="cc-name">${c.name}</div>
+        <div class="cc-meta">
+          📞 ${c.phone || '—'}　${c.address ? '📍 ' + c.address : ''}
+          ${c.payment ? '　💳 ' + c.payment : ''}
+          ${c.note ? '　📝 ' + c.note : ''}
+        </div>
+        <div class="cc-items">🛒 ${itemStr}</div>
+        <span class="cc-count">歷史訂單 ${orderCount} 筆</span>
+      </div>
+      <div class="cc-actions">
+        <button class="sbtn g" style="height:28px;font-size:11px;padding:0 10px;" onclick="applyCustomer('${c.id}')">帶入開單</button>
+        <button class="sbtn" style="height:28px;font-size:11px;padding:0 8px;background:var(--gray);" onclick="editCustomer('${c.id}')">編輯</button>
+        <button class="sbtn" style="height:28px;font-size:11px;padding:0 8px;background:var(--red-l);color:var(--red);border:1px solid #F7C1C1;" onclick="deleteCustomer('${c.id}')">刪除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── 常買品項列（新增客戶表單用）────────
+function addCItemRow(name, qty) {
+  var body = document.getElementById('cItemsBody');
+  var tr = document.createElement('tr');
+  var opts = PRODUCTS.map(p => `<option value="${p.name}"${p.name === name ? ' selected' : ''}>${p.name}</option>`).join('');
+  tr.innerHTML = `
+    <td><select class="ffs" style="height:34px;">${opts}</select></td>
+    <td><input type="number" class="ffi" style="height:34px;" value="${qty || 12}" min="1" max="999"></td>
+    <td><button class="sbtn" style="height:30px;font-size:11px;background:var(--gray);" onclick="this.closest('tr').remove()">✕</button></td>`;
+  body.appendChild(tr);
+}
+
+function getCItems() {
+  return [...document.querySelectorAll('#cItemsBody tr')].map(tr => {
+    var sel = tr.querySelector('select');
+    var inp = tr.querySelector('input');
+    return { name: sel?.value || '', qty: parseInt(inp?.value) || 0 };
+  }).filter(i => i.name && i.qty > 0);
+}
+
+// ── 儲存客戶 ────────────────────────────
+async function saveCustomer() {
+  var id = document.getElementById('editCustomerId').value;
+  var name = document.getElementById('cName').value.trim();
+  var phone = document.getElementById('cPhone').value.trim();
+  if (!name || !phone) { toast('請填寫姓名與電話', 'er'); return; }
+
+  var params = {
+    action: id ? 'customerUpdate' : 'customerSave',
+    id: id || undefined,
+    name, phone,
+    address: document.getElementById('cAddress').value.trim(),
+    payment: document.getElementById('cPayment').value,
+    note: document.getElementById('cNote').value.trim(),
+    items: JSON.stringify(getCItems())
+  };
+
+  var r = await api(params);
+  if (r.ok) {
+    toast(id ? '✓ 客戶資料已更新' : '✓ 客戶已新增', 'ok');
+    cancelEditCustomer();
+    loadCustomers();
+  } else toast('儲存失敗', 'er');
+}
+
+// ── 編輯客戶 ────────────────────────────
+function editCustomer(id) {
+  var c = _customers.find(c => c.id === id);
+  if (!c) return;
+  document.getElementById('editCustomerId').value = c.id;
+  document.getElementById('cName').value = c.name || '';
+  document.getElementById('cPhone').value = c.phone || '';
+  document.getElementById('cAddress').value = c.address || '';
+  document.getElementById('cPayment').value = c.payment || '';
+  document.getElementById('cNote').value = c.note || '';
+  document.getElementById('cItemsBody').innerHTML = '';
+  var items = [];
+  try { items = JSON.parse(c.items || '[]'); } catch(e) {}
+  items.forEach(i => addCItemRow(i.name, i.qty));
+  document.getElementById('customerFormTitle').textContent = '✏️ 編輯客戶：' + c.name;
+  document.getElementById('cancelEditBtn').style.display = '';
+  document.getElementById('customerForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelEditCustomer() {
+  document.getElementById('editCustomerId').value = '';
+  document.getElementById('cName').value = '';
+  document.getElementById('cPhone').value = '';
+  document.getElementById('cAddress').value = '';
+  document.getElementById('cPayment').value = '';
+  document.getElementById('cNote').value = '';
+  document.getElementById('cItemsBody').innerHTML = '';
+  document.getElementById('customerFormTitle').textContent = '👤 新增常訂客戶';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+}
+
+// ── 刪除客戶 ────────────────────────────
+async function deleteCustomer(id) {
+  if (!confirm('確定刪除此客戶？')) return;
+  var r = await api({ action: 'customerDelete', id });
+  if (r.ok) { toast('已刪除', 'ok'); loadCustomers(); }
+  else toast('刪除失敗', 'er');
+}
+
+// ── 帶入開單（從客戶列表或下拉）────────
+function applyCustomer(id) {
+  var c = _customers.find(c => c.id === id);
+  if (!c) return;
+
+  document.getElementById('name').value = c.name || '';
+  document.getElementById('phone').value = c.phone || '';
+  document.getElementById('address').value = c.address || '';
+  if (c.payment) document.getElementById('payment').value = c.payment;
+  if (c.note) document.getElementById('note').value = c.note;
+
+  // 帶入常買品項
+  var items = [];
+  try { items = JSON.parse(c.items || '[]'); } catch(e) {}
+  if (items.length) {
+    document.getElementById('itemsBody').innerHTML = '';
+    items.forEach(i => {
+      addItemRow();
+      var rows = document.querySelectorAll('#itemsBody tr');
+      var last = rows[rows.length - 1];
+      if (last) {
+        var sel = last.querySelector('select');
+        var inp = last.querySelector('input[type="number"]');
+        if (sel) sel.value = i.name;
+        if (inp) { inp.value = i.qty; inp.dispatchEvent(new Event('input')); }
+      }
+    });
+  }
+
+  // 切到開單分頁
+  switchTab('order');
+  toast('✓ 已帶入 ' + c.name + ' 的資料', 'ok');
+
+  // 關閉下拉
+  closeCustomerDropdown();
+}
+
+// ── 搜尋下拉 ────────────────────────────
+function showCustomerDropdown() {
+  filterCustomerDropdown();
+  document.addEventListener('click', closeDropdownOnClickOutside);
+}
+
+function filterCustomerDropdown() {
+  var q = (document.getElementById('customerSearch')?.value || '').trim().toLowerCase();
+  var dd = document.getElementById('customerDropdown');
+  if (!dd) return;
+
+  var list = q
+    ? _customers.filter(c => c.name.toLowerCase().includes(q) || (c.phone||'').includes(q))
+    : _customers.slice(0, 8); // 無搜尋時顯示前8筆
+
+  if (!list.length) {
+    dd.style.display = 'none'; return;
+  }
+
+  dd.innerHTML = list.map(c => {
+    var items = [];
+    try { items = JSON.parse(c.items || '[]'); } catch(e) {}
+    var itemStr = items.map(i => i.name + '×' + i.qty).join('、') || '未設定品項';
+    return `<div class="cd-item" onclick="applyCustomer('${c.id}')">
+      <div class="cd-name">${c.name} <span style="font-weight:400;color:var(--text-m);">📞 ${c.phone||''}</span></div>
+      <div class="cd-meta">🛒 ${itemStr}${c.payment ? '　💳 ' + c.payment : ''}</div>
+    </div>`;
+  }).join('');
+  dd.style.display = 'block';
+}
+
+function closeCustomerDropdown() {
+  var dd = document.getElementById('customerDropdown');
+  if (dd) dd.style.display = 'none';
+  var inp = document.getElementById('customerSearch');
+  if (inp) inp.value = '';
+  document.removeEventListener('click', closeDropdownOnClickOutside);
+}
+
+function closeDropdownOnClickOutside(e) {
+  var bar = document.getElementById('customerQuickBar');
+  if (bar && !bar.contains(e.target)) closeCustomerDropdown();
+}
+
+// ── 開單成功後更新客戶訂單計數 ──────────
+async function incrementCustomerOrderCount(name, phone) {
+  var c = _customers.find(c => c.name === name && c.phone == phone);
+  if (c) await api({ action: 'customerIncrementOrder', id: c.id });
+}
 function openCancelModal(orderId, orderName, shipDate) {
   // 移除舊的 modal（若有）
   var old = document.getElementById('cancelModalOverlay');
