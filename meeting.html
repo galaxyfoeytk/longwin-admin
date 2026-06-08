@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>會議記錄 — 龍吟後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1rem;background:var(--surface);border-radius:var(--r) var(--r) 0 0;padding:0 1rem;}
+.tab-btn{padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text-m);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--font);}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
+.tab-pane{display:none;}.tab-pane.active{display:block;}
+
+/* ── 會議卡片 ── */
+.meeting-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:10px;overflow:hidden;}
+.meeting-card-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:8px;cursor:pointer;user-select:none;}
+.meeting-card-head:hover{background:var(--bg);}
+.mc-title{font-size:14px;font-weight:700;}
+.mc-meta{font-size:12px;color:var(--text-m);margin-top:2px;}
+.mc-badge{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--blue-l);color:var(--blue-d);font-weight:500;}
+.meeting-body{padding:14px;display:none;}
+.meeting-body.open{display:block;}
+.mb-section{margin-bottom:14px;}
+.mb-section-title{font-size:12px;font-weight:600;color:var(--text-m);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;}
+.mb-content{font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap;}
+
+/* ── 交辦事項列 ── */
+.action-item-row{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg);border-radius:var(--rx);margin-bottom:5px;}
+.ai-num{font-size:11px;color:var(--teal);font-weight:700;min-width:20px;margin-top:2px;}
+.ai-body{flex:1;}
+.ai-title{font-size:13px;font-weight:500;}
+.ai-meta{font-size:11px;color:var(--text-m);margin-top:2px;}
+.ai-synced{font-size:10px;background:var(--teal-l);color:var(--teal);border-radius:20px;padding:1px 7px;display:inline-block;margin-top:3px;}
+
+/* ── 新增表單 ── */
+.textarea-styled{width:100%;border:1px solid var(--border-md);border-radius:var(--rx);padding:10px 12px;font-size:13px;font-family:var(--font);color:var(--text);background:var(--surface);resize:vertical;outline:none;line-height:1.7;}
+.textarea-styled:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(24,95,165,.1);}
+
+/* ── 交辦事項行 (表單內) ── */
+.action-form-row{background:var(--bg);border-radius:var(--rx);padding:10px 12px;margin-bottom:6px;border:1px solid var(--border);}
+.afr-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.afr-num{font-size:11px;font-weight:700;color:var(--teal);min-width:18px;}
+.afr-del{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text-h);font-size:14px;}
+.afr-del:hover{color:var(--red);}
+
+/* ── 成員選擇器 ── */
+.member-pill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border-md);border-radius:20px;padding:4px 10px;font-size:12px;margin:2px;cursor:pointer;user-select:none;background:var(--surface);color:var(--text-m);}
+.member-pill.selected{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:500;}
+
+/* ── spin ── */
+.spin{width:13px;height:13px;border:2px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-2px;margin-right:5px;}
+
+/* ── 參與人標籤 ── */
+.attendee-chip{display:inline-flex;align-items:center;font-size:11px;background:var(--purple-l);color:var(--purple);border-radius:20px;padding:2px 8px;font-weight:500;margin:2px;}
+</style>
+</head>
+<body>
+<div class="tb">
+  <div class="tbl" onclick="goHome()">📝</div>
+  <div class="page-title-wrap">
+    <div class="page-title-main" id="page-title">會議記錄</div>
+    <div class="page-title-sub" id="page-sub">記錄會議重點・自動同步交辦事項</div>
+  </div>
+  <div class="tbr">
+    <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
+    <button class="lgb" onclick="goHome()">🏠 主頁</button>
+    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('new')">✏️ 新增會議記錄</button>
+    <button class="tab-btn" onclick="switchTab('history')">📚 歷史記錄</button>
+  </div>
+
+  <!-- ═══ 新增 ═══ -->
+  <div id="tab-new" class="tab-pane active">
+    <div class="fc">
+      <div class="fct">📝 會議基本資訊</div>
+      <div class="fr">
+        <div>
+          <label class="ffl">會議日期 <span style="color:var(--red)">*</span></label>
+          <input type="date" class="ffi" id="m-date">
+        </div>
+        <div>
+          <label class="ffl">會議主題 <span style="color:var(--red)">*</span></label>
+          <input type="text" class="ffi" id="m-title" placeholder="如：6月例行店務會議">
+        </div>
+      </div>
+      <div class="fr one">
+        <div>
+          <label class="ffl">出席人員</label>
+          <div id="attendees-pills" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+            <span class="member-pill" onclick="toggleAttendee(this,'Brian')">Brian</span>
+            <span class="member-pill" onclick="toggleAttendee(this,'紘誠')">紘誠</span>
+            <span class="member-pill" onclick="toggleAttendee(this,'美君')">美君</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc">
+      <div class="fct">📋 會議內容</div>
+      <div style="margin-bottom:12px;">
+        <label class="ffl">討論重點 / 會議摘要</label>
+        <textarea class="textarea-styled" id="m-summary" rows="5" placeholder="記錄本次會議的討論重點、決議事項…"></textarea>
+      </div>
+      <div>
+        <label class="ffl">其他備註</label>
+        <textarea class="textarea-styled" id="m-note" rows="2" placeholder="下次會議時間、補充說明…"></textarea>
+      </div>
+    </div>
+
+    <div class="fc">
+      <div class="fct">
+        ✅ 交辦事項
+        <span style="font-size:11px;color:var(--teal);background:var(--teal-l);border-radius:20px;padding:2px 8px;margin-left:6px;">自動同步至交辦看板</span>
+      </div>
+      <div id="action-items-form"></div>
+      <button class="sbtn" style="height:32px;font-size:12px;background:var(--gray);margin-top:4px;" onclick="addActionRow()">＋ 新增交辦事項</button>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:1rem;">
+      <button class="sbtn" style="background:var(--gray);height:38px;" onclick="resetMeetingForm()">重填</button>
+      <button class="sbtn g" style="height:38px;" id="saveMeetingBtn" onclick="saveMeeting()">💾 儲存會議記錄</button>
+    </div>
+  </div>
+
+  <!-- ═══ 歷史 ═══ -->
+  <div id="tab-history" class="tab-pane">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:13px;color:var(--text-m);">點擊展開查看完整記錄</div>
+      <button class="sbtn g" style="height:32px;font-size:12px;" onclick="loadHistory()">🔄 重新整理</button>
+    </div>
+    <div id="historyList"><div style="text-align:center;padding:2rem;color:var(--text-h);font-size:13px;">載入中…</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・會議記錄</span></div>
+
+<script src="base.js"></script>
+<script>
+var MEMBERS = ['Brian','紘誠','美君'];
+var _actionCount = 0;
+var _meetings = [];
+
+window.addEventListener('load', () => {
+  var u = buildSubHeader('會議記錄', '記錄會議重點・自動同步交辦事項');
+  if (!u) return;
+
+  // 設定今天日期
+  document.getElementById('m-date').value = today;
+  addActionRow(); // 預設一筆
+});
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab-btn')[ name === 'new' ? 0 : 1 ].classList.add('active');
+  if (name === 'history') loadHistory();
+}
+
+// ════════════════════════════════════════
+// 出席人員
+// ════════════════════════════════════════
+function toggleAttendee(el, name) {
+  el.classList.toggle('selected');
+}
+
+function getAttendees() {
+  return [...document.querySelectorAll('#attendees-pills .member-pill.selected')].map(el => el.textContent);
+}
+
+// ════════════════════════════════════════
+// 交辦事項行（表單內）
+// ════════════════════════════════════════
+function addActionRow(prefill) {
+  _actionCount++;
+  var idx = _actionCount;
+  var p = prefill || {};
+  var container = document.getElementById('action-items-form');
+  var div = document.createElement('div');
+  div.className = 'action-form-row';
+  div.id = 'afr-' + idx;
+  div.innerHTML = `
+    <div class="afr-head">
+      <span class="afr-num">#${idx}</span>
+      <span style="font-size:13px;font-weight:500;flex:1;">交辦事項 ${idx}</span>
+      <button class="afr-del" onclick="this.closest('.action-form-row').remove()">✕</button>
+    </div>
+    <div class="fr one" style="margin-bottom:6px;">
+      <div><label class="ffl">事項內容 <span style="color:var(--red)">*</span></label>
+        <input class="ffi" name="ai-title" placeholder="具體說明交辦工作內容" value="${p.title||''}">
+      </div>
+    </div>
+    <div class="fr" style="margin-bottom:6px;">
+      <div>
+        <label class="ffl">主要負責人</label>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+          ${MEMBERS.map(m => `<span class="member-pill${p.owner===m?' selected':''}" onclick="pickRowOwner(this)">${m}</span>`).join('')}
+        </div>
+      </div>
+      <div><label class="ffl">截止日期</label>
+        <input type="date" class="ffi" name="ai-deadline" value="${p.deadline||''}">
+      </div>
+    </div>
+    <div>
+      <label class="ffl">共同協作（可多選）</label>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+        ${MEMBERS.map(m => `<span class="member-pill" style="background:var(--surface);border-color:var(--border-md);" onclick="toggleRowCollab(this)">${m}</span>`).join('')}
+      </div>
+    </div>`;
+  container.appendChild(div);
+}
+
+function pickRowOwner(el) {
+  var group = el.closest('div').querySelectorAll('.member-pill');
+  group.forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function toggleRowCollab(el) {
+  el.classList.toggle('selected');
+}
+
+function getActionItems() {
+  return [...document.querySelectorAll('.action-form-row')].map(row => {
+    var title = row.querySelector('[name="ai-title"]')?.value.trim() || '';
+    var deadline = row.querySelector('[name="ai-deadline"]')?.value || '';
+    var owner = row.querySelector('.member-pill.selected')?.textContent || '';
+    // collabs = member-pills in last div (不是負責人那行)
+    var collabDivs = row.querySelectorAll('div > div.member-pill.selected');
+    return { title, owner, deadline };
+  }).filter(a => a.title);
+}
+
+// ════════════════════════════════════════
+// 儲存會議記錄
+// ════════════════════════════════════════
+async function saveMeeting() {
+  var date = document.getElementById('m-date').value;
+  var title = document.getElementById('m-title').value.trim();
+  if (!date || !title) { toast('請填寫會議日期與主題', 'er'); return; }
+
+  var summary = document.getElementById('m-summary').value.trim();
+  var note = document.getElementById('m-note').value.trim();
+  var attendees = getAttendees();
+
+  // 蒐集所有交辦事項
+  var actions = [];
+  document.querySelectorAll('.action-form-row').forEach(row => {
+    var t = row.querySelector('[name="ai-title"]')?.value.trim();
+    if (!t) return;
+    var deadline = row.querySelector('[name="ai-deadline"]')?.value || '';
+    // 負責人：第一個 div 裡 selected 的 member-pill
+    var ownerPills = row.querySelectorAll('.fr:nth-child(2) .member-pill.selected');
+    var owner = ownerPills.length ? ownerPills[0].textContent : '';
+    // 協作：最後一個 div 裡 selected 的 member-pill
+    var collabPills = row.querySelectorAll('div:last-child .member-pill.selected');
+    var collabs = [...collabPills].map(p => p.textContent);
+    actions.push({ title: t, owner, deadline, collabs });
+  });
+
+  var btn = document.getElementById('saveMeetingBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>儲存中…';
+
+  var meetingId = Date.now().toString();
+  var r = await api({
+    action: 'meetingSave',
+    id: meetingId,
+    date, title,
+    attendees: JSON.stringify(attendees),
+    summary, note,
+    actions: JSON.stringify(actions)
+  });
+
+  if (!r.ok) {
+    toast('儲存失敗：' + (r.error || ''), 'er');
+    btn.disabled = false; btn.innerHTML = '💾 儲存會議記錄';
+    return;
+  }
+
+  // 自動同步交辦事項到任務看板
+  var synced = 0;
+  for (var a of actions) {
+    var tr = await api({
+      action: 'taskSave',
+      title: a.title,
+      owner: a.owner,
+      collabs: JSON.stringify(a.collabs || []),
+      deadline: a.deadline,
+      status: '待處理',
+      note: '來自會議：' + title + '（' + date + '）',
+      meetingId, meetingTitle: title
+    });
+    if (tr.ok) synced++;
+  }
+
+  toast(`✓ 會議記錄已儲存，${synced} 項交辦已同步至任務看板`, 'ok');
+  btn.disabled = false; btn.innerHTML = '💾 儲存會議記錄';
+  resetMeetingForm();
+}
+
+function resetMeetingForm() {
+  document.getElementById('m-date').value = today;
+  document.getElementById('m-title').value = '';
+  document.getElementById('m-summary').value = '';
+  document.getElementById('m-note').value = '';
+  document.querySelectorAll('#attendees-pills .member-pill').forEach(p => p.classList.remove('selected'));
+  document.getElementById('action-items-form').innerHTML = '';
+  _actionCount = 0;
+  addActionRow();
+}
+
+// ════════════════════════════════════════
+// 歷史記錄
+// ════════════════════════════════════════
+async function loadHistory() {
+  document.getElementById('historyList').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-h);font-size:13px;">載入中…</div>';
+  var r = await api({ action: 'meetingGetAll' });
+  _meetings = r.ok ? (r.data || []) : [];
+  renderHistory();
+}
+
+function renderHistory() {
+  var el = document.getElementById('historyList');
+  if (!_meetings.length) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-h);font-size:13px;">尚無會議記錄</div>';
+    return;
+  }
+
+  var sorted = [..._meetings].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  el.innerHTML = sorted.map(m => {
+    var attendees = [];
+    try { attendees = JSON.parse(m.attendees || '[]'); } catch(e){}
+    var actions = [];
+    try { actions = JSON.parse(m.actions || '[]'); } catch(e){}
+
+    var attendeeHtml = attendees.map(a => `<span class="attendee-chip">${a}</span>`).join('');
+    var actionsHtml = actions.length ? actions.map((a, i) => `
+      <div class="action-item-row">
+        <span class="ai-num">${i+1}</span>
+        <div class="ai-body">
+          <div class="ai-title">${a.title}</div>
+          <div class="ai-meta">${a.owner ? '👤 ' + a.owner : ''}${a.deadline ? '　📅 ' + a.deadline : ''}</div>
+          <span class="ai-synced">✓ 已同步至任務看板</span>
+        </div>
+      </div>`).join('') : '<div style="font-size:13px;color:var(--text-h);">無交辦事項</div>';
+
+    return `<div class="meeting-card">
+      <div class="meeting-card-head" onclick="toggleMeeting('mc-${m.id}')">
+        <div>
+          <div class="mc-title">${m.title}</div>
+          <div class="mc-meta">📅 ${m.date}　${attendeeHtml||'<span style="color:var(--text-h)">無出席記錄</span>'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${actions.length ? `<span class="mc-badge">${actions.length} 項交辦</span>` : ''}
+          <span style="color:var(--text-h);font-size:18px;" id="arr-${m.id}">›</span>
+        </div>
+      </div>
+      <div class="meeting-body" id="mc-${m.id}">
+        ${m.summary ? `<div class="mb-section">
+          <div class="mb-section-title">會議重點</div>
+          <div class="mb-content">${m.summary}</div>
+        </div>` : ''}
+        <div class="mb-section">
+          <div class="mb-section-title">交辦事項 (${actions.length})</div>
+          ${actionsHtml}
+        </div>
+        ${m.note ? `<div class="mb-section">
+          <div class="mb-section-title">備註</div>
+          <div class="mb-content">${m.note}</div>
+        </div>` : ''}
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          <button class="sbtn" style="height:28px;font-size:11px;background:var(--gray);" onclick="deleteMeeting('${m.id}')">刪除記錄</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleMeeting(id) {
+  var body = document.getElementById(id);
+  if (!body) return;
+  body.classList.toggle('open');
+  var meetingId = id.replace('mc-', '');
+  var arr = document.getElementById('arr-' + meetingId);
+  if (arr) arr.textContent = body.classList.contains('open') ? '˅' : '›';
+}
+
+async function deleteMeeting(id) {
+  if (!confirm('確定刪除此會議記錄？（已同步的交辦事項不受影響）')) return;
+  var r = await api({ action: 'meetingDelete', id });
+  if (r.ok) { toast('已刪除', 'ok'); loadHistory(); }
+  else toast('刪除失敗', 'er');
+}
+</script>
+</body>
+</html>

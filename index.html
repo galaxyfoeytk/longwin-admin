@@ -197,6 +197,11 @@ html,body{min-height:100%;font-family:var(--font);font-size:14px;background:var(
     </div>
 
     <div class="sec">
+      <div class="sec-title">🗂 管理協作</div>
+      <div class="grid" id="g-manage"></div>
+    </div>
+
+    <div class="sec">
       <div class="sec-title">⚙️ 系統管理</div>
       <div class="grid" id="g-system"></div>
     </div>
@@ -239,6 +244,11 @@ const GROUPS = {
   'g-schedule': [
     {e:'📅',cl:'ic-purple',n:'週排程日曆',d:'出貨・叫貨・行程安排',href:'calendar.html',r:[1,2,3,4]},
     {e:'⏱',cl:'ic-gray',n:'時數記錄',d:'員工出勤時數',href:'hours.html',r:[1,2,3,4]},
+  ],
+  'g-manage': [
+    {e:'📝',cl:'ic-blue',n:'會議記錄',d:'記錄會議重點・交辦自動同步',href:'meeting.html',r:[1,2,3,4]},
+    {e:'📓',cl:'ic-teal',n:'店長週日誌',d:'每週回顧・亮點問題・目標設定',href:'journal.html',r:[1,2,3]},
+    {e:'✅',cl:'ic-amber',n:'交辦事項',d:'任務追蹤・負責人・逾期通知',href:'tasks.html',r:[1,2,3,4]},
   ],
   'g-system': [
     {e:'👥',cl:'ic-gray',n:'帳號管理',d:'帳號設定・角色指派',href:'users.html',r:[1]},
