@@ -764,6 +764,40 @@ async function parseMessage() {
   var todayStr = new Date().toISOString().slice(0, 10);
   var prodList = PRODUCTS.map(p => p.name + '（別名：' + p.aliases.join('、') + '）').join('；');
 
+  var prompt = `你是台灣飲料宅配系統的訂單解析助理。請從以下客戶訊息中精確提取訂單資訊，只回傳 JSON，不要任何說明或 markdown。
+
+【品項清單】
+${prodList}
+
+【解析規則】
+1. address：收件地址，通常以縣市或郵遞區號開頭，只取地址本身不含姓名
+2. name：收件人「姓名」，通常是2-4個中文字，注意：
+   - 若有括號如「林鎂齡（國際優生學院）」，name 只取「林鎂齡」，括號內容放 note
+   - 絕對不能把付款方式（ATM、貨到付款、現金等）當成姓名
+3. phone：手機或市話號碼，純數字或含 0/+886 格式
+4. shipDate：出貨日期，格式 YYYY-MM-DD。今天是 ${todayStr}。
+   - 「週X寄」「週X出」推算最近的那個週X
+   - 「明天」「後天」依今天推算
+   - 無日期資訊則留空 ""
+5. payment：只能是以下之一：ATM、貨到付款、LINE Pay、現金、不收款、""
+6. items：品項陣列，注意：
+   - 品項名稱必須完全符合品項清單中的名稱
+   - 「無糖」和「微糖」是不同品項，務必區分
+   - 數字＋品項名 或 品項名＋數字 都要識別（如「7罐無糖仙草草」「仙草*6」「杏仁x3」）
+   - qty 單位是「罐」，若寫「箱」請換算（1箱=12罐）
+7. note：備註，包含：
+   - 到貨時間（早上到、下午到、中午前到等）
+   - 電聯需求（到貨前電聯、電話確認等）
+   - 括號內的機構名稱
+   - 其他特殊需求
+   - 不要把品項、地址、姓名、電話重複放進 note
+
+【客戶訊息】
+${raw}
+
+回傳格式（純 JSON）：
+{"address":"","name":"","phone":"","items":[{"name":"品項清單中的名稱","qty":數量}],"shipDate":"","payment":"","note":""}`;
+
   try {
     var res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -771,12 +805,7 @@ async function parseMessage() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
-        messages: [{ role: 'user', content: `從客戶訊息提取宅配資訊，只回傳JSON不要任何說明。
-品項清單：${prodList}
-注意：「無糖」和「微糖」是不同品項，請仔細區分，並以完整品項名稱（如「無糖仙草茶」vs「微糖仙草茶」）回傳。
-今天：${todayStr}，週X請推算最近的那天。
-回傳格式：{"address":"","name":"","phone":"","items":[{"name":"需完全符合品項清單名稱","qty":數量}],"shipDate":"YYYY-MM-DD或空","payment":"ATM或貨到付款或LINE Pay或不收款或現金或空","note":""}
-客戶訊息：\n${raw}` }]
+        messages: [{ role: 'user', content: prompt }]
       })
     });
     if (!res.ok) throw new Error('api_fail');
