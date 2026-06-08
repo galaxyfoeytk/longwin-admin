@@ -1515,13 +1515,75 @@ function viewPhoto(url) {
 }
 
 // ════════════════════════════════════════
-// 16-18 點取件提醒
+// ════════════════════════════════════════
+// 定時提醒（13:30 致電 + 16-18 取件）
 // ════════════════════════════════════════
 function startPickupReminder() {
-  setInterval(checkPickupReminder, 60000); // 每分鐘檢查
-  checkPickupReminder();
+  setInterval(checkReminders, 60000); // 每分鐘檢查
+  checkReminders();
 }
 
+async function checkReminders() {
+  await checkCallReminder();
+  await checkPickupReminder();
+}
+
+// ── 13:30 尚未致電提醒 ──────────────────
+async function checkCallReminder() {
+  var now = new Date();
+  var h = now.getHours();
+  var m = now.getMinutes();
+
+  // 只在 13:30–13:35 觸發
+  if (h !== 13 || m < 30 || m > 35) return;
+
+  var todayStr = now.toISOString().slice(0, 10);
+  var key = 'lw_call_remind_' + todayStr;
+  if (localStorage.getItem(key) === '1') return;
+
+  var orders = (window._orders || []).filter(o => o.shipDate === todayStr && o.status !== '已取消');
+  if (!orders.length) return;
+
+  // 找出尚未致電的訂單
+  var uncalled = [];
+  for (var o of orders) {
+    delete _flowCache[o.id];
+    var state = await loadFlowState(o.id);
+    if (!state['called']) {
+      var items = [];
+      try { items = JSON.parse(o.items || '[]'); } catch(e) {}
+      var itemStr = items.map(i => i.name + '×' + i.qty).join('、');
+      uncalled.push(o.name + '（' + itemStr + '）');
+    }
+  }
+
+  if (uncalled.length > 0) {
+    localStorage.setItem(key, '1');
+
+    var msg = '📞 龍吟出貨提醒｜13:30 尚未致電\n' +
+      '📅 ' + todayStr + '\n' +
+      '以下 ' + uncalled.length + ' 張訂單尚未致電，請盡快聯絡！\n' +
+      uncalled.map(n => '・' + n).join('\n');
+
+    toast('📞 13:30 提醒：' + uncalled.length + ' 張訂單尚未致電！', 'er');
+
+    if (typeof Notification !== 'undefined') {
+      if (Notification.permission === 'granted') {
+        new Notification('📞 龍吟出貨｜尚未致電', {
+          body: uncalled.length + ' 張訂單尚未致電：' + uncalled.map(n => n.split('（')[0]).join('、'),
+        });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission();
+      }
+    }
+
+    sendLineNotify(msg);
+  } else {
+    localStorage.setItem(key, '1'); // 全部已致電，也標記不再觸發
+  }
+}
+
+// ── 16-18 點尚未取件提醒 ────────────────
 async function checkPickupReminder() {
   var now = new Date();
   var h = now.getHours();
@@ -1533,21 +1595,18 @@ async function checkPickupReminder() {
 
   var todayStr = now.toISOString().slice(0, 10);
   var reminderKey = 'lw_pickup_remind_' + todayStr + '_' + h;
-  if (localStorage.getItem(reminderKey) === '1') return; // 此小時今天已提醒過
+  if (localStorage.getItem(reminderKey) === '1') return;
 
-  // 取得今天的訂單，找出尚未取件的（從 Sheets 取最新狀態）
-  var orders = (window._orders || []).filter(o => o.shipDate === todayStr);
+  var orders = (window._orders || []).filter(o => o.shipDate === todayStr && o.status !== '已取消');
   if (!orders.length) return;
 
-  // 強制重新讀取今日所有訂單流程狀態（確保資料最新）
   var unpicked = [];
   for (var o of orders) {
-    // 清除快取，強制重取
     delete _flowCache[o.id];
     var state = await loadFlowState(o.id);
     if (!state['picked']) {
       var items = [];
-      try { items = JSON.parse(o.items||'[]'); } catch(e){}
+      try { items = JSON.parse(o.items || '[]'); } catch(e) {}
       var itemStr = items.map(i => i.name + '×' + i.qty).join('、');
       unpicked.push(o.name + '（' + itemStr + '）');
     }
@@ -1560,25 +1619,20 @@ async function checkPickupReminder() {
       '以下 ' + unpicked.length + ' 張訂單尚未取件，請確認！\n' +
       unpicked.map(n => '・' + n).join('\n');
 
-    // 頁面 toast 通知
     toast('⏰ ' + h + ':00 提醒：' + unpicked.length + ' 張訂單尚未取件！', 'er');
 
-    // 瀏覽器推播通知
     if (typeof Notification !== 'undefined') {
       if (Notification.permission === 'granted') {
         new Notification('🚚 龍吟出貨提醒 ' + h + ':00', {
-          body: unpicked.length + ' 張訂單尚未取件：' + unpicked.map(n=>n.split('（')[0]).join('、'),
-          icon: '📦'
+          body: unpicked.length + ' 張訂單尚未取件：' + unpicked.map(n => n.split('（')[0]).join('、'),
         });
       } else if (Notification.permission !== 'denied') {
         Notification.requestPermission();
       }
     }
 
-    // 發送 LINE 群組通知
     sendLineNotify(msg);
   } else {
-    // 全部已取件，不需提醒（也標記避免重複查）
     localStorage.setItem(reminderKey, '1');
   }
 }
