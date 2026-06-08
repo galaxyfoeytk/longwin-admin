@@ -114,6 +114,20 @@
 
 /* ── spinner ── */
 .spin{width:13px;height:13px;border:2px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-2px;margin-right:5px;}
+
+/* ── 取消訂單 ── */
+.flow-card.cancelled{opacity:.5;background:var(--bg);}
+.flow-card.cancelled .flow-step-check{pointer-events:none;cursor:default;}
+.cancelled-badge{display:inline-flex;align-items:center;font-size:11px;background:#FDECEA;color:#C62828;border-radius:20px;padding:2px 9px;font-weight:600;margin-left:4px;}
+.cancel-btn{height:26px;padding:0 10px;font-size:11px;border:1px solid #FFCDD2;border-radius:var(--rx);background:transparent;color:#E53935;cursor:pointer;font-family:var(--font);transition:all .15s;}
+.cancel-btn:hover{background:#FDECEA;}
+.cancel-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.cancel-modal{background:var(--surface);border-radius:var(--r);padding:20px 22px;width:min(340px,90vw);box-shadow:0 8px 32px rgba(0,0,0,.18);}
+.cancel-modal h3{font-size:15px;font-weight:700;margin:0 0 4px;}
+.cancel-modal p{font-size:13px;color:var(--text-m);margin:0 0 12px;}
+.cancel-modal textarea{width:100%;border:1px solid var(--border-md);border-radius:var(--rx);padding:8px 10px;font-size:13px;font-family:var(--font);color:var(--text);background:var(--bg);resize:none;outline:none;box-sizing:border-box;}
+.cancel-modal textarea:focus{border-color:var(--red);}
+.cancel-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
 </style>
 </head>
 <body>
@@ -841,7 +855,9 @@ function renderSummary() {
 
   var totalQty = 0;
   var itemTotals = {};
-  filtered.forEach(o => {
+  var activeOrders = filtered.filter(o => o.status !== '已取消');
+  var cancelledOrders = filtered.filter(o => o.status === '已取消');
+  activeOrders.forEach(o => {
     var items = [];
     try { items = JSON.parse(o.items || '[]'); } catch (e) {}
     items.forEach(it => {
@@ -851,7 +867,7 @@ function renderSummary() {
   });
 
   var html = `<div class="stat-row">
-    <div class="stat-card"><div class="sc-label">出貨單數</div><div class="sc-val">${filtered.length}</div><div class="sc-sub">張</div></div>
+    <div class="stat-card"><div class="sc-label">出貨單數</div><div class="sc-val">${activeOrders.length}</div><div class="sc-sub">張${cancelledOrders.length ? '（另 ' + cancelledOrders.length + ' 張已取消）' : ''}</div></div>
     <div class="stat-card"><div class="sc-label">總出貨量</div><div class="sc-val">${totalQty}</div><div class="sc-sub">罐 ≈ ${calcBoxText(totalQty)}</div></div>
   </div>`;
 
@@ -864,7 +880,7 @@ function renderSummary() {
   html += `</tbody></table>`;
 
   html += `<div style="font-size:12px;font-weight:600;color:var(--text-m);margin-bottom:8px;">出貨明細</div>`;
-  filtered.forEach(o => {
+  activeOrders.forEach(o => {
     var items = [];
     try { items = JSON.parse(o.items || '[]'); } catch (e) {}
     var qty = items.reduce((s, i) => s + i.qty, 0);
@@ -887,6 +903,27 @@ function renderSummary() {
     </div>`;
   });
 
+  if (cancelledOrders.length) {
+    html += `<div style="font-size:12px;font-weight:600;color:#C62828;margin:14px 0 8px;">已取消訂單</div>`;
+    cancelledOrders.forEach(o => {
+      var items = [];
+      try { items = JSON.parse(o.items || '[]'); } catch (e) {}
+      var itemStr = items.map(i => i.name + ' ×' + i.qty).join('、');
+      html += `<div class="order-card" style="opacity:.6;border-color:#FFCDD2;">
+        <div class="oc-head">
+          <div>
+            <div class="oc-name" style="text-decoration:line-through;color:var(--text-m);">${o.name} <span style="font-size:11px;background:#FDECEA;color:#C62828;border-radius:20px;padding:1px 8px;font-weight:600;">已取消</span></div>
+            <div class="oc-date">${o.shipDate} &nbsp; ${o.phone}</div>
+          </div>
+          <button class="del-btn" onclick="deleteOrder('${o.id}')">刪除</button>
+        </div>
+        <div class="oc-items">${o.address}</div>
+        <div class="oc-items" style="margin-top:3px;text-decoration:line-through;">${itemStr}</div>
+        ${o.cancelReason ? `<div style="font-size:12px;color:#C62828;margin-top:4px;">取消原因：${o.cancelReason}</div>` : ''}
+      </div>`;
+    });
+  }
+
   container.innerHTML = html;
 }
 
@@ -895,6 +932,88 @@ async function deleteOrder(id) {
   var r = await api({ action: 'deliveryDelete', id });
   if (r.ok) { toast('已刪除', 'ok'); loadAndRender(); }
   else toast('刪除失敗', 'er');
+}
+
+// ════════════════════════════════════════
+// 取消訂單
+// ════════════════════════════════════════
+function openCancelModal(orderId, orderName, shipDate) {
+  // 移除舊的 modal（若有）
+  var old = document.getElementById('cancelModalOverlay');
+  if (old) old.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'cancelModalOverlay';
+  overlay.className = 'cancel-modal-overlay';
+  overlay.innerHTML = `
+    <div class="cancel-modal" onclick="event.stopPropagation()">
+      <h3>取消訂單</h3>
+      <p>${orderName} 的訂單將標記為已取消，資料保留供備查。</p>
+      <label style="font-size:12px;color:var(--text-m);display:block;margin-bottom:6px;">取消原因（選填）</label>
+      <textarea id="cancelReasonInput" rows="3" placeholder="例如：客戶來電取消、地址有誤…"></textarea>
+      <div class="cancel-modal-actions">
+        <button class="sbtn" style="background:var(--gray);height:34px;font-size:13px;" onclick="closeCancelModal()">取消</button>
+        <button class="sbtn" style="background:#E53935;height:34px;font-size:13px;color:#fff;" onclick="confirmCancel('${orderId}','${orderName}','${shipDate}')">確認取消訂單</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', closeCancelModal);
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById('cancelReasonInput')?.focus(), 50);
+}
+
+function closeCancelModal() {
+  var el = document.getElementById('cancelModalOverlay');
+  if (el) el.remove();
+}
+
+async function confirmCancel(orderId, orderName, shipDate) {
+  var reason = (document.getElementById('cancelReasonInput')?.value || '').trim();
+  closeCancelModal();
+
+  toast('取消中…');
+  var r = await api({ action: 'deliveryCancel', id: orderId, reason });
+  if (!r.ok) { toast('取消失敗：' + (r.error || ''), 'er'); return; }
+
+  // 更新本地快取
+  var o = (window._orders || []).find(o => o.id === orderId);
+  if (o) { o.status = '已取消'; o.cancelReason = reason; }
+
+  toast('✓ 訂單已標記為取消', 'ok');
+
+  // 1. 補發取消通知
+  var items = [];
+  try { items = JSON.parse(o?.items || '[]'); } catch(e){}
+  var itemStr = items.map(i => i.name + ' ' + calcBoxText(i.qty)).join('、');
+  var cancelMsg = '❌ 龍吟出貨｜取消訂單\n' +
+    '📅 ' + _formatShipDateLabel(shipDate) + '\n' +
+    '👤 ' + orderName + '　' + itemStr +
+    (reason ? '\n📝 原因：' + reason : '');
+  sendLineNotify(cancelMsg);
+
+  // 2. 重發接龍（移除取消的單後）
+  sendChainNotify(shipDate);
+
+  // 3. 更新 UI
+  var card = document.getElementById('fc-' + orderId);
+  if (card) {
+    card.classList.add('cancelled');
+    // 更新 badge 與按鈕
+    var nameEl = card.querySelector('.flow-card-name');
+    if (nameEl && !nameEl.querySelector('.cancelled-badge')) {
+      var badge = document.createElement('span');
+      badge.className = 'cancelled-badge';
+      badge.textContent = '已取消';
+      nameEl.appendChild(badge);
+    }
+    var cancelBtn = card.querySelector('.cancel-btn');
+    if (cancelBtn) cancelBtn.remove();
+    // 步驟鎖定
+    card.querySelectorAll('.flow-step-check').forEach(el => el.style.pointerEvents = 'none');
+  }
+
+  // 紀錄
+  var u = JSON.parse(sessionStorage.getItem('longyinUser') || '{}');
+  api({ action: 'logSave', user: u.name || '', role: u.role || '', action: '取消', module: '宅配出貨', detail: orderName + (reason ? '・' + reason : '') });
 }
 
 // ════════════════════════════════════════
@@ -1017,7 +1136,8 @@ function _formatShipDateLabel(dateStr) {
 
 // 組出指定出貨日所有訂單的接龍訊息字串
 function buildChainMessage(shipDate) {
-  var orders = (window._orders || []).filter(o => o.shipDate === shipDate);
+  // 只列出非取消的訂單
+  var orders = (window._orders || []).filter(o => o.shipDate === shipDate && o.status !== '已取消');
   if (!orders.length) return '';
 
   var dateLabel = _formatShipDateLabel(shipDate);
@@ -1160,15 +1280,22 @@ async function renderFlow() {
       var prog = Math.round(doneCount / FLOW_STEPS.length * 100);
       var allDone = doneCount === FLOW_STEPS.length;
 
-      html += `<div class="flow-card" id="fc-${order.id}">
+      var isCancelled = order.status === '已取消';
+      html += `<div class="flow-card${isCancelled ? ' cancelled' : ''}" id="fc-${order.id}">
         <div class="flow-card-head">
           <div>
-            <div class="flow-card-name">${order.name} ${allDone ? '<span style="font-size:11px;background:#E8F5E9;color:#2E7D32;border-radius:20px;padding:1px 8px;">完成</span>' : ''}</div>
+            <div class="flow-card-name">${order.name}
+              ${allDone ? '<span style="font-size:11px;background:#E8F5E9;color:#2E7D32;border-radius:20px;padding:1px 8px;margin-left:4px;">完成</span>' : ''}
+              ${isCancelled ? '<span class="cancelled-badge">已取消</span>' : ''}
+            </div>
             <div class="flow-card-meta">${order.phone} ・ ${itemStr} ・ ${order.payment}</div>
           </div>
-          <div class="flow-card-progress">
-            <div class="flow-prog-bar" style="min-width:80px;"><div class="flow-prog-fill" style="width:${prog}%"></div></div>
-            <span class="flow-prog-txt">${doneCount}/${FLOW_STEPS.length}</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${!isCancelled ? `<button class="cancel-btn" onclick="openCancelModal('${order.id}','${order.name}','${date}')">取消訂單</button>` : ''}
+            <div class="flow-card-progress">
+              <div class="flow-prog-bar" style="min-width:80px;"><div class="flow-prog-fill" style="width:${prog}%"></div></div>
+              <span class="flow-prog-txt">${doneCount}/${FLOW_STEPS.length}</span>
+            </div>
           </div>
         </div>
         <div class="flow-steps">`;
