@@ -745,11 +745,23 @@ async function submitOrder() {
   });
   if (r.ok) {
     toast('✓ 出貨單已建立', 'ok');
-    // 發送「已確認」通知
-    var itemStr = items.map(i => i.name + 'x' + i.qty).join('、');
-    var totalQty = items.reduce((s,i) => s+i.qty, 0);
-    sendLineNotify('✅ 龍吟出貨 | 新增訂單\n👤 ' + name + '  ' + phone + '\n📦 ' + itemStr + '（' + calcBoxText(totalQty) + '）\n📅 出貨日：' + shipDate);
-    // 更新今日摘要
+
+    // 發送開單 LINE 通知（完整資訊，代替原本的「已確認」步驟）
+    var itemsStr = items.map(i => i.name + ' ×' + i.qty).join('、');
+    var totalQty2 = items.reduce((s,i) => s+i.qty, 0);
+    var lineMsg = [
+      '📦 龍吟新增出貨單',
+      '👤 ' + name + '　📞 ' + phone,
+      '📍 ' + address,
+      '📅 出貨日期：' + shipDate,
+      '🛒 ' + itemsStr + '（共 ' + calcBoxText(totalQty2) + '）',
+      '💳 付款：' + payment,
+    ];
+    var noteVal = getNoteValue();
+    if (noteVal) lineMsg.push('📝 備註：' + noteVal);
+    sendLineNotify(lineMsg.join('\n'));
+
+    // 更新快取 + 重刷流程
     try {
       var ro = await api({ action: 'deliveryGetAll' });
       window._orders = ro.ok ? (ro.data||[]) : [];
@@ -758,7 +770,7 @@ async function submitOrder() {
     } catch(e) {}
     // 操作紀錄
     var u = JSON.parse(sessionStorage.getItem('longyinUser') || '{}');
-    api({ action: 'logSave', user: u.name || '', role: u.role || '', action: '新增', module: '宅配出貨', detail: name + ' ' + itemStr });
+    await api({ action: 'logSave', user: u.name || '', role: u.role || '', action: '新增', module: '宅配出貨', detail: name + ' ' + items.map(i => i.name + 'x' + i.qty).join('、') });
     resetForm();
   } else {
     toast('✗ ' + (r.error || '儲存失敗'), 'er');
@@ -966,9 +978,10 @@ var FLOW_STEPS = [
   { key:'photo',      emoji:'📷', label:'封箱前拍照', notify:false, hasPhoto:true },
   { key:'packed',     emoji:'📦', label:'已打包',     notify:false },
   { key:'filled',     emoji:'📋', label:'已填單',     notify:false },
-  { key:'called',     emoji:'📞', label:'已致電',     notify:'batch' },
-  { key:'picked',     emoji:'🚚', label:'已取件',     notify:'batch' },
+  { key:'called',     emoji:'📞', label:'已致電',     notify:'daily_once', notifyType:'called' },
+  { key:'picked',     emoji:'🚚', label:'已取件',     notify:'daily_once', notifyType:'picked' },
 ];
+// 注意：「已確認」步驟已移除，開單時自動發 LINE 通知即視為確認
 
 // ════════════════════════════════════════
 // LINE Token
@@ -997,32 +1010,6 @@ async function testLineToken() {
 
 async function sendLineNotify(message) {
   await api({ action: 'lineNotify', message });
-}
-
-async function sendBatchStepNotify(stepKey, shipDate) {
-  var stepDef = FLOW_STEPS.find(s => s.key === stepKey);
-  if (!stepDef) return;
-  var label = stepDef.label;
-  var emoji = stepDef.emoji;
-
-  // 找當日所有訂單，列出已完成此步驟的
-  var todayOrders = (window._orders || []).filter(o => o.shipDate === shipDate);
-  var doneNames = [];
-  var pendingNames = [];
-  todayOrders.forEach(o => {
-    var state = _flowCache[o.id] || {};
-    if (state[stepKey]) doneNames.push(o.name);
-    else pendingNames.push(o.name);
-  });
-
-  var lines = [emoji + ' 龍吟出貨 | ' + label, '📅 出貨日：' + shipDate, '─────────────'];
-  lines.push('已完成（' + doneNames.length + '/' + todayOrders.length + '）：');
-  doneNames.forEach(n => lines.push('  ✓ ' + n));
-  if (pendingNames.length > 0) {
-    lines.push('尚未完成：');
-    pendingNames.forEach(n => lines.push('  ・' + n));
-  }
-  sendLineNotify(lines.join('\n'));
 }
 
 // ════════════════════════════════════════
@@ -1092,10 +1079,8 @@ async function renderFlow() {
     groups[o.shipDate].push(o);
   });
 
-  // 預載所有流程狀態
-  for (var o of orders) {
-    await loadFlowState(o.id);
-  }
+  // 並行預載所有流程狀態（大幅提升速度）
+  await Promise.all(orders.map(o => loadFlowState(o.id)));
 
   var html = '';
   var sortedDates = Object.keys(groups).sort();
@@ -1143,7 +1128,9 @@ async function renderFlow() {
         var done = !!state[step.key];
         var doneTime = state[step.key + '_time'] || '';
         var photos = state[step.key + '_photos'] || [];
-        var notifyBadge = step.notify ? '<span class="flow-step-notify">LINE 通知</span>' : '';
+        var notifyBadge = step.notify === 'daily_once'
+          ? '<span class="flow-step-notify">LINE 當日一次</span>'
+          : (step.notify ? '<span class="flow-step-notify">LINE 通知</span>' : '');
 
         html += `<div class="flow-step${done ? ' done' : ''}" id="fs-${order.id}-${step.key}">
           <div class="flow-step-check" onclick="toggleStep('${order.id}','${step.key}','${order.name}','${date}')">${done ? '✓' : ''}</div>
@@ -1189,15 +1176,69 @@ async function toggleStep(orderId, stepKey, orderName, shipDate) {
   _flowCache[orderId] = state;
   updateFlowCardDOM(orderId);
 
-  // 2. 背景儲存 + LINE 通知（不阻擋 UI）
+  // 2. 背景儲存（不阻擋 UI）
   saveFlowState(orderId, state);
+
+  // 3. 致電 / 取件：整合當日所有訂單，每天只發一次
   if (!wasDone) {
     var stepDef = FLOW_STEPS.find(s => s.key === stepKey);
-    if (stepDef && stepDef.notify === 'batch') {
-      // 批次通知：整合當日所有訂單該步驟的狀態一起發
-      sendBatchStepNotify(stepKey, shipDate);
+    if (stepDef && stepDef.notify === 'daily_once') {
+      sendDailyOnceNotify(stepDef.notifyType, shipDate);
     }
   }
+}
+
+// 當日整合通知（每個 type 每天只發一次，使用 localStorage 持久化）
+function _isDailyNotified(type, shipDate) {
+  var key = 'lw_notified_' + type + '_' + shipDate;
+  return localStorage.getItem(key) === '1';
+}
+function _markDailyNotified(type, shipDate) {
+  var key = 'lw_notified_' + type + '_' + shipDate;
+  localStorage.setItem(key, '1');
+  // 清除 7 天前的舊 key 避免累積
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 7);
+  var cutoffStr = cutoff.toISOString().slice(0,10);
+  Object.keys(localStorage).forEach(k => {
+    if (k.startsWith('lw_notified_')) {
+      var parts = k.split('_');
+      var dateStr = parts[parts.length - 1];
+      if (dateStr < cutoffStr) localStorage.removeItem(k);
+    }
+  });
+}
+
+async function sendDailyOnceNotify(type, shipDate) {
+  if (_isDailyNotified(type, shipDate)) return; // 今天已發過，不重複
+
+  // 取當天所有訂單的最新狀態，組合訊息
+  var orders = (window._orders || []).filter(o => o.shipDate === shipDate);
+  if (!orders.length) return;
+
+  // 統計已完成該步驟的訂單
+  var doneOrders = [];
+  var totalOrders = orders.length;
+  for (var o of orders) {
+    var st = _flowCache[o.id] || {};
+    if (st[type]) {
+      var items = [];
+      try { items = JSON.parse(o.items||'[]'); } catch(e){}
+      var itemStr = items.map(i => i.name + '×' + i.qty).join('、');
+      doneOrders.push(o.name + '（' + itemStr + '）');
+    }
+  }
+  if (!doneOrders.length) return;
+
+  _markDailyNotified(type, shipDate);
+
+  var emoji = type === 'called' ? '📞' : '🚚';
+  var label = type === 'called' ? '已致電宅配' : '已取件完成';
+  var msg = emoji + ' 龍吟出貨｜' + label + '\n' +
+    '📅 出貨日：' + shipDate + '\n' +
+    '📦 共 ' + totalOrders + ' 張訂單\n' +
+    doneOrders.map(n => '・' + n).join('\n');
+  sendLineNotify(msg);
 }
 
 function updateFlowCardDOM(orderId) {
@@ -1300,8 +1341,6 @@ function viewPhoto(url) {
 // ════════════════════════════════════════
 // 16-18 點取件提醒
 // ════════════════════════════════════════
-var _lastReminderHour = -1;
-
 function startPickupReminder() {
   setInterval(checkPickupReminder, 60000); // 每分鐘檢查
   checkPickupReminder();
@@ -1311,34 +1350,60 @@ async function checkPickupReminder() {
   var now = new Date();
   var h = now.getHours();
   var m = now.getMinutes();
-  // 只在 16、17、18 點的 0-5 分內觸發，且每小時只觸發一次
+
+  // 只在 16、17、18 點整點後 5 分鐘內觸發
   if (h < 16 || h > 18) return;
   if (m > 5) return;
-  if (_lastReminderHour === h) return;
 
-  // 取得今天的訂單，找出尚未取件的
-  var todayStr = new Date().toISOString().slice(0, 10);
+  var todayStr = now.toISOString().slice(0, 10);
+  var reminderKey = 'lw_pickup_remind_' + todayStr + '_' + h;
+  if (localStorage.getItem(reminderKey) === '1') return; // 此小時今天已提醒過
+
+  // 取得今天的訂單，找出尚未取件的（從 Sheets 取最新狀態）
   var orders = (window._orders || []).filter(o => o.shipDate === todayStr);
   if (!orders.length) return;
 
+  // 強制重新讀取今日所有訂單流程狀態（確保資料最新）
   var unpicked = [];
   for (var o of orders) {
+    // 清除快取，強制重取
+    delete _flowCache[o.id];
     var state = await loadFlowState(o.id);
-    if (!state['picked']) unpicked.push(o.name);
+    if (!state['picked']) {
+      var items = [];
+      try { items = JSON.parse(o.items||'[]'); } catch(e){}
+      var itemStr = items.map(i => i.name + '×' + i.qty).join('、');
+      unpicked.push(o.name + '（' + itemStr + '）');
+    }
   }
 
   if (unpicked.length > 0) {
-    _lastReminderHour = h;
-    var msg = '⏰ ' + h + ':00 提醒｜以下訂單尚未取件，請確認：\n' + unpicked.map(function(n){ return '・' + n; }).join('\n');
-    // 頁面通知
-    if (Notification && Notification.permission === 'granted') {
-      new Notification('龍吟出貨提醒', { body: unpicked.join('、') + ' 尚未取件', icon: '🚚' });
-    } else if (Notification && Notification.permission !== 'denied') {
-      Notification.requestPermission();
+    localStorage.setItem(reminderKey, '1');
+    var msg = '⏰ 龍吟出貨提醒｜' + h + ':00\n' +
+      '📅 ' + todayStr + '\n' +
+      '以下 ' + unpicked.length + ' 張訂單尚未取件，請確認！\n' +
+      unpicked.map(n => '・' + n).join('\n');
+
+    // 頁面 toast 通知
+    toast('⏰ ' + h + ':00 提醒：' + unpicked.length + ' 張訂單尚未取件！', 'er');
+
+    // 瀏覽器推播通知
+    if (typeof Notification !== 'undefined') {
+      if (Notification.permission === 'granted') {
+        new Notification('🚚 龍吟出貨提醒 ' + h + ':00', {
+          body: unpicked.length + ' 張訂單尚未取件：' + unpicked.map(n=>n.split('（')[0]).join('、'),
+          icon: '📦'
+        });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission();
+      }
     }
-    toast('⏰ ' + unpicked.length + ' 張訂單尚未取件！', 'er');
+
     // 發送 LINE 群組通知
     sendLineNotify(msg);
+  } else {
+    // 全部已取件，不需提醒（也標記避免重複查）
+    localStorage.setItem(reminderKey, '1');
   }
 }
 
