@@ -746,28 +746,17 @@ async function submitOrder() {
   if (r.ok) {
     toast('✓ 出貨單已建立', 'ok');
 
-    // 發送開單 LINE 通知（完整資訊，代替原本的「已確認」步驟）
-    var itemsStr = items.map(i => i.name + ' ×' + i.qty).join('、');
-    var totalQty2 = items.reduce((s,i) => s+i.qty, 0);
-    var lineMsg = [
-      '📦 龍吟新增出貨單',
-      '👤 ' + name + '　📞 ' + phone,
-      '📍 ' + address,
-      '📅 出貨日期：' + shipDate,
-      '🛒 ' + itemsStr + '（共 ' + calcBoxText(totalQty2) + '）',
-      '💳 付款：' + payment,
-    ];
-    var noteVal = getNoteValue();
-    if (noteVal) lineMsg.push('📝 備註：' + noteVal);
-    sendLineNotify(lineMsg.join('\n'));
-
-    // 更新快取 + 重刷流程
+    // 更新快取（先拿最新訂單清單，才能組完整接龍訊息）
     try {
       var ro = await api({ action: 'deliveryGetAll' });
       window._orders = ro.ok ? (ro.data||[]) : [];
       renderTodaySummaryBar();
       loadAndRenderFlow();
     } catch(e) {}
+
+    // 發送接龍訊息（當日出貨日期下所有訂單的完整狀態）
+    sendChainNotify(shipDate);
+
     // 操作紀錄
     var u = JSON.parse(sessionStorage.getItem('longyinUser') || '{}');
     await api({ action: 'logSave', user: u.name || '', role: u.role || '', action: '新增', module: '宅配出貨', detail: name + ' ' + items.map(i => i.name + 'x' + i.qty).join('、') });
@@ -1010,6 +999,66 @@ async function testLineToken() {
 
 async function sendLineNotify(message) {
   await api({ action: 'lineNotify', message });
+}
+
+// ════════════════════════════════════════
+// 接龍訊息：開單時發送當日所有訂單完整狀態
+// ════════════════════════════════════════
+var _DOW_ZH = ['日','一','二','三','四','五','六'];
+
+function _formatShipDateLabel(dateStr) {
+  // dateStr: 'YYYY-MM-DD' → 'M/D（X）'
+  var d = new Date(dateStr + 'T00:00:00');
+  var m = d.getMonth() + 1;
+  var day = d.getDate();
+  var dow = _DOW_ZH[d.getDay()];
+  return m + '/' + day + '（' + dow + '）';
+}
+
+// 組出指定出貨日所有訂單的接龍訊息字串
+function buildChainMessage(shipDate) {
+  var orders = (window._orders || []).filter(o => o.shipDate === shipDate);
+  if (!orders.length) return '';
+
+  var dateLabel = _formatShipDateLabel(shipDate);
+
+  // 接龍中的步驟清單（含「已確認」固定為完成，因為能開單就是確認）
+  var chainSteps = [
+    { key:'confirmed', label:'已確認' },
+    { key:'produced',  label:'已製作' },
+    { key:'photo',     label:'封箱前拍照' },
+    { key:'packed',    label:'已打包' },
+    { key:'filled',    label:'已填單' },
+    { key:'called',    label:'已致電' },
+    { key:'picked',    label:'已取件' },
+  ];
+
+  var blocks = orders.map(function(o) {
+    var items = [];
+    try { items = JSON.parse(o.items||'[]'); } catch(e){}
+    var itemStr = items.map(function(i){ return i.name + ' ' + calcBoxText(i.qty); }).join('、');
+    var state = _flowCache[o.id] || {};
+
+    var allDone = chainSteps.every(function(s){
+      return s.key === 'confirmed' || !!state[s.key];
+    });
+
+    var stepLines = chainSteps.map(function(s) {
+      var done = (s.key === 'confirmed') ? true : !!state[s.key];
+      var mark = done ? (allDone ? '✅' : '⭕️') : '';
+      return s.label + ' ' + mark;
+    });
+
+    return dateLabel + '\n' + o.name + ' ' + itemStr + '\n' + stepLines.join('\n');
+  });
+
+  // 用 '-' 分隔每張單
+  return blocks.join('\n-\n') + '\n-';
+}
+
+async function sendChainNotify(shipDate) {
+  var msg = buildChainMessage(shipDate);
+  if (msg) sendLineNotify(msg);
 }
 
 // ════════════════════════════════════════
