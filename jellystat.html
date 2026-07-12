@@ -2,112 +2,379 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <title>仙草杏仁統計 — 龍吟後台</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="base.css">
 <style>
-.month-tab{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;}
-.mtab{padding:5px 14px;border-radius:20px;border:1px solid var(--border-md);background:var(--surface);cursor:pointer;font-size:13px;font-family:var(--font);}
-.mtab.active{background:var(--blue);color:white;border-color:var(--blue);}
-.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
-.bar-label{width:70px;font-size:12px;color:var(--text-m);flex-shrink:0;}
-.bar-wrap{flex:1;height:20px;background:var(--bg);border-radius:4px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:4px;transition:width 0.4s;}
-.bar-val{width:50px;font-size:12px;font-weight:600;text-align:right;flex-shrink:0;}
+/* ── 月份選擇 ── */
+.month-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.mbtn{padding:5px 14px;border-radius:20px;border:1px solid var(--border-md);background:var(--surface);cursor:pointer;font-size:13px;font-family:var(--font);font-weight:500;}
+.mbtn.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+.mbtn:hover:not(.active){background:var(--bg);}
+
+/* ── 統計表格 ── */
+.stat-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.stat-tbl{border-collapse:collapse;width:100%;min-width:560px;font-size:13px;}
+.stat-tbl th{background:var(--bg);padding:8px 10px;text-align:center;font-weight:600;border:1px solid var(--border);white-space:nowrap;color:var(--text-m);font-size:12px;}
+.stat-tbl th.group-h{font-size:13px;font-weight:700;color:var(--text);}
+.stat-tbl td{padding:0;border:1px solid var(--border);text-align:center;vertical-align:middle;}
+.stat-tbl tr:hover td{background:rgba(0,119,85,.04);}
+.stat-tbl tr.today-row td{background:rgba(0,119,85,.06);}
+.stat-tbl tr.total-row td{background:var(--bg);font-weight:700;font-size:13px;}
+
+/* ── 셀 버튼 ── */
+.cell-btn{display:block;width:100%;min-height:38px;padding:8px 4px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:var(--font);color:var(--text);text-align:center;transition:background .1s;}
+.cell-btn:hover{background:var(--teal-l);}
+.cell-btn.empty{color:var(--text-h);}
+.cell-btn.filled{color:var(--text);}
+.date-cell{background:var(--bg);font-weight:600;font-size:13px;padding:8px 10px;color:var(--text-m);white-space:nowrap;}
+.auto-cell{padding:8px 6px;font-weight:700;font-size:13px;color:var(--teal);}
+.total-row .auto-cell{color:var(--teal);}
+
+/* ── 數字小鍵盤 Modal ── */
+.numpad-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center;}
+@media(min-width:480px){.numpad-overlay{align-items:center;}}
+.numpad-box{background:var(--surface);border-radius:16px 16px 0 0;padding:16px 16px 28px;width:100%;max-width:360px;box-shadow:0 -4px 32px rgba(0,0,0,.2);}
+@media(min-width:480px){.numpad-box{border-radius:16px;}}
+.numpad-label{font-size:12px;color:var(--text-m);margin-bottom:6px;text-align:center;}
+.numpad-display{font-size:32px;font-weight:800;text-align:center;padding:10px;background:var(--bg);border-radius:var(--rs);margin-bottom:12px;min-height:56px;letter-spacing:.05em;color:var(--text);}
+.numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;}
+.nk{height:58px;border:1.5px solid var(--border);border-radius:var(--rs);background:var(--surface);font-size:22px;font-weight:700;cursor:pointer;font-family:var(--font);color:var(--text);transition:all .1s;display:flex;align-items:center;justify-content:center;}
+.nk:active,.nk:hover{background:var(--teal-l);border-color:var(--teal);}
+.nk.zero{grid-column:1/3;}
+.nk.del{background:var(--bg);font-size:18px;}
+.nk.del:active{background:var(--red-l);}
+.numpad-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+.nk-cancel{height:46px;border:1.5px solid var(--border-md);border-radius:var(--rs);background:var(--bg);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--text-m);}
+.nk-confirm{height:46px;border:none;border-radius:var(--rs);background:var(--teal);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);color:#fff;}
+.nk-confirm:active{background:#0A5042;}
+
+/* ── 月份統計 ── */
+.month-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.ms-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;text-align:center;}
+.ms-num{font-size:22px;font-weight:800;color:var(--teal);}
+.ms-lbl{font-size:11px;color:var(--text-m);margin-top:2px;}
 </style>
 </head>
 <body>
 <div class="tb">
   <div class="tbl" onclick="goHome()">☕</div>
   <div class="page-title-wrap">
-    <div class="page-title-main" id="page-title">仙草杏仁統計表</div>
-    <div class="page-title-sub" id="page-sub">月匯總・趨勢・比較分析</div>
+    <div class="page-title-main" id="page-title">仙草杏仁統計</div>
+    <div class="page-title-sub" id="page-sub">仙草罐裝・杏仁罐裝・仙草凍</div>
   </div>
   <div class="tbr">
     <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
-    <button class="lgb" onclick="goHome()">🏠 主頁</button>
-    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+    <button class="lgb" onclick="goHome()">🏠</button>
+    <button class="lgb" onclick="doLogout()">↩</button>
   </div>
 </div>
+
 <div class="main">
-  <div class="month-tab" id="monthTab"></div>
+  <!-- 月份切換 -->
+  <div class="month-bar" id="monthBar"></div>
 
-  <div class="sr" id="monthStats">
-    <div class="sc"><div class="sl">本月仙草</div><div class="sv2" id="ms-j">—</div><div class="ss">杯</div></div>
-    <div class="sc"><div class="sl">本月杏仁</div><div class="sv2" id="ms-a">—</div><div class="ss">杯</div></div>
-    <div class="sc"><div class="sl">仙草撞奶</div><div class="sv2" id="ms-jm">—</div><div class="ss">杯</div></div>
-    <div class="sc" style="background:var(--blue-l)"><div class="sl">總杯數</div><div class="sv2" id="ms-tot" style="color:var(--blue)">—</div><div class="ss">杯</div></div>
-    <div class="sc"><div class="sl">記錄天數</div><div class="sv2" id="ms-days">—</div><div class="ss">天</div></div>
-    <div class="sc"><div class="sl">日均杯數</div><div class="sv2" id="ms-avg">—</div><div class="ss">杯/天</div></div>
+  <!-- 月統計摘要 -->
+  <div class="month-summary">
+    <div class="ms-card"><div class="ms-num" id="sumJelly">—</div><div class="ms-lbl">仙草罐裝 合計</div></div>
+    <div class="ms-card"><div class="ms-num" id="sumAlmond">—</div><div class="ms-lbl">杏仁罐裝 合計</div></div>
+    <div class="ms-card"><div class="ms-num" id="sumFrozen">—</div><div class="ms-lbl">仙草凍 合計</div></div>
   </div>
 
-  <!-- 每日長條圖 -->
   <div class="fc">
-    <div class="fct">📊 每日杯數分布</div>
-    <div id="barChart" style="min-height:80px"></div>
-  </div>
-
-  <div class="tc">
-    <div class="tc-head"><div class="tc-title">📋 明細記錄</div></div>
-    <table>
-      <thead><tr><th>日期</th><th>仙草(杯)</th><th>杏仁(杯)</th><th>仙草撞奶</th><th>總杯數</th></tr></thead>
-      <tbody id="tb-stat"><tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody>
-    </table>
+    <div class="fct" style="display:flex;justify-content:space-between;align-items:center;">
+      <span id="tableTitle">統計表</span>
+      <button class="sbtn g" style="height:30px;font-size:12px;" onclick="saveAll()">💾 儲存</button>
+    </div>
+    <div class="stat-wrap">
+      <table class="stat-tbl" id="statTable">
+        <thead>
+          <tr>
+            <th rowspan="2" style="min-width:54px;">日期</th>
+            <th colspan="3" class="group-h" style="background:rgba(0,119,85,.06)">仙草罐裝</th>
+            <th colspan="3" class="group-h" style="background:rgba(245,158,11,.06)">杏仁罐裝</th>
+            <th colspan="3" class="group-h" style="background:rgba(59,130,246,.06)">仙草凍（碗裝）</th>
+          </tr>
+          <tr>
+            <th style="background:rgba(0,119,85,.06)">現場</th>
+            <th style="background:rgba(0,119,85,.06)">外送</th>
+            <th style="background:rgba(0,119,85,.06)">合計</th>
+            <th style="background:rgba(245,158,11,.06)">現場</th>
+            <th style="background:rgba(245,158,11,.06)">外送</th>
+            <th style="background:rgba(245,158,11,.06)">合計</th>
+            <th style="background:rgba(59,130,246,.06)">現場</th>
+            <th style="background:rgba(59,130,246,.06)">外送</th>
+            <th style="background:rgba(59,130,246,.06)">合計</th>
+          </tr>
+        </thead>
+        <tbody id="statBody"></tbody>
+        <tfoot id="statFoot"></tfoot>
+      </table>
+    </div>
   </div>
 </div>
+
+<!-- 數字鍵盤 -->
+<div id="numpadOverlay" class="numpad-overlay" style="display:none;" onclick="cancelNumpad()">
+  <div class="numpad-box" onclick="event.stopPropagation()">
+    <div class="numpad-label" id="numpadLabel">輸入數量</div>
+    <div class="numpad-display" id="numpadDisplay">0</div>
+    <div class="numpad-grid">
+      <button class="nk" onclick="numKey('7')">7</button>
+      <button class="nk" onclick="numKey('8')">8</button>
+      <button class="nk" onclick="numKey('9')">9</button>
+      <button class="nk" onclick="numKey('4')">4</button>
+      <button class="nk" onclick="numKey('5')">5</button>
+      <button class="nk" onclick="numKey('6')">6</button>
+      <button class="nk" onclick="numKey('1')">1</button>
+      <button class="nk" onclick="numKey('2')">2</button>
+      <button class="nk" onclick="numKey('3')">3</button>
+      <button class="nk zero" onclick="numKey('0')">0</button>
+      <button class="nk del" onclick="numDel()">⌫</button>
+    </div>
+    <div class="numpad-actions">
+      <button class="nk-cancel" onclick="cancelNumpad()">取消</button>
+      <button class="nk-confirm" onclick="confirmNumpad()">確認</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
-<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・仙草杏仁統計表</span></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・仙草杏仁統計</span></div>
+
 <script src="base.js"></script>
 <script>
-var allData = [];
-var curMonth = today.slice(0,7);
+// ── 欄位定義 ──────────────────────────────
+// j=仙草, a=杏仁, f=仙草凍；s=現場, d=外送
+var FIELDS = ['js','jd','as','ad','fs','fd'];
+var FIELD_LABELS = { js:'仙草罐/現場', jd:'仙草罐/外送', as:'杏仁罐/現場', ad:'杏仁罐/外送', fs:'仙草凍/現場', fd:'仙草凍/外送' };
 
-window.addEventListener('load',()=>{
-  var u=buildSubHeader('仙草杏仁統計表','月匯總・趨勢・比較分析');
-  if(!u)return;
-  loadAll();
+var _currentYear = 115;
+var _currentMonth = new Date().getMonth() + 1; // 台灣月份=公曆月份
+var _data = {}; // { 'day_field': value }
+var _dirty = false;
+
+// 數字鍵盤狀態
+var _numTarget = null; // { day, field }
+var _numStr = '';
+
+window.addEventListener('load', () => {
+  var u = buildSubHeader('仙草杏仁統計', '仙草罐裝・杏仁罐裝・仙草凍');
+  if (!u) return;
+
+  // 月份列（近6個月）
+  buildMonthBar();
+  loadMonth(_currentYear, _currentMonth);
 });
 
-async function loadAll(){
-  var r=await api({action:'cupsGetAll'});
-  if(!r.ok||!r.data?.length) return;
-  allData=r.data;
-  // 建立月份標籤
-  var months=[...new Set(r.data.map(d=>d.date?d.date.replace(/\//g,'-').slice(0,7):'').filter(Boolean))].sort().reverse();
-  var tab=document.getElementById('monthTab');
-  tab.innerHTML=months.map(m=>`<button class="mtab${m===curMonth?' active':''}" onclick="selectMonth('${m}')">${m}</button>`).join('');
-  renderMonth(curMonth);
+// ── 月份切換 ────────────────────────────────
+function buildMonthBar() {
+  var bar = document.getElementById('monthBar');
+  var months = [];
+  var now = new Date();
+  for (var i = 5; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    var tw = d.getFullYear() - 1911;
+    var m = d.getMonth() + 1;
+    months.push({ year: tw, month: m, label: tw + '年' + m + '月' });
+  }
+  bar.innerHTML = months.map(mo =>
+    `<button class="mbtn${mo.year===_currentYear&&mo.month===_currentMonth?' active':''}"
+      id="mb-${mo.year}-${mo.month}"
+      onclick="switchMonth(${mo.year},${mo.month})">${mo.label}</button>`
+  ).join('');
 }
 
-function selectMonth(m){
-  curMonth=m;
-  document.querySelectorAll('.mtab').forEach(t=>t.classList.toggle('active',t.textContent===m));
-  renderMonth(m);
+function switchMonth(year, month) {
+  if (_dirty && !confirm('尚未儲存，確定切換月份？')) return;
+  _currentYear = year; _currentMonth = month; _dirty = false;
+  document.querySelectorAll('.mbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`mb-${year}-${month}`)?.classList.add('active');
+  loadMonth(year, month);
 }
 
-function renderMonth(m){
-  var data=allData.filter(d=>d.date&&d.date.replace(/\//g,'-').slice(0,7)===m);
-  if(!data.length){ document.getElementById('tb-stat').innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:20px">該月無記錄</td></tr>'; return; }
-  var totalJ=data.reduce((s,d)=>s+parseInt(d.jelly||0),0);
-  var totalA=data.reduce((s,d)=>s+parseInt(d.almond||0),0);
-  var totalJM=data.reduce((s,d)=>s+parseInt(d.jellyMilk||0),0);
-  var total=data.reduce((s,d)=>s+parseInt(d.total||0),0);
-  document.getElementById('ms-j').textContent=totalJ;
-  document.getElementById('ms-a').textContent=totalA;
-  document.getElementById('ms-jm').textContent=totalJM;
-  document.getElementById('ms-tot').textContent=total;
-  document.getElementById('ms-days').textContent=data.length;
-  document.getElementById('ms-avg').textContent=data.length?Math.round(total/data.length):'—';
-  // 長條圖
-  var maxT=Math.max(...data.map(d=>parseInt(d.total||0)),1);
-  document.getElementById('barChart').innerHTML=data.slice(0,31).map(d=>{
-    var t=parseInt(d.total||0);
-    var pct=Math.round(t/maxT*100);
-    var day=d.date?d.date.replace(/\//g,'-').slice(8):d.date;
-    return`<div class="bar-row"><span class="bar-label">${day}日</span><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:var(--blue)"></div></div><span class="bar-val">${t}</span></div>`;
+// ── 載入資料 ────────────────────────────────
+async function loadMonth(year, month) {
+  document.getElementById('tableTitle').textContent = year + '年' + month + '月 仙草杏仁統計表';
+  var r = await api({ action: 'jellyStatGet', year, month });
+  _data = {};
+  if (r.ok && r.data) {
+    (r.data || []).forEach(row => {
+      FIELDS.forEach(f => {
+        _data[row.day + '_' + f] = parseInt(row[f]) || 0;
+      });
+    });
+  }
+  renderTable(year, month);
+  updateSummary();
+}
+
+// ── 渲染表格 ────────────────────────────────
+function renderTable(year, month) {
+  var days = daysInMonth(year + 1911, month);
+  var todayDay = (new Date().getFullYear() - 1911 === year && new Date().getMonth() + 1 === month)
+    ? new Date().getDate() : -1;
+  var tbody = document.getElementById('statBody');
+
+  tbody.innerHTML = Array.from({ length: days }, (_, i) => {
+    var d = i + 1;
+    var isToday = d === todayDay;
+    var rowCls = isToday ? 'today-row' : '';
+
+    // 各欄值
+    var js = v(d,'js'), jd = v(d,'jd'), as_ = v(d,'as'), ad = v(d,'ad'), fs = v(d,'fs'), fd = v(d,'fd');
+    var jt = js + jd, at_ = as_ + ad, ft = fs + fd;
+
+    return `<tr class="${rowCls}">
+      <td class="date-cell">${d}${isToday?' 🔵':''}</td>
+      ${cellBtn(d,'js',js,'teal')}
+      ${cellBtn(d,'jd',jd,'teal')}
+      <td class="auto-cell" id="jt-${d}" style="color:var(--teal)">${jt||0}</td>
+      ${cellBtn(d,'as',as_,'amber')}
+      ${cellBtn(d,'ad',ad,'amber')}
+      <td class="auto-cell" id="at-${d}" style="color:var(--amber)">${at_||0}</td>
+      ${cellBtn(d,'fs',fs,'blue')}
+      ${cellBtn(d,'fd',fd,'blue')}
+      <td class="auto-cell" id="ft-${d}" style="color:var(--blue)">${ft||0}</td>
+    </tr>`;
   }).join('');
-  document.getElementById('tb-stat').innerHTML=data.map(d=>`<tr><td>${d.date}</td><td>${d.jelly}</td><td>${d.almond}</td><td>${d.jellyMilk}</td><td><strong>${d.total}</strong></td></tr>`).join('');
+
+  // 合計列
+  renderFoot(days);
+}
+
+function cellBtn(day, field, val, color) {
+  var cls = val ? 'filled' : 'empty';
+  return `<td><button class="cell-btn ${cls}" id="cell-${day}-${field}"
+    onclick="openNumpad(${day},'${field}')"
+    style="${val?'color:var(--'+color+');font-weight:700;':''}">${val||'—'}</button></td>`;
+}
+
+function renderFoot(days) {
+  var totals = { js:0, jd:0, as:0, ad:0, fs:0, fd:0 };
+  for (var d = 1; d <= days; d++) {
+    FIELDS.forEach(f => { totals[f] += v(d, f); });
+  }
+  var jt = totals.js + totals.jd, at = totals.as + totals.ad, ft = totals.fs + totals.fd;
+  document.getElementById('statFoot').innerHTML = `
+    <tr class="total-row">
+      <td class="date-cell" style="font-weight:700;color:var(--text);">合計</td>
+      <td class="auto-cell" style="color:var(--teal)">${totals.js}</td>
+      <td class="auto-cell" style="color:var(--teal)">${totals.jd}</td>
+      <td class="auto-cell" style="font-size:14px;color:var(--teal)">${jt}</td>
+      <td class="auto-cell" style="color:var(--amber)">${totals.as}</td>
+      <td class="auto-cell" style="color:var(--amber)">${totals.ad}</td>
+      <td class="auto-cell" style="font-size:14px;color:var(--amber)">${at}</td>
+      <td class="auto-cell" style="color:var(--blue)">${totals.fs}</td>
+      <td class="auto-cell" style="color:var(--blue)">${totals.fd}</td>
+      <td class="auto-cell" style="font-size:14px;color:var(--blue)">${ft}</td>
+    </tr>`;
+}
+
+function updateSummary() {
+  var days = daysInMonth(_currentYear + 1911, _currentMonth);
+  var jTotal = 0, aTotal = 0, fTotal = 0;
+  for (var d = 1; d <= days; d++) {
+    jTotal += v(d,'js') + v(d,'jd');
+    aTotal += v(d,'as') + v(d,'ad');
+    fTotal += v(d,'fs') + v(d,'fd');
+  }
+  document.getElementById('sumJelly').textContent = jTotal;
+  document.getElementById('sumAlmond').textContent = aTotal;
+  document.getElementById('sumFrozen').textContent = fTotal;
+}
+
+function v(day, field) { return parseInt(_data[day + '_' + field]) || 0; }
+
+// ── 數字鍵盤 ────────────────────────────────
+function openNumpad(day, field) {
+  _numTarget = { day, field };
+  _numStr = String(v(day, field)) === '0' ? '' : String(v(day, field));
+  document.getElementById('numpadLabel').textContent =
+    day + '日・' + FIELD_LABELS[field];
+  document.getElementById('numpadDisplay').textContent = _numStr || '0';
+  document.getElementById('numpadOverlay').style.display = 'flex';
+}
+
+function numKey(k) {
+  if (_numStr.length >= 4) return;
+  if (_numStr === '0') _numStr = k;
+  else _numStr += k;
+  document.getElementById('numpadDisplay').textContent = _numStr || '0';
+}
+
+function numDel() {
+  _numStr = _numStr.slice(0, -1);
+  document.getElementById('numpadDisplay').textContent = _numStr || '0';
+}
+
+function cancelNumpad() {
+  document.getElementById('numpadOverlay').style.display = 'none';
+  _numTarget = null; _numStr = '';
+}
+
+function confirmNumpad() {
+  if (!_numTarget) return;
+  var val = parseInt(_numStr) || 0;
+  var { day, field } = _numTarget;
+  _data[day + '_' + field] = val;
+  _dirty = true;
+
+  // 更新 UI
+  var btn = document.getElementById(`cell-${day}-${field}`);
+  if (btn) {
+    var colorMap = { js:'teal', jd:'teal', as:'amber', ad:'amber', fs:'blue', fd:'blue' };
+    var color = colorMap[field];
+    btn.textContent = val || '—';
+    btn.className = 'cell-btn ' + (val ? 'filled' : 'empty');
+    btn.style.color = val ? `var(--${color})` : '';
+    btn.style.fontWeight = val ? '700' : '';
+  }
+
+  // 更新小計
+  var d = day;
+  var jt = v(d,'js') + v(d,'jd');
+  var at = v(d,'as') + v(d,'ad');
+  var ft = v(d,'fs') + v(d,'fd');
+  var jtEl = document.getElementById('jt-' + d);
+  var atEl = document.getElementById('at-' + d);
+  var ftEl = document.getElementById('ft-' + d);
+  if (jtEl) jtEl.textContent = jt;
+  if (atEl) atEl.textContent = at;
+  if (ftEl) ftEl.textContent = ft;
+
+  // 更新合計列和摘要
+  var days = daysInMonth(_currentYear + 1911, _currentMonth);
+  renderFoot(days);
+  updateSummary();
+
+  cancelNumpad();
+}
+
+// ── 儲存 ────────────────────────────────────
+async function saveAll() {
+  var days = daysInMonth(_currentYear + 1911, _currentMonth);
+  var rows = [];
+  for (var d = 1; d <= days; d++) {
+    rows.push({
+      day: d,
+      js: v(d,'js'), jd: v(d,'jd'),
+      as: v(d,'as'), ad: v(d,'ad'),
+      fs: v(d,'fs'), fd: v(d,'fd')
+    });
+  }
+  var r = await api({
+    action: 'jellyStatSave',
+    year: _currentYear, month: _currentMonth,
+    data: JSON.stringify(rows)
+  });
+  if (r.ok) { toast('✓ 已儲存', 'ok'); _dirty = false; }
+  else toast('儲存失敗', 'er');
+}
+
+// ── 工具 ────────────────────────────────────
+function daysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
 }
 </script>
 </body>
