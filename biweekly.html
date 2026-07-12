@@ -2,146 +2,169 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>雙週盤點 — 龍吟後台</title>
+<title>週盤點 — 龍吟後台</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="base.css">
 <style>
-.inv-section{margin-bottom:1.5rem;}
-.inv-section-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;padding:6px 10px;background:var(--blue-l);border-radius:var(--rx);border-left:3px solid var(--blue);}
-.inv-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
-.inv-header{font-size:11px;font-weight:600;color:var(--text-m);border-bottom:2px solid var(--border);}
-.inv-name{font-size:13px;}
-.inv-input{width:100%;padding:0 8px;height:32px;font-size:13px;border:1px solid var(--border-md);border-radius:var(--rx);text-align:center;}
-.diff-pos{color:var(--red);font-weight:600;}
-.diff-neg{color:var(--green);font-weight:600;}
+.inv-section{margin-bottom:1.2rem;}
+.inv-section-title{font-size:12px;font-weight:700;color:var(--text-m);margin-bottom:6px;padding:5px 10px;background:var(--blue-l);border-radius:var(--rx);border-left:3px solid var(--blue-d);}
+.inv-table{width:100%;border-collapse:collapse;font-size:13px;}
+.inv-table th{background:var(--bg);padding:8px 10px;text-align:center;font-weight:600;color:var(--text-m);border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap;}
+.inv-table th.left{text-align:left;}
+.inv-table td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.inv-table tr:last-child td{border-bottom:none;}
+.cnt-inp{width:70px;height:32px;border:1px solid var(--border-md);border-radius:var(--rx);text-align:center;font-size:13px;font-family:var(--font);padding:0;}
+.cnt-inp:focus{border-color:var(--teal);outline:none;}
+.diff-pos{color:var(--red);font-weight:600;} .diff-neg{color:var(--teal);font-weight:600;} .diff-zero{color:var(--text-h);}
+.unit-hint{font-size:11px;color:var(--text-h);}
+.reorder-badge{font-size:11px;background:var(--teal-l);color:var(--teal);border-radius:20px;padding:2px 8px;font-weight:500;white-space:nowrap;}
 </style>
 </head>
 <body>
 <div class="tb">
-  <div class="tbl" onclick="goHome()">☕</div>
+  <div class="tbl" onclick="goHome()">📋</div>
   <div class="page-title-wrap">
-    <div class="page-title-main" id="page-title">雙週盤點</div>
-    <div class="page-title-sub" id="page-sub">每兩週盤點・差異分析</div>
+    <div class="page-title-main" id="page-title">週盤點</div>
+    <div class="page-title-sub" id="page-sub">每週盤點・差異分析</div>
   </div>
   <div class="tbr">
     <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
-    <button class="lgb" onclick="goHome()">🏠 主頁</button>
-    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+    <button class="lgb" onclick="goHome()">🏠</button>
+    <button class="lgb" onclick="doLogout()">↩</button>
   </div>
 </div>
-
 <div class="main">
   <div class="fc">
-    <div class="fct">🗂 雙週盤點表</div>
+    <div class="fct" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>📋 週盤點表</span>
+      <a href="inventory_config.html" style="font-size:11px;color:var(--teal);">⚙ 品項設定</a>
+    </div>
     <div class="fr tri">
-      <div><label class="ffl">盤點日期</label><input type="date" class="ffi" id="bw_d"/></div>
-      <div><label class="ffl">盤點人員</label><input class="ffi" id="bw_p"/></div>
-      <div><label class="ffl">盤點類型</label><select class="ffs" id="bw_t"><option>雙週盤</option><option>補盤</option></select></div>
+      <div><label class="ffl">盤點日期</label><input type="date" class="ffi" id="bw_d"></div>
+      <div><label class="ffl">盤點人員</label><input class="ffi" id="bw_p"></div>
+      <div><label class="ffl">盤點類型</label><select class="ffs" id="bw_t"><option>週盤</option><option>補盤</option></select></div>
     </div>
   </div>
-
-  <!-- 品項盤點 -->
-  <div id="invForm">
-    <div class="inv-section">
-      <div class="inv-section-title">🍵 茶葉・原料類</div>
-      <div class="inv-row inv-header">
-        <div>品項</div><div style="text-align:center">單位</div><div style="text-align:center">帳存</div><div style="text-align:center">實存</div><div style="text-align:center">差異</div>
-      </div>
-      <div id="cat-tea"></div>
-    </div>
-    <div class="inv-section">
-      <div class="inv-section-title">🥤 包材・耗材類</div>
-      <div class="inv-row inv-header">
-        <div>品項</div><div style="text-align:center">單位</div><div style="text-align:center">帳存</div><div style="text-align:center">實存</div><div style="text-align:center">差異</div>
-      </div>
-      <div id="cat-pack"></div>
-    </div>
-    <div class="inv-section">
-      <div class="inv-section-title">❄️ 冷藏・冷凍類</div>
-      <div class="inv-row inv-header">
-        <div>品項</div><div style="text-align:center">單位</div><div style="text-align:center">帳存</div><div style="text-align:center">實存</div><div style="text-align:center">差異</div>
-      </div>
-      <div id="cat-cold"></div>
-    </div>
+  <div id="invBody"><div style="text-align:center;padding:2rem;color:var(--text-h);">載入品項設定中…</div></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:1rem;">
+    <button class="sbtn" style="background:var(--gray);height:38px;" onclick="resetForm()">重填</button>
+    <button class="sbtn g" style="height:38px;" onclick="submitInventory()">💾 提交盤點</button>
   </div>
-
-  <div style="margin-bottom:1.5rem;">
-    <button class="sbtn" onclick="saveBiweekly()">💾 提交盤點結果</button>
-  </div>
-
-  <!-- 歷史盤點 -->
   <div class="tc">
     <div class="tc-head"><div class="tc-title">📋 盤點歷史</div></div>
-    <table>
-      <thead><tr><th>日期</th><th>類型</th><th>盤點人員</th><th>品項數</th><th>差異數</th><th>狀態</th></tr></thead>
-      <tbody id="tb-bw"><tr><td colspan="6" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr></tbody>
-    </table>
+    <table><thead><tr><th>日期</th><th>類型</th><th>盤點人員</th><th>品項數</th><th>記錄品項</th></tr></thead>
+    <tbody id="histBody"><tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:16px;">載入中…</td></tr></tbody></table>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
-<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・雙週盤點</span></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・週盤點</span></div>
 <script src="base.js"></script>
 <script>
-const ITEMS = {
-  'cat-tea':[
-    {n:'日本鶴神紅茶',u:'罐'},{n:'仙草原汁',u:'桶'},{n:'杏仁粉',u:'包'},{n:'冬瓜磚',u:'塊'},{n:'糖',u:'包'},{n:'梅釀原料',u:'包'}
-  ],
-  'cat-pack':[
-    {n:'大吸管',u:'包'},{n:'小吸管',u:'包'},{n:'外帶袋',u:'包'},{n:'紙杯',u:'條'},{n:'杯蓋',u:'包'},{n:'杯套',u:'包'},{n:'貼紙卷',u:'卷'},{n:'發票捲',u:'卷'}
-  ],
-  'cat-cold':[
-    {n:'燕麥奶',u:'罐'},{n:'仙草凍',u:'桶'},{n:'冰塊',u:'袋'}
-  ]
-};
-
-window.addEventListener('load',()=>{
-  var u=buildSubHeader('雙週盤點','每兩週盤點・差異分析');
-  if(!u)return;
-  sv('bw_d',today);sv('bw_p',u.name);
-  buildForm();
+var _items=[], _cats=[];
+window.addEventListener('load', async()=>{
+  var u=buildSubHeader('週盤點','每週盤點・差異分析'); if(!u)return;
+  sv('bw_d',today); sv('bw_p',u.name);
+  await loadItems(); loadHistory();
 });
-
-function buildForm(){
-  Object.entries(ITEMS).forEach(([cat,items])=>{
-    document.getElementById(cat).innerHTML=items.map((item,i)=>`
-      <div class="inv-row">
-        <div class="inv-name">${item.n}</div>
-        <div style="text-align:center;font-size:12px;color:var(--text-m)">${item.u}</div>
-        <div><input class="inv-input" type="number" id="${cat}_acc_${i}" placeholder="0" oninput="calcDiff('${cat}',${i})"/></div>
-        <div><input class="inv-input" type="number" id="${cat}_act_${i}" placeholder="0" oninput="calcDiff('${cat}',${i})"/></div>
-        <div style="text-align:center;font-size:13px;font-weight:600" id="${cat}_diff_${i}">—</div>
-      </div>`).join('');
-  });
+async function loadItems(){
+  var r=await api({action:'invConfigGet'});
+  var cfg={cats:[],items:[]};
+  if(r.ok&&r.data){try{cfg=JSON.parse(r.data);}catch(e){}}
+  _cats=cfg.cats||[]; _items=(cfg.items||[]).filter(it=>it.inWeekly);
+  renderForm();
 }
-
-function calcDiff(cat,i){
-  var acc=parseFloat(document.getElementById(`${cat}_acc_${i}`)?.value||0);
-  var act=parseFloat(document.getElementById(`${cat}_act_${i}`)?.value||0);
-  var diff=act-acc;
-  var el=document.getElementById(`${cat}_diff_${i}`);
-  if(el){
-    if(diff===0){el.textContent='0';el.className='';}
-    else if(diff>0){el.textContent='+'+diff;el.className='diff-pos';}
-    else{el.textContent=diff;el.className='diff-neg';}
+function renderForm(){
+  var el=document.getElementById('invBody');
+  if(!_items.length){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text-h);">尚無設定週盤品項，<a href="inventory_config.html" style="color:var(--teal);">前往設定 ›</a></div>';return;}
+  var groups={};
+  _cats.forEach(c=>{groups[c]=[];}); groups['其他']=[];
+  _items.forEach(it=>{var c=it.cat&&groups[it.cat]!==undefined?it.cat:'其他';groups[c].push(it);});
+  el.innerHTML=Object.entries(groups).filter(([,arr])=>arr.length).map(([cat,arr])=>`
+    <div class="inv-section">
+      <div class="inv-section-title">${cat}</div>
+      <table class="inv-table"><thead><tr>
+        <th class="left" style="width:28%">品項</th><th style="width:22%">換算說明</th>
+        <th style="width:12%">實存</th><th style="width:12%">單位</th>
+        <th style="width:12%">與叫貨基準差</th><th style="width:14%">叫貨基準</th>
+      </tr></thead><tbody>
+      ${arr.map(it=>{
+        var unitStr=buildUnitHint(it);
+        var reorder=it.reorder?.weekly;
+        var reorderHtml=(reorder?.qty&&reorder?.unit)?`<span class="reorder-badge">叫 ${reorder.qty} ${reorder.unit}</span>`:'—';
+        var unitOpts=getUnitOpts(it).map(u=>`<option value="${u}">${u}</option>`).join('');
+        return `<tr>
+          <td style="font-weight:600;">${it.name||'—'}</td>
+          <td class="unit-hint">${unitStr}</td>
+          <td><input class="cnt-inp" type="number" id="act_${it.id}" min="0" placeholder="0" oninput="calcDiff('${it.id}')"></td>
+          <td><select id="unit_${it.id}" style="height:30px;font-size:12px;border:1px solid var(--border-md);border-radius:var(--rx);padding:0 4px;font-family:var(--font);">${unitOpts}</select></td>
+          <td id="diff_${it.id}" class="diff-zero">—</td>
+          <td>${reorderHtml}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table>
+    </div>`).join('');
+}
+function buildUnitHint(it){
+  var u=it.units; if(!u)return '';
+  var parts=[];
+  if(u.big?.name&&u.big?.qty)parts.push(`1 ${u.big.name}=${u.big.qty} ${u.small?.name||'個'}`);
+  if(u.mid?.name&&u.mid?.qty)parts.push(`1 ${u.mid.name}=${u.mid.qty} ${u.small?.name||'個'}`);
+  if(u.small?.name)parts.push(`基準：${u.small.name}`);
+  return parts.join('　');
+}
+function getUnitOpts(it){
+  var u=it.units; if(!u)return['個'];
+  return [u.big?.name,u.mid?.name,u.small?.name].filter(Boolean);
+}
+function toBase(qty,unitName,item){
+  var u=item.units; if(!u)return qty;
+  if(unitName===u.big?.name)return qty*(parseFloat(u.big.qty)||1);
+  if(unitName===u.mid?.name)return qty*(parseFloat(u.mid.qty)||1);
+  return qty;
+}
+function calcDiff(id){
+  var item=_items.find(it=>it.id===id); if(!item)return;
+  var act=parseFloat(document.getElementById('act_'+id)?.value)||0;
+  var unitSel=document.getElementById('unit_'+id)?.value||'';
+  var actBase=toBase(act,unitSel,item);
+  var reorder=item.reorder?.weekly;
+  var diffEl=document.getElementById('diff_'+id); if(!diffEl)return;
+  if(reorder?.qty&&reorder?.unit){
+    var reorderBase=toBase(parseFloat(reorder.qty)||0,reorder.unit,item);
+    var diff=actBase-reorderBase;
+    var smallUnit=item.units?.small?.name||'';
+    diffEl.textContent=(diff>=0?'+':'')+diff+' '+smallUnit;
+    diffEl.className=diff>=0?'diff-pos':'diff-neg';
+  }else{
+    diffEl.textContent=act?act+' '+unitSel:'—';
+    diffEl.className='diff-zero';
   }
 }
-
-async function saveBiweekly(){
-  toast('儲存中...','info');
-  // 收集差異品項
-  var diffs=[];
-  Object.entries(ITEMS).forEach(([cat,items])=>{
-    items.forEach((item,i)=>{
-      var acc=parseFloat(document.getElementById(`${cat}_acc_${i}`)?.value||0);
-      var act=parseFloat(document.getElementById(`${cat}_act_${i}`)?.value||0);
-      if(acc||act) diffs.push({name:item.n,unit:item.u,acc,act,diff:act-acc});
-    });
+function resetForm(){
+  _items.forEach(it=>{
+    var e=document.getElementById('act_'+it.id); if(e)e.value='';
+    var d=document.getElementById('diff_'+it.id); if(d){d.textContent='—';d.className='diff-zero';}
   });
-  var r=await api({action:'orderSave',orderDate:gv('bw_d'),product:'雙週盤點-'+gv('bw_t'),qty:diffs.length,unit:'品項',orderer:gv('bw_p'),status:'已完成',note:JSON.stringify(diffs.filter(d=>d.diff!==0).map(d=>`${d.name}:差${d.diff}${d.unit}`))});
-  if(r.ok){toast('✓ 雙週盤點已提交','ok');}
-  else toast('✗ '+r.error,'er');
+}
+async function submitInventory(){
+  var results=_items.map(it=>{
+    var act=parseFloat(document.getElementById('act_'+it.id)?.value)||0;
+    var unit=document.getElementById('unit_'+it.id)?.value||'';
+    return{name:it.name,act,unit,actBase:toBase(act,unit,it)};
+  }).filter(r=>r.act>0);
+  var r=await api({action:'invRecordSave',date:gv('bw_d'),staff:gv('bw_p'),type:gv('bw_t'),mode:'weekly',data:JSON.stringify(results)});
+  if(r.ok){toast('✓ 週盤點已提交','ok');loadHistory();}
+  else toast('提交失敗','er');
+}
+async function loadHistory(){
+  var r=await api({action:'invRecordGet',mode:'weekly'});
+  var data=r.ok?(r.data||[]):[];
+  var tbody=document.getElementById('histBody');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-h);padding:16px;">尚無記錄</td></tr>';return;}
+  tbody.innerHTML=data.slice(0,20).map(d=>{
+    var rows=JSON.parse(d.data||'[]');
+    return `<tr><td>${d.date}</td><td>${d.type}</td><td>${d.staff}</td><td>${rows.length}</td><td style="font-size:11px;color:var(--text-m);">${rows.slice(0,3).map(r=>r.name).join('、')}${rows.length>3?'…':''}</td></tr>`;
+  }).join('');
 }
 </script>
 </body>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>盤點設定 — 龍吟後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+/* ── 分頁 ── */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:1rem;background:var(--surface);border-radius:var(--r) var(--r) 0 0;padding:0 1rem;}
+.tab-btn{padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--text-m);border-bottom:3px solid transparent;margin-bottom:-2px;font-family:var(--font);}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
+.tab-pane{display:none;}.tab-pane.active{display:block;}
+
+/* ── 品項卡片 ── */
+.item-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px;margin-bottom:10px;}
+.item-card-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.item-num{font-size:11px;font-weight:700;color:var(--teal);background:var(--teal-l);border-radius:20px;padding:2px 8px;}
+.item-name-input{flex:1;height:36px;font-size:14px;font-weight:600;border:1px solid var(--border-md);border-radius:var(--rx);padding:0 10px;font-family:var(--font);}
+.item-del{background:none;border:none;cursor:pointer;color:var(--text-h);font-size:16px;padding:4px;}
+.item-del:hover{color:var(--red);}
+
+/* ── 換算設定 ── */
+.unit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+.unit-cell{background:var(--bg);border-radius:var(--rx);padding:8px 10px;}
+.unit-lbl{font-size:10px;color:var(--text-m);font-weight:600;margin-bottom:4px;text-transform:uppercase;}
+.unit-row{display:flex;gap:6px;align-items:center;}
+.unit-name-inp{width:60px;height:30px;font-size:12px;border:1px solid var(--border-md);border-radius:var(--rx);padding:0 6px;font-family:var(--font);}
+.unit-val-inp{width:50px;height:30px;font-size:12px;border:1px solid var(--border-md);border-radius:var(--rx);padding:0 6px;text-align:center;font-family:var(--font);}
+.unit-eq{font-size:11px;color:var(--text-m);}
+
+/* ── 標籤選擇 ── */
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.tag-pill{padding:4px 12px;border:1.5px solid var(--border-md);border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font);background:var(--surface);color:var(--text-m);}
+.tag-pill.on{border-color:var(--teal);background:var(--teal-l);color:var(--teal);}
+.tag-pill.weekly.on{border-color:var(--blue);background:var(--blue-l);color:var(--blue-d);}
+.tag-pill.monthly.on{border-color:var(--purple);background:var(--purple-l);color:var(--purple);}
+
+/* ── 叫貨基準 ── */
+.reorder-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;}
+.reorder-block{display:flex;align-items:center;gap:5px;background:var(--bg);border-radius:var(--rx);padding:5px 8px;}
+.reorder-label{font-size:11px;color:var(--text-m);}
+.reorder-inp{width:50px;height:28px;font-size:12px;border:1px solid var(--border-md);border-radius:var(--rx);padding:0 6px;text-align:center;font-family:var(--font);}
+
+/* ── 分類標籤 ── */
+.cat-badge{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--gray-l);color:var(--gray);font-weight:500;cursor:pointer;}
+.cat-badge:hover{background:var(--amber-l);color:var(--amber);}
+.cats-input{height:30px;font-size:12px;border:1px solid var(--border-md);border-radius:var(--rx);padding:0 8px;font-family:var(--font);}
+
+/* ── 預覽 ── */
+.preview-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;}
+.ps-title{font-size:12px;font-weight:700;color:var(--text-m);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.ps-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border);}
+.ps-item:last-child{border-bottom:none;}
+.ps-unit{font-size:11px;color:var(--text-m);}
+.ps-reorder{font-size:11px;color:var(--teal);font-weight:600;}
+
+/* ── spin ── */
+.spin{width:13px;height:13px;border:2px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-2px;margin-right:4px;}
+</style>
+</head>
+<body>
+<div class="tb">
+  <div class="tbl" onclick="goHome()">⚙️</div>
+  <div class="page-title-wrap">
+    <div class="page-title-main" id="page-title">盤點設定</div>
+    <div class="page-title-sub" id="page-sub">貨物品項・換算單位・週盤月盤・叫貨基準</div>
+  </div>
+  <div class="tbr">
+    <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
+    <button class="lgb" onclick="goHome()">🏠</button>
+    <button class="lgb" onclick="doLogout()">↩</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('edit')">✏️ 品項設定</button>
+    <button class="tab-btn" onclick="switchTab('preview')">👁 預覽</button>
+  </div>
+
+  <!-- ════ 品項設定 ════ -->
+  <div id="tab-edit" class="tab-pane active">
+
+    <!-- 頂部操作列 -->
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="sbtn g" style="height:34px;font-size:12px;" onclick="addItem()">＋ 新增品項</button>
+      <button class="sbtn" style="height:34px;font-size:12px;background:var(--gray);" onclick="loadConfig()">🔄 重新載入</button>
+      <span style="font-size:11px;color:var(--text-h);" id="syncStatus">（從雲端載入中…）</span>
+      <div style="margin-left:auto;">
+        <button class="sbtn g" style="height:34px;font-size:13px;font-weight:700;" id="saveBtn" onclick="saveConfig()">☁️ 儲存並同步</button>
+      </div>
+    </div>
+
+    <!-- 分類管理 -->
+    <div class="fc" style="margin-bottom:12px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:12px;font-weight:600;color:var(--text-m);">分類：</span>
+        <div id="catList" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        <div style="display:flex;gap:6px;align-items:center;margin-left:8px;">
+          <input class="cats-input" id="newCatInput" placeholder="新增分類名稱" style="width:120px;" onkeydown="if(event.key==='Enter')addCat()">
+          <button class="sbtn" style="height:30px;font-size:12px;background:var(--gray);" onclick="addCat()">＋ 新增</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 品項列表 -->
+    <div id="itemList"></div>
+  </div>
+
+  <!-- ════ 預覽 ════ -->
+  <div id="tab-preview" class="tab-pane">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem;">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--blue-d);margin-bottom:8px;">📋 週盤品項</div>
+        <div id="preview-weekly"></div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:8px;">📋 月盤品項</div>
+        <div id="preview-monthly"></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:8px;">📦 叫貨基準一覽</div>
+      <div id="preview-reorder"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・盤點設定</span></div>
+
+<script src="base.js"></script>
+<script>
+// ════════════════════════════════════════
+// 資料結構
+// config = {
+//   cats: ['茶葉原料','包材耗材','冷藏冷凍'],
+//   items: [{
+//     id, name, cat,
+//     units: { big:{name,qty}, mid:{name,qty}, small:{name,qty} },
+//     inWeekly, inMonthly,
+//     reorder: { weekly:{qty,unit}, monthly:{qty,unit} }
+//   }]
+// }
+// ════════════════════════════════════════
+
+var _config = { cats: ['茶葉原料','包材耗材','冷藏冷凍'], items: [] };
+var _idCounter = 1;
+
+window.addEventListener('load', () => {
+  var u = buildSubHeader('盤點設定', '貨物品項・換算單位・週盤月盤・叫貨基準');
+  if (!u) return;
+  loadConfig();
+});
+
+function switchTab(t) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  document.querySelectorAll('.tab-btn')[t==='edit'?0:1].classList.add('active');
+  if (t === 'preview') renderPreview();
+}
+
+// ════════════════════════════════════════
+// 載入 / 儲存（雲端）
+// ════════════════════════════════════════
+async function loadConfig() {
+  document.getElementById('syncStatus').textContent = '載入中…';
+  var r = await api({ action: 'invConfigGet' });
+  if (r.ok && r.data) {
+    try { _config = JSON.parse(r.data); } catch(e) {}
+    // 修復舊資料
+    if (!_config.cats) _config.cats = ['茶葉原料','包材耗材','冷藏冷凍'];
+    if (!_config.items) _config.items = [];
+  }
+  document.getElementById('syncStatus').textContent = '已從雲端載入 ✓';
+  renderCats();
+  renderItems();
+}
+
+async function saveConfig() {
+  collectAllItems(); // 先從 DOM 更新記憶體
+  var btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>同步中…';
+  var r = await api({ action: 'invConfigSave', data: JSON.stringify(_config) });
+  btn.disabled = false; btn.innerHTML = '☁️ 儲存並同步';
+  if (r.ok) {
+    document.getElementById('syncStatus').textContent = '已同步至雲端 ✓ ' + new Date().toLocaleTimeString('zh-TW', {hour12:false});
+    toast('✓ 設定已儲存並同步', 'ok');
+  } else {
+    toast('儲存失敗：' + (r.error||''), 'er');
+  }
+}
+
+// ════════════════════════════════════════
+// 分類管理
+// ════════════════════════════════════════
+function renderCats() {
+  var el = document.getElementById('catList');
+  el.innerHTML = _config.cats.map((c, i) =>
+    `<span class="cat-badge" title="點擊刪除" onclick="removeCat(${i})">${c} ✕</span>`
+  ).join('');
+}
+
+function addCat() {
+  var inp = document.getElementById('newCatInput');
+  var name = inp.value.trim();
+  if (!name || _config.cats.includes(name)) { inp.value = ''; return; }
+  _config.cats.push(name);
+  inp.value = '';
+  renderCats();
+  renderItems(); // 更新所有品項的分類選單
+}
+
+function removeCat(i) {
+  var name = _config.cats[i];
+  if (_config.items.some(it => it.cat === name)) {
+    if (!confirm(`「${name}」分類下有品項，確定刪除？（品項分類將清空）`)) return;
+    _config.items.forEach(it => { if (it.cat === name) it.cat = ''; });
+  }
+  _config.cats.splice(i, 1);
+  renderCats();
+  renderItems();
+}
+
+// ════════════════════════════════════════
+// 品項渲染
+// ════════════════════════════════════════
+function renderItems() {
+  var el = document.getElementById('itemList');
+  if (!_config.items.length) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-h);font-size:13px;">尚無品項，點「＋ 新增品項」開始設定</div>';
+    return;
+  }
+  el.innerHTML = _config.items.map((item, i) => itemCardHTML(item, i)).join('');
+}
+
+function itemCardHTML(item, idx) {
+  var catOpts = _config.cats.map(c =>
+    `<option value="${c}"${item.cat===c?' selected':''}>${c}</option>`
+  ).join('');
+
+  var unitRow = (level, label) => {
+    var u = item.units?.[level] || { name:'', qty:1 };
+    return `<div class="unit-cell">
+      <div class="unit-lbl">${label}</div>
+      <div class="unit-row">
+        <input class="unit-name-inp" data-field="${level}_name" placeholder="名稱" value="${u.name||''}">
+        <span class="unit-eq">＝</span>
+        <input class="unit-val-inp" type="number" data-field="${level}_qty" placeholder="1" value="${u.qty||''}">
+        <span class="unit-eq" style="font-size:10px;">個最小單位</span>
+      </div>
+    </div>`;
+  };
+
+  var reorderW = item.reorder?.weekly || { qty:'', unit:'' };
+  var reorderM = item.reorder?.monthly || { qty:'', unit:'' };
+  var unitNames = [
+    (item.units?.big?.name||''), (item.units?.mid?.name||''), (item.units?.small?.name||'')
+  ].filter(Boolean);
+  var unitOptW = unitNames.map(u => `<option${reorderW.unit===u?' selected':''}>${u}</option>`).join('');
+  var unitOptM = unitNames.map(u => `<option${reorderM.unit===u?' selected':''}>${u}</option>`).join('');
+
+  return `<div class="item-card" id="ic-${item.id}">
+    <div class="item-card-head">
+      <span class="item-num">#${idx+1}</span>
+      <input class="item-name-input" data-field="name" placeholder="品項名稱" value="${item.name||''}">
+      <select class="ffs" data-field="cat" style="width:110px;height:36px;font-size:12px;">
+        <option value="">選分類</option>${catOpts}
+      </select>
+      <button class="item-del" onclick="removeItem('${item.id}')">✕</button>
+    </div>
+
+    <!-- 換算單位 -->
+    <div style="font-size:11px;font-weight:600;color:var(--text-m);margin-bottom:6px;">📦 換算單位（大→中→小，最小為基準）</div>
+    <div class="unit-grid">
+      ${unitRow('big','大 (選填)')}
+      ${unitRow('mid','中 (選填)')}
+      ${unitRow('small','小 / 基準單位')}
+    </div>
+
+    <!-- 盤點選項 -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-m);margin-bottom:5px;">盤點範圍</div>
+        <div class="tag-row">
+          <span class="tag-pill weekly${item.inWeekly?' on':''}" onclick="toggleTag(this,'inWeekly','${item.id}')">📋 週盤</span>
+          <span class="tag-pill monthly${item.inMonthly?' on':''}" onclick="toggleTag(this,'inMonthly','${item.id}')">📋 月盤</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-m);margin-bottom:5px;">叫貨基準</div>
+        <div class="reorder-row">
+          <span style="font-size:11px;color:var(--text-m);">週盤叫</span>
+          <input class="reorder-inp" type="number" data-field="reorder_weekly_qty" placeholder="量" value="${reorderW.qty||''}">
+          <select data-field="reorder_weekly_unit" style="height:28px;font-size:12px;border:1px solid var(--border-md);border-radius:var(--rx);padding:0 4px;font-family:var(--font);">
+            <option value="">單位</option>${unitOptW}
+          </select>
+          <span style="font-size:11px;color:var(--text-m);margin-left:8px;">月盤叫</span>
+          <input class="reorder-inp" type="number" data-field="reorder_monthly_qty" placeholder="量" value="${reorderM.qty||''}">
+          <select data-field="reorder_monthly_unit" style="height:28px;font-size:12px;border:1px solid var(--border-md);border-radius:var(--rx);padding:0 4px;font-family:var(--font);">
+            <option value="">單位</option>${unitOptM}
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// 品項 CRUD
+// ════════════════════════════════════════
+function addItem() {
+  var newItem = {
+    id: Date.now().toString(),
+    name: '', cat: _config.cats[0] || '',
+    units: { big:{name:'',qty:''}, mid:{name:'',qty:''}, small:{name:'',qty:1} },
+    inWeekly: false, inMonthly: false,
+    reorder: { weekly:{qty:'',unit:''}, monthly:{qty:'',unit:''} }
+  };
+  _config.items.push(newItem);
+  renderItems();
+  // scroll 到最後
+  setTimeout(() => document.getElementById('ic-' + newItem.id)?.scrollIntoView({behavior:'smooth'}), 50);
+}
+
+function removeItem(id) {
+  var item = _config.items.find(it => it.id === id);
+  if (!confirm('確定刪除「' + (item?.name||'此品項') + '」？')) return;
+  _config.items = _config.items.filter(it => it.id !== id);
+  renderItems();
+}
+
+function toggleTag(el, field, id) {
+  el.classList.toggle('on');
+  var item = _config.items.find(it => it.id === id);
+  if (item) item[field] = el.classList.contains('on');
+}
+
+// 從 DOM 讀回所有品項資料
+function collectAllItems() {
+  _config.items.forEach(item => {
+    var card = document.getElementById('ic-' + item.id);
+    if (!card) return;
+
+    // 基本欄位
+    card.querySelectorAll('[data-field]').forEach(el => {
+      var f = el.getAttribute('data-field');
+      var val = el.value || '';
+      if (f === 'name') item.name = val;
+      else if (f === 'cat') item.cat = val;
+      else if (f === 'big_name') item.units.big.name = val;
+      else if (f === 'big_qty') item.units.big.qty = parseFloat(val) || '';
+      else if (f === 'mid_name') item.units.mid.name = val;
+      else if (f === 'mid_qty') item.units.mid.qty = parseFloat(val) || '';
+      else if (f === 'small_name') item.units.small.name = val;
+      else if (f === 'small_qty') item.units.small.qty = parseFloat(val) || 1;
+      else if (f === 'reorder_weekly_qty') item.reorder.weekly.qty = parseFloat(val) || '';
+      else if (f === 'reorder_weekly_unit') item.reorder.weekly.unit = val;
+      else if (f === 'reorder_monthly_qty') item.reorder.monthly.qty = parseFloat(val) || '';
+      else if (f === 'reorder_monthly_unit') item.reorder.monthly.unit = val;
+    });
+
+    // 盤點標籤
+    item.inWeekly  = !!card.querySelector('.tag-pill.weekly.on');
+    item.inMonthly = !!card.querySelector('.tag-pill.monthly.on');
+  });
+}
+
+// ════════════════════════════════════════
+// 預覽
+// ════════════════════════════════════════
+function renderPreview() {
+  collectAllItems();
+  var cats = _config.cats;
+
+  // 按分類分組
+  function groupByCat(items) {
+    var groups = {};
+    cats.forEach(c => { groups[c] = []; });
+    groups['其他'] = [];
+    items.forEach(it => {
+      var c = it.cat && groups[it.cat] !== undefined ? it.cat : '其他';
+      groups[c].push(it);
+    });
+    return groups;
+  }
+
+  function renderGroup(items, labelColor) {
+    if (!items.length) return '<div style="color:var(--text-h);font-size:12px;padding:8px;">尚無品項</div>';
+    var groups = groupByCat(items);
+    return Object.entries(groups).filter(([c,arr])=>arr.length).map(([cat,arr]) => `
+      <div class="preview-section">
+        <div class="ps-title">${cat}</div>
+        ${arr.map(it => {
+          var unitStr = [it.units?.big, it.units?.mid, it.units?.small]
+            .filter(u => u?.name).map(u => u.name).join(' › ');
+          return `<div class="ps-item">
+            <span>${it.name||'（未命名）'}</span>
+            <span class="ps-unit">${unitStr || '—'}</span>
+          </div>`;
+        }).join('')}
+      </div>`).join('');
+  }
+
+  document.getElementById('preview-weekly').innerHTML =
+    renderGroup(_config.items.filter(it => it.inWeekly), 'var(--blue-d)');
+  document.getElementById('preview-monthly').innerHTML =
+    renderGroup(_config.items.filter(it => it.inMonthly), 'var(--purple)');
+
+  // 叫貨基準
+  var withReorder = _config.items.filter(it =>
+    (it.reorder?.weekly?.qty) || (it.reorder?.monthly?.qty)
+  );
+  var groups = groupByCat(withReorder);
+  document.getElementById('preview-reorder').innerHTML =
+    Object.entries(groups).filter(([c,arr])=>arr.length).map(([cat,arr]) => `
+      <div class="preview-section">
+        <div class="ps-title">${cat}</div>
+        ${arr.map(it => {
+          var wk = it.reorder?.weekly;
+          var mo = it.reorder?.monthly;
+          var parts = [];
+          if (wk?.qty) parts.push('週盤叫 <b>' + wk.qty + ' ' + (wk.unit||'') + '</b>');
+          if (mo?.qty) parts.push('月盤叫 <b>' + mo.qty + ' ' + (mo.unit||'') + '</b>');
+          return `<div class="ps-item">
+            <span>${it.name||'（未命名）'}</span>
+            <span class="ps-reorder">${parts.join('　')}</span>
+          </div>`;
+        }).join('')}
+      </div>`).join('') || '<div style="color:var(--text-h);font-size:12px;padding:8px;">尚無叫貨基準設定</div>';
+}
+</script>
+</body>
+</html>
