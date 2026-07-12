@@ -380,7 +380,8 @@ function switchType(type) {
 // 載入批次
 // ════════════════════════════════════════════════════════
 async function loadBatches() {
-  var r = await api({ action: 'teaBrewGetAll', teaType: _currentType, date: today });
+  // 不傳 date，撈全部（讓跨日的進行中批次也能顯示）
+  var r = await api({ action: 'teaBrewGetAll', teaType: _currentType });
   _batches[_currentType] = r.ok ? (r.data || []) : [];
   renderBatchGrid();
   loadStatData();
@@ -677,7 +678,7 @@ function closeCleanModal() {
 
 async function submitClean() {
   if (!_cleanTarget) return;
-  var cfg = TEA_CONFIG[_currentTarget?.type || _currentType];
+  var cfg = TEA_CONFIG[_cleanTarget.type || _currentType];
   var cleaners = getSelected('cleanerRow');
   if (!cleaners.length) { toast('請選擇清潔人員', 'er'); return; }
 
