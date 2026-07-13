@@ -11,9 +11,8 @@
 .mbtn.active{background:var(--teal);color:#fff;border-color:var(--teal);}
 .mbtn:hover:not(.active){background:var(--bg);}
 .year-select{height:32px;border:1px solid var(--border-md);border-radius:20px;padding:0 12px;font-size:13px;font-family:var(--font);background:var(--surface);cursor:pointer;}
-
 .stat-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-.stat-tbl{border-collapse:collapse;width:100%;min-width:420px;font-size:13px;}
+.stat-tbl{border-collapse:collapse;width:100%;min-width:520px;font-size:13px;}
 .stat-tbl th{background:var(--bg);padding:8px 10px;text-align:center;font-weight:600;border:1px solid var(--border);white-space:nowrap;color:var(--text-m);font-size:12px;}
 .stat-tbl td{padding:0;border:1px solid var(--border);text-align:center;vertical-align:middle;}
 .stat-tbl tr:hover td{background:rgba(0,119,85,.03);}
@@ -21,16 +20,13 @@
 .stat-tbl tr.total-row td{background:var(--bg);font-weight:700;}
 .date-cell{background:var(--bg);font-weight:600;font-size:13px;padding:8px 10px;color:var(--text-m);white-space:nowrap;}
 .auto-cell{padding:8px 6px;font-weight:700;font-size:14px;color:var(--teal);}
-
 .cell-btn{display:block;width:100%;min-height:38px;padding:8px 4px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:var(--font);color:var(--text);text-align:center;transition:background .1s;}
 .cell-btn:hover{background:var(--teal-l);}
 .cell-btn.empty{color:var(--text-h);}
-
 .month-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
 .ms-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;text-align:center;}
 .ms-num{font-size:22px;font-weight:800;color:var(--teal);}
 .ms-lbl{font-size:11px;color:var(--text-m);margin-top:2px;}
-
 .numpad-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center;}
 @media(min-width:480px){.numpad-overlay{align-items:center;}}
 .numpad-box{background:var(--surface);border-radius:16px 16px 0 0;padding:16px 16px 28px;width:100%;max-width:360px;box-shadow:0 -4px 32px rgba(0,0,0,.2);}
@@ -53,7 +49,7 @@
   <div class="tbl" onclick="goHome()">🥤</div>
   <div class="page-title-wrap">
     <div class="page-title-main" id="page-title">杯數統計</div>
-    <div class="page-title-sub" id="page-sub">一般杯・特大杯・破杯・環保杯・熱飲</div>
+    <div class="page-title-sub" id="page-sub">仙草・杏仁・仙草撞奶・仙草罐・杏仁罐</div>
   </div>
   <div class="tbr">
     <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
@@ -63,7 +59,6 @@
 </div>
 
 <div class="main">
-  <!-- 年份 + 月份選擇 -->
   <div style="margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <select class="year-select" id="yearSel" onchange="onYearChange()"></select>
     <div class="month-bar" id="monthBar" style="margin-bottom:0;"></div>
@@ -71,8 +66,8 @@
 
   <div class="month-summary">
     <div class="ms-card"><div class="ms-num" id="sumTotal">—</div><div class="ms-lbl">本月總杯數</div></div>
-    <div class="ms-card"><div class="ms-num" id="sumLarge">—</div><div class="ms-lbl">特大杯</div></div>
-    <div class="ms-card"><div class="ms-num" id="sumNormal">—</div><div class="ms-lbl">一般杯</div></div>
+    <div class="ms-card"><div class="ms-num" id="sumJelly">—</div><div class="ms-lbl">仙草(杯)</div></div>
+    <div class="ms-card"><div class="ms-num" id="sumAlmond">—</div><div class="ms-lbl">杏仁(杯)</div></div>
   </div>
 
   <div class="fc">
@@ -85,12 +80,12 @@
         <thead>
           <tr>
             <th style="min-width:54px;">日期</th>
-            <th style="min-width:58px;">一般杯</th>
-            <th style="min-width:58px;">特大杯</th>
-            <th style="min-width:52px;">破杯</th>
-            <th style="min-width:58px;">環保杯</th>
-            <th style="min-width:52px;">熱飲</th>
-            <th style="min-width:64px;color:var(--teal)">合計</th>
+            <th style="min-width:64px;">仙草(杯)</th>
+            <th style="min-width:64px;">杏仁(杯)</th>
+            <th style="min-width:64px;">仙草撞奶</th>
+            <th style="min-width:64px;">仙草罐</th>
+            <th style="min-width:64px;">杏仁罐</th>
+            <th style="min-width:64px;color:var(--teal)">總杯數</th>
           </tr>
         </thead>
         <tbody id="statBody"></tbody>
@@ -123,14 +118,15 @@
 
 <script src="base.js"></script>
 <script>
-// 欄位定義（與 Excel 完全對應）
-var FIELDS = ['normal','large','broken','eco','hot'];
-var FIELD_LABELS = { normal:'一般杯', large:'特大杯', broken:'破杯', eco:'環保杯', hot:'熱飲' };
+// 欄位對應 Sheets：仙草(杯)、杏仁(杯)、仙草撞奶、仙草罐、杏仁罐
+var FIELDS = ['jelly','almond','milk','jelly_can','almond_can'];
+var FIELD_LABELS = {
+  jelly:'仙草(杯)', almond:'杏仁(杯)',
+  milk:'仙草撞奶', jelly_can:'仙草罐', almond_can:'杏仁罐'
+};
 
-// 年份範圍：111 ~ 現在
 var TW_NOW_YEAR = new Date().getFullYear() - 1911;
 var TW_START_YEAR = 111;
-
 var _currentYear = TW_NOW_YEAR;
 var _currentMonth = new Date().getMonth() + 1;
 var _data = {};
@@ -139,21 +135,18 @@ var _numTarget = null;
 var _numStr = '';
 
 window.addEventListener('load', () => {
-  var u = buildSubHeader('杯數統計', '一般杯・特大杯・破杯・環保杯・熱飲');
+  var u = buildSubHeader('杯數統計', '仙草・杏仁・仙草撞奶・仙草罐・杏仁罐');
   if (!u) return;
   buildYearSel();
   buildMonthBar();
   loadMonth();
 });
 
-// ── 年份選單 ────────────────────────────
 function buildYearSel() {
   var sel = document.getElementById('yearSel');
-  sel.innerHTML = '';
   for (var y = TW_NOW_YEAR; y >= TW_START_YEAR; y--) {
     var opt = document.createElement('option');
-    opt.value = y;
-    opt.textContent = y + ' 年';
+    opt.value = y; opt.textContent = y + ' 年';
     if (y === _currentYear) opt.selected = true;
     sel.appendChild(opt);
   }
@@ -161,21 +154,16 @@ function buildYearSel() {
 
 function onYearChange() {
   if (_dirty && !confirm('尚未儲存，確定切換？')) {
-    document.getElementById('yearSel').value = _currentYear;
-    return;
+    document.getElementById('yearSel').value = _currentYear; return;
   }
   _currentYear = parseInt(document.getElementById('yearSel').value);
-  _dirty = false;
-  buildMonthBar();
-  loadMonth();
+  _dirty = false; buildMonthBar(); loadMonth();
 }
 
-// ── 月份列 ────────────────────────────
 function buildMonthBar() {
   var bar = document.getElementById('monthBar');
-  bar.innerHTML = Array.from({length:12}, (_,i) => i+1).map(m =>
-    `<button class="mbtn${m===_currentMonth?' active':''}"
-      id="mb-${m}" onclick="switchMonth(${m})">${m}月</button>`
+  bar.innerHTML = Array.from({length:12},(_,i)=>i+1).map(m =>
+    `<button class="mbtn${m===_currentMonth?' active':''}" id="mb-${m}" onclick="switchMonth(${m})">${m}月</button>`
   ).join('');
 }
 
@@ -187,7 +175,6 @@ function switchMonth(m) {
   loadMonth();
 }
 
-// ── 載入資料 ────────────────────────────
 async function loadMonth() {
   document.getElementById('tableTitle').textContent =
     _currentYear + '年' + _currentMonth + '月 杯數統計表';
@@ -202,17 +189,15 @@ async function loadMonth() {
   updateSummary();
 }
 
-// ── 渲染表格 ────────────────────────────
 function renderTable() {
   var days = new Date(_currentYear+1911, _currentMonth, 0).getDate();
   var todayDay = (new Date().getFullYear()-1911===_currentYear && new Date().getMonth()+1===_currentMonth)
     ? new Date().getDate() : -1;
-  var tbody = document.getElementById('statBody');
 
-  tbody.innerHTML = Array.from({length:days}, (_,i) => {
+  document.getElementById('statBody').innerHTML = Array.from({length:days},(_,i) => {
     var d = i+1, isToday = d===todayDay;
     var vals = FIELDS.map(f => v(d,f));
-    var total = vals.reduce((s,x) => s+x, 0);
+    var total = vals.reduce((s,x)=>s+x, 0);
     return `<tr class="${isToday?'today-row':''}">
       <td class="date-cell">${d}${isToday?' 🔵':''}</td>
       ${FIELDS.map((f,fi) => cBtn(d,f,vals[fi])).join('')}
@@ -230,32 +215,31 @@ function cBtn(day, field, val) {
 }
 
 function renderFoot(days) {
-  var tots = {}; FIELDS.forEach(f => { tots[f]=0; });
-  for (var d=1; d<=days; d++) FIELDS.forEach(f => { tots[f]+=v(d,f); });
-  var grand = FIELDS.reduce((s,f) => s+tots[f], 0);
+  var tots = {}; FIELDS.forEach(f=>{tots[f]=0;});
+  for(var d=1;d<=days;d++) FIELDS.forEach(f=>{tots[f]+=v(d,f);});
+  var grand = FIELDS.reduce((s,f)=>s+tots[f],0);
   document.getElementById('statFoot').innerHTML = `<tr class="total-row">
     <td class="date-cell" style="color:var(--text);">合計</td>
-    ${FIELDS.map(f => `<td class="auto-cell" style="font-size:13px;">${tots[f]}</td>`).join('')}
+    ${FIELDS.map(f=>`<td class="auto-cell" style="font-size:13px;">${tots[f]}</td>`).join('')}
     <td class="auto-cell" style="font-size:14px;">${grand}</td>
   </tr>`;
 }
 
 function updateSummary() {
   var days = new Date(_currentYear+1911, _currentMonth, 0).getDate();
-  var total=0, large=0, normal=0;
-  for (var d=1; d<=days; d++) {
-    FIELDS.forEach(f => { total+=v(d,f); });
-    large  += v(d,'large');
-    normal += v(d,'normal');
+  var total=0, jelly=0, almond=0;
+  for(var d=1;d<=days;d++){
+    FIELDS.forEach(f=>{total+=v(d,f);});
+    jelly  += v(d,'jelly');
+    almond += v(d,'almond');
   }
   document.getElementById('sumTotal').textContent  = total;
-  document.getElementById('sumLarge').textContent  = large;
-  document.getElementById('sumNormal').textContent = normal;
+  document.getElementById('sumJelly').textContent  = jelly;
+  document.getElementById('sumAlmond').textContent = almond;
 }
 
 function v(day,field){ return parseInt(_data[day+'_'+field])||0; }
 
-// ── 數字鍵盤 ────────────────────────────
 function openNumpad(day, field) {
   _numTarget = {day, field};
   _numStr = v(day,field)===0 ? '' : String(v(day,field));
@@ -281,7 +265,7 @@ function confirmNumpad() {
     btn.style.color = val?'var(--teal)':'';
     btn.style.fontWeight = val?'700':'';
   }
-  var total = FIELDS.reduce((s,f) => s+v(day,f), 0);
+  var total = FIELDS.reduce((s,f)=>s+v(day,f), 0);
   var totEl = document.getElementById('tot-'+day);
   if (totEl) totEl.textContent = total;
 
@@ -291,12 +275,11 @@ function confirmNumpad() {
   cancelNumpad();
 }
 
-// ── 儲存 ────────────────────────────────
 async function saveAll() {
   var days = new Date(_currentYear+1911, _currentMonth, 0).getDate();
-  var rows = Array.from({length:days}, (_,i) => {
+  var rows = Array.from({length:days},(_,i)=>{
     var d=i+1, row={day:d};
-    FIELDS.forEach(f => { row[f]=v(d,f); });
+    FIELDS.forEach(f=>{row[f]=v(d,f);});
     return row;
   });
   var r = await api({action:'cupsStatSave', year:_currentYear, month:_currentMonth, data:JSON.stringify(rows)});
