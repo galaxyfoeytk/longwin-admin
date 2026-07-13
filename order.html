@@ -2,142 +2,542 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>PAGE_order — 龍吟後台</title>
+<title>叫貨記錄 — 龍吟後台</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="base.css">
+<style>
+/* ── 分頁 ── */
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:1rem;background:var(--surface);border-radius:var(--r) var(--r) 0 0;padding:0 1rem;}
+.tab-btn{padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--text-m);border-bottom:3px solid transparent;margin-bottom:-2px;font-family:var(--font);}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
+.tab-pane{display:none;}.tab-pane.active{display:block;}
+
+/* ── 品項選擇器 ── */
+.item-select-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;margin-top:6px;}
+.item-pill{padding:8px 10px;border:1.5px solid var(--border-md);border-radius:var(--rs);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);background:var(--surface);color:var(--text-m);text-align:center;transition:all .12s;}
+.item-pill:hover{border-color:var(--teal);color:var(--teal);}
+.item-pill.sel{background:var(--teal);border-color:var(--teal);color:#fff;}
+
+/* ── 叫貨品項列表（新增用）── */
+.order-item-row{display:flex;gap:8px;align-items:center;background:var(--bg);border-radius:var(--rs);padding:8px 10px;margin-bottom:6px;}
+.oir-name{flex:1;font-size:13px;font-weight:600;}
+.oir-qty{width:70px;height:32px;border:1px solid var(--border-md);border-radius:var(--rx);text-align:center;font-size:13px;font-family:var(--font);}
+.oir-unit{width:70px;height:32px;border:1px solid var(--border-md);border-radius:var(--rx);font-size:12px;font-family:var(--font);padding:0 4px;}
+.oir-del{background:none;border:none;cursor:pointer;color:var(--text-h);font-size:16px;padding:4px;}
+.oir-del:hover{color:var(--red);}
+
+/* ── 記錄卡片 ── */
+.order-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:10px;overflow:hidden;}
+.oc-head{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;}
+.oc-title{font-size:14px;font-weight:700;}
+.oc-meta{font-size:12px;color:var(--text-m);margin-top:2px;line-height:1.6;}
+.oc-body{padding:10px 14px;}
+.oc-items{font-size:13px;margin-bottom:6px;}
+.oc-item-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);}
+.oc-item-row:last-child{border-bottom:none;}
+.oc-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
+.badge-green{background:var(--teal-l);color:var(--teal);}
+.badge-amber{background:var(--amber-l);color:var(--amber);}
+.badge-blue{background:var(--blue-l);color:var(--blue-d);}
+.badge-gray{background:var(--gray-l);color:var(--gray);}
+.badge-red{background:var(--red-l);color:var(--red);}
+.oc-actions{display:flex;gap:6px;padding:8px 14px;border-top:1px solid var(--border);flex-wrap:wrap;}
+
+/* ── 篩選列 ── */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.filter-select{height:32px;border:1px solid var(--border-md);border-radius:20px;padding:0 12px;font-size:12px;font-family:var(--font);background:var(--surface);cursor:pointer;}
+
+/* ── 品項管理 ── */
+.goods-chip{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border-md);border-radius:20px;padding:4px 10px;font-size:12px;margin:3px;}
+.gc-del{background:none;border:none;cursor:pointer;color:var(--text-h);font-size:12px;padding:0 2px;}
+.gc-del:hover{color:var(--red);}
+
+/* ── 統計卡 ── */
+.stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.stat-c{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;text-align:center;}
+.stat-n{font-size:20px;font-weight:800;color:var(--teal);}
+.stat-l{font-size:11px;color:var(--text-m);margin-top:2px;}
+
+.spin{width:13px;height:13px;border:2px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-2px;margin-right:4px;}
+</style>
 </head>
 <body>
 <div class="tb">
-  <div class="tbl" onclick="goHome()">☕</div>
+  <div class="tbl" onclick="goHome()">📦</div>
   <div class="page-title-wrap">
-    <div class="page-title-main" id="page-title">載入中</div>
-    <div class="page-title-sub" id="page-sub"></div>
+    <div class="page-title-main" id="page-title">叫貨記錄</div>
+    <div class="page-title-sub" id="page-sub">品項叫貨・進貨確認・支出管理</div>
   </div>
   <div class="tbr">
     <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
-    <button class="lgb" onclick="goHome()">🏠 主頁</button>
-    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+    <button class="lgb" onclick="goHome()">🏠</button>
+    <button class="lgb" onclick="doLogout()">↩</button>
   </div>
 </div>
-<div class="main" id="mainContent"><div style="color:var(--text-h);padding:20px">載入中...</div></div>
+
+<div class="main">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('new')">📝 新增叫貨</button>
+    <button class="tab-btn" onclick="switchTab('list')">📋 叫貨記錄</button>
+    <button class="tab-btn" onclick="switchTab('goods')">⚙️ 品項管理</button>
+  </div>
+
+  <!-- ════ 新增叫貨 ════ -->
+  <div id="tab-new" class="tab-pane active">
+    <div class="fc">
+      <div class="fct">📦 叫貨資訊</div>
+      <div class="fr">
+        <div>
+          <label class="ffl">叫貨日期 <span style="color:var(--red)">*</span></label>
+          <input type="date" class="ffi" id="o-date">
+        </div>
+        <div>
+          <label class="ffl">叫貨人員 <span style="color:var(--red)">*</span></label>
+          <select class="ffs" id="o-orderer">
+            <option value="Brian">Brian</option>
+            <option value="紘誠">紘誠</option>
+            <option value="美君">美君</option>
+          </select>
+        </div>
+      </div>
+      <div class="fr">
+        <div>
+          <label class="ffl">配送方式</label>
+          <select class="ffs" id="o-delivery">
+            <option value="自取">自取</option>
+            <option value="宅配">宅配</option>
+            <option value="貨運">貨運</option>
+            <option value="廠商配送">廠商配送</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div>
+          <label class="ffl">預計到貨日</label>
+          <input type="date" class="ffi" id="o-arrive">
+        </div>
+      </div>
+      <div class="fr">
+        <div>
+          <label class="ffl">💰 支出金額（元）</label>
+          <input type="number" class="ffi" id="o-amount" placeholder="0（若尚未付款可留空）">
+        </div>
+        <div>
+          <label class="ffl">收款方式</label>
+          <select class="ffs" id="o-payment">
+            <option value="現金">現金</option>
+            <option value="轉帳">轉帳</option>
+            <option value="信用卡">信用卡</option>
+            <option value="月結">月結</option>
+            <option value="未付款">未付款</option>
+          </select>
+        </div>
+      </div>
+      <div class="fr">
+        <div style="display:flex;align-items:center;gap:16px;margin-top:4px;">
+          <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" id="o-invoice" style="width:16px;height:16px;cursor:pointer;">
+            🧾 有發票
+          </label>
+          <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" id="o-expense" style="width:16px;height:16px;cursor:pointer;" checked>
+            💸 計入支出
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 品項選擇 -->
+    <div class="fc">
+      <div class="fct">🛒 選擇叫貨品項</div>
+      <div style="font-size:12px;color:var(--text-m);margin-bottom:6px;">點選品項後可設定數量與單位</div>
+      <div class="item-select-grid" id="itemSelectGrid">
+        <div style="color:var(--text-h);font-size:12px;">載入品項中…</div>
+      </div>
+    </div>
+
+    <!-- 已選品項列表 -->
+    <div class="fc" id="selectedItemsSection" style="display:none;">
+      <div class="fct">📋 已選品項（填入數量）</div>
+      <div id="selectedItemsList"></div>
+    </div>
+
+    <!-- 備註 -->
+    <div class="fc">
+      <div class="fct">📝 備註</div>
+      <textarea class="ffi" id="o-note" rows="2" style="height:auto;padding:8px;resize:none;font-family:var(--font);" placeholder="補充說明、特殊需求…"></textarea>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:1rem;">
+      <button class="sbtn" style="background:var(--gray);height:38px;" onclick="resetOrderForm()">重填</button>
+      <button class="sbtn g" style="height:38px;" id="saveOrderBtn" onclick="saveOrder()">💾 送出叫貨單</button>
+    </div>
+  </div>
+
+  <!-- ════ 叫貨記錄 ════ -->
+  <div id="tab-list" class="tab-pane">
+    <!-- 統計 -->
+    <div class="stat-cards">
+      <div class="stat-c"><div class="stat-n" id="stat-total">—</div><div class="stat-l">本月總支出</div></div>
+      <div class="stat-c"><div class="stat-n" id="stat-count">—</div><div class="stat-l">叫貨筆數</div></div>
+      <div class="stat-c"><div class="stat-n" id="stat-pending">—</div><div class="stat-l">待進貨</div></div>
+    </div>
+
+    <!-- 篩選 -->
+    <div class="filter-row">
+      <select class="filter-select" id="f-month" onchange="renderOrderList()">
+        <option value="">全部月份</option>
+      </select>
+      <select class="filter-select" id="f-status" onchange="renderOrderList()">
+        <option value="">全部狀態</option>
+        <option value="待進貨">待進貨</option>
+        <option value="已進貨">已進貨</option>
+        <option value="部分到貨">部分到貨</option>
+      </select>
+      <button class="sbtn g" style="height:32px;font-size:12px;" onclick="loadOrders()">🔄</button>
+    </div>
+
+    <div id="orderList"><div style="text-align:center;padding:2rem;color:var(--text-h);">載入中…</div></div>
+  </div>
+
+  <!-- ════ 品項管理 ════ -->
+  <div id="tab-goods" class="tab-pane">
+    <div class="fc">
+      <div class="fct">⚙️ 叫貨品項清單</div>
+      <div style="font-size:12px;color:var(--text-m);margin-bottom:10px;">在這裡管理可叫貨的品項，儲存後新增叫貨時可直接選擇</div>
+      <div id="goodsList" style="margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input type="text" class="ffi" id="newGoodsName" placeholder="品項名稱（如：日本鶴神紅茶）" style="flex:1;min-width:160px;height:36px;">
+        <select class="ffs" id="newGoodsUnit" style="width:90px;height:36px;">
+          <option>罐</option><option>箱</option><option>桶</option>
+          <option>包</option><option>袋</option><option>個</option><option>公斤</option><option>公升</option>
+        </select>
+        <button class="sbtn g" style="height:36px;" onclick="addGoods()">＋ 新增</button>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+        <button class="sbtn g" style="height:36px;" onclick="saveGoods()">☁️ 儲存品項設定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
-<div class="bb"><div class="bd"></div><span class="bt" id="btText">龍吟古早味飲品專賣</span></div>
+<div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・叫貨記錄</span></div>
+
 <script src="base.js"></script>
 <script>
-var PAGE_CONFIG = {
-  elec:{title:'電表度數記錄',sub:'每日開班電表度數',action:'elecGetAll',saveAction:'elecSave',
-    form:['日期|date|el_d|date','當日度數|today|el_t|number','記錄人員|recorder|el_r|text','備註|note|el_n|text'],
-    cols:['日期','當日度數','昨日度數','用電(度)','記錄人員','狀態','備註'],
-    row:d=>`<tr><td>${d.date}</td><td>${d.today}</td><td>${d.yesterday||'-'}</td><td>${d.usage||'-'}</td><td>${d.recorder}</td><td>${d.abnormal||'-'}</td><td>${d.note||'-'}</td></tr>`
-  },
-  filter:{title:'濾心更換記錄',sub:'總店・倉庫濾心更換',action:'filterGetAll',saveAction:'filterSave',
-    form:['日期|date|fl_d|date','地點|location|fl_l|select:總店,倉庫','第一支|f1|fl_1|select:未更換,更換,待更換','第二支|f2|fl_2|select:未更換,更換,待更換','第三支|f3|fl_3|select:未更換,更換,待更換','簽名|signer|fl_s|text'],
-    cols:['日期','地點','第一支','第二支','第三支','簽名','備註'],
-    row:d=>`<tr><td>${d.date}</td><td>${d.location}</td><td>${d.f1}</td><td>${d.f2}</td><td>${d.f3}</td><td>${d.signer}</td><td>${d.note||'-'}</td></tr>`
-  },
-  order:{title:'叫貨記錄',sub:'龍吟總店・日本鶴神叫貨單',action:'orderGetAll',saveAction:'orderSave',
-    form:['叫貨日期|orderDate|o_d|date','商品|product|o_p|select:日本鶴神紅茶,日本鶴神仙草凍,仙草凍,杏仁粉,糖,冬瓜磚,梅釀原料,紙杯,塑膠袋,其他','數量|qty|o_q|number','單位|unit|o_u|select:罐,箱,桶,包,個','叫貨人員|orderer|o_or|text','金額|amount|o_am|number'],
-    cols:['叫貨日期','商品','數量','叫貨人員','金額','到貨狀態'],
-    row:d=>`<tr><td>${d.orderDate}</td><td>${d.product}</td><td>${d.qty}${d.unit}</td><td>${d.orderer}</td><td>${d.amount?'$'+d.amount:'-'}</td><td>${d.status||'-'}</td></tr>`
-  },
-  market:{title:'市場紀錄',sub:'月市場仙草杏仁銷售記錄',action:'marketGetAll',saveAction:'marketSave',
-    form:['日期|date|mk_d|date','天氣|weather|mk_w|select:晴,多雲,陰,雨,大雨,颱風','仙草(杯)|jelly|mk_j|number','杏仁(杯)|almond|mk_a|number','仙草撞奶|jellyMilk|mk_jm|number','記錄人員|recorder|mk_r|text'],
-    cols:['日期','天氣','仙草(杯)','杏仁(杯)','仙草撞奶','總杯數','記錄人員'],
-    row:d=>`<tr><td>${d.date}</td><td>${d.weather}</td><td>${d.jelly}</td><td>${d.almond}</td><td>${d.jellyMilk}</td><td><strong>${d.total}</strong></td><td>${d.recorder}</td></tr>`
-  },
-  hours:{title:'時數記錄',sub:'員工出勤時數',action:'hoursGetAll',saveAction:'hoursSave',
-    form:['日期|date|h_d|date','員工姓名|name|h_n|text','角色|role|h_r|select:正職員工,工讀生,副店長,店長','開始時間|start|h_s|time','結束時間|end|h_e|time'],
-    cols:['日期','員工','角色','開始','結束','工時(h)','加班(h)'],
-    row:d=>`<tr><td>${d.date}</td><td>${d.name}</td><td>${d.role}</td><td>${d.start}</td><td>${d.end}</td><td>${d.work}</td><td>${d.overtime}</td></tr>`
-  },
-  report:{title:'報表分析',sub:'營收・杯數・趨勢總覽',action:'cupsGetAll',
-    noForm:true,
-    cols:['日期','仙草(杯)','杏仁(杯)','仙草撞奶','總杯數','記錄人員'],
-    row:d=>`<tr><td>${d.date}</td><td>${d.jelly}</td><td>${d.almond}</td><td>${d.jellyMilk}</td><td><strong>${d.total}</strong></td><td>${d.recorder}</td></tr>`
-  },
-  users:{title:'帳號管理',sub:'帳號設定・角色指派',action:'getAccounts',
-    noForm:true,adminOnly:true,
-    cols:['帳號','姓名','角色','狀態'],
-    row:d=>`<tr><td style="font-family:monospace;font-size:12px">${d.key}</td><td>${d.name}</td><td>${d.label||''}</td><td>${d.active?'啟用':'停用'}</td></tr>`
-  },
-  logs:{title:'操作紀錄',sub:'所有操作完整保存',action:'logGetAll',
-    noForm:true,
-    cols:['時間','人員','動作','模組','內容'],
-    row:d=>`<tr><td>${d.time}</td><td>${d.user}</td><td>${d.action}</td><td>${d.module}</td><td>${d.detail}</td></tr>`
-  },
-};
+// ════════════════════════════════════════
+// 狀態
+// ════════════════════════════════════════
+var _goods = []; // [{ name, unit }]
+var _orders = [];
+var _selectedItems = {}; // { name: { qty, unit } }
+var _currentUser = '';
 
-var PAGEID = 'order';
-var cfg = PAGE_CONFIG[PAGEID];
+// 預設品項
+var DEFAULT_GOODS = [
+  {name:'日本鶴神紅茶', unit:'罐'},
+  {name:'仙草原汁', unit:'桶'},
+  {name:'杏仁粉', unit:'包'},
+  {name:'冬瓜磚', unit:'塊'},
+  {name:'糖', unit:'包'},
+  {name:'梅釀原料', unit:'包'},
+  {name:'大吸管', unit:'包'},
+  {name:'小吸管', unit:'包'},
+  {name:'外帶袋', unit:'包'},
+  {name:'紙杯', unit:'條'},
+  {name:'杯蓋', unit:'包'},
+  {name:'杯套', unit:'包'},
+  {name:'仙草凍', unit:'桶'},
+];
 
-window.addEventListener('load', async ()=>{
-  var u = buildSubHeader(cfg.title, cfg.sub||'');
-  if(!u) return;
-  document.getElementById('btText').textContent = '龍吟古早味飲品專賣・' + cfg.title;
-  renderPage(u);
+window.addEventListener('load', () => {
+  var u = buildSubHeader('叫貨記錄', '品項叫貨・進貨確認・支出管理');
+  if (!u) return;
+  _currentUser = u.name;
+
+  // 設定預設值
+  document.getElementById('o-date').value = today;
+  document.getElementById('o-orderer').value = u.name;
+
+  loadGoods();
+  buildMonthFilter();
 });
 
-function renderPage(u){
-  var html = '';
-  // 表單
-  if(!cfg.noForm){
-    html += '<div class="fc"><div class="fct">➕ 新增'+cfg.title+'</div>';
-    var fields = cfg.form||[];
-    // 分兩欄
-    for(var i=0;i<fields.length;i+=2){
-      html += '<div class="fr">';
-      for(var j=i;j<Math.min(i+2,fields.length);j++){
-        var parts=fields[j].split('|');
-        var label=parts[0],key=parts[1],id=parts[2],type=parts[3];
-        html += '<div><label class="ffl">'+label+'</label>';
-        if(type.startsWith('select:')){
-          var opts=type.slice(7).split(',');
-          html += '<select class="ffs" id="'+id+'">'+opts.map(o=>'<option>'+o+'</option>').join('')+'</select>';
-        } else {
-          html += '<input type="'+type+'" class="ffi" id="'+id+'" '+(type==='number'?'placeholder="0"':'')+(type==='date'?'value="'+today+'"':'')+'>';
-        }
-        html += '</div>';
-      }
-      html += '</div>';
-    }
-    html += '<button class="sbtn" onclick="doSave()">💾 儲存記錄</button></div>';
-  }
-  // 表格
-  html += '<div class="tc"><div class="tc-head"><div class="tc-title">📋 '+cfg.title+'記錄</div><button class="sbtn g" onclick="loadData()" style="height:30px;font-size:12px">重新整理</button></div>';
-  html += '<table><thead><tr>'+cfg.cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead>';
-  html += '<tbody id="tb-data"><tr><td colspan="'+cfg.cols.length+'" style="text-align:center;color:var(--text-h);padding:20px">載入中...</td></tr></tbody></table></div>';
-  // 自動設定當前使用者
-  document.getElementById('mainContent').innerHTML = html;
-  if(u) {
-    var rf = cfg.form||[];
-    rf.forEach(f=>{
-      var parts=f.split('|');
-      if(parts[1]==='recorder'||parts[1]==='signer'||parts[1]==='orderer'||parts[1]==='name'||parts[1]==='brewer'){
-        var el=document.getElementById(parts[2]); if(el) el.value=u.name;
-      }
-    });
-  }
-  loadData();
+// ════════════════════════════════════════
+// 分頁切換
+// ════════════════════════════════════════
+function switchTab(t) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  var idx = ['new','list','goods'].indexOf(t);
+  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  if (t === 'list') loadOrders();
+  if (t === 'goods') renderGoodsList();
 }
 
-async function doSave(){
-  toast('儲存中...','info');
-  var params={action:cfg.saveAction||''};
-  (cfg.form||[]).forEach(f=>{var p=f.split('|');params[p[1]]=gv(p[2]);});
-  var r=await api(params);
-  if(r.ok){toast('✓ 已儲存','ok');loadData();}else toast('✗ '+(r.error||'儲存失敗'),'er');
+// ════════════════════════════════════════
+// 品項管理
+// ════════════════════════════════════════
+async function loadGoods() {
+  var r = await api({ action: 'orderGoodsGet' });
+  if (r.ok && r.data) {
+    try { _goods = JSON.parse(r.data); } catch(e) { _goods = DEFAULT_GOODS; }
+  } else {
+    _goods = DEFAULT_GOODS;
+  }
+  renderItemSelectGrid();
+  renderGoodsList();
 }
 
-async function loadData(){
-  var r=await api({action:cfg.action});
-  var b=document.getElementById('tb-data'); if(!b) return;
-  var data=r.data||r.accounts||[];
-  if(!r.ok||!data.length){
-    b.innerHTML='<tr><td colspan="'+cfg.cols.length+'" style="text-align:center;color:var(--text-h);padding:20px">尚無記錄</td></tr>';
+function renderGoodsList() {
+  var el = document.getElementById('goodsList');
+  if (!_goods.length) { el.innerHTML = '<div style="color:var(--text-h);font-size:12px;">尚無品項</div>'; return; }
+  el.innerHTML = _goods.map((g, i) =>
+    `<span class="goods-chip">
+      ${g.name}<span style="color:var(--text-m);font-size:10px;margin-left:3px;">${g.unit}</span>
+      <button class="gc-del" onclick="removeGoods(${i})">✕</button>
+    </span>`
+  ).join('');
+}
+
+function addGoods() {
+  var name = document.getElementById('newGoodsName').value.trim();
+  var unit = document.getElementById('newGoodsUnit').value;
+  if (!name) { toast('請填寫品項名稱', 'er'); return; }
+  if (_goods.some(g => g.name === name)) { toast('品項已存在', 'er'); return; }
+  _goods.push({ name, unit });
+  document.getElementById('newGoodsName').value = '';
+  renderGoodsList();
+  renderItemSelectGrid();
+  toast('已新增，記得儲存', 'ok');
+}
+
+function removeGoods(i) {
+  _goods.splice(i, 1);
+  renderGoodsList();
+  renderItemSelectGrid();
+}
+
+async function saveGoods() {
+  var r = await api({ action: 'orderGoodsSave', data: JSON.stringify(_goods) });
+  if (r.ok) toast('✓ 品項設定已儲存', 'ok');
+  else toast('儲存失敗', 'er');
+}
+
+// ════════════════════════════════════════
+// 品項選擇格子
+// ════════════════════════════════════════
+function renderItemSelectGrid() {
+  var el = document.getElementById('itemSelectGrid');
+  if (!_goods.length) {
+    el.innerHTML = '<div style="color:var(--text-h);font-size:12px;">請先到「品項管理」新增品項</div>';
     return;
   }
-  b.innerHTML=data.slice(0,60).map(cfg.row).join('');
+  el.innerHTML = _goods.map(g =>
+    `<div class="item-pill${_selectedItems[g.name] ? ' sel' : ''}"
+      id="ip-${g.name.replace(/[^\w]/g,'_')}"
+      onclick="toggleItem('${g.name}','${g.unit}')">${g.name}</div>`
+  ).join('');
+}
+
+function toggleItem(name, unit) {
+  if (_selectedItems[name]) {
+    delete _selectedItems[name];
+  } else {
+    _selectedItems[name] = { qty: 1, unit };
+  }
+  var id = 'ip-' + name.replace(/[^\w]/g,'_');
+  document.getElementById(id)?.classList.toggle('sel', !!_selectedItems[name]);
+  renderSelectedItems();
+}
+
+function renderSelectedItems() {
+  var keys = Object.keys(_selectedItems);
+  var section = document.getElementById('selectedItemsSection');
+  section.style.display = keys.length ? '' : 'none';
+  if (!keys.length) return;
+
+  document.getElementById('selectedItemsList').innerHTML = keys.map(name => {
+    var item = _selectedItems[name];
+    var units = (_goods.find(g=>g.name===name)?.unit) || '個';
+    var unitOpts = ['罐','箱','桶','包','袋','個','公斤','公升',units]
+      .filter((v,i,a)=>a.indexOf(v)===i)
+      .map(u => `<option${u===item.unit?' selected':''}>${u}</option>`).join('');
+    return `<div class="order-item-row">
+      <span class="oir-name">${name}</span>
+      <input class="oir-qty" type="number" min="1" value="${item.qty}"
+        oninput="_selectedItems['${name}'].qty=parseInt(this.value)||1">
+      <select class="oir-unit" onchange="_selectedItems['${name}'].unit=this.value">${unitOpts}</select>
+      <button class="oir-del" onclick="toggleItem('${name}','${item.unit}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// 新增叫貨單
+// ════════════════════════════════════════
+async function saveOrder() {
+  var items = Object.entries(_selectedItems).map(([name, v]) => ({ name, qty: v.qty, unit: v.unit }));
+  if (!items.length) { toast('請選擇至少一個品項', 'er'); return; }
+  var date = document.getElementById('o-date').value;
+  if (!date) { toast('請填寫叫貨日期', 'er'); return; }
+
+  var btn = document.getElementById('saveOrderBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>儲存中…';
+
+  var r = await api({
+    action: 'orderRecordSave',
+    date,
+    orderer: document.getElementById('o-orderer').value,
+    delivery: document.getElementById('o-delivery').value,
+    arriveDate: document.getElementById('o-arrive').value,
+    amount: document.getElementById('o-amount').value || 0,
+    payment: document.getElementById('o-payment').value,
+    hasInvoice: document.getElementById('o-invoice').checked ? '是' : '否',
+    isExpense: document.getElementById('o-expense').checked ? '是' : '否',
+    note: document.getElementById('o-note').value.trim(),
+    items: JSON.stringify(items),
+    status: '待進貨'
+  });
+
+  btn.disabled = false; btn.innerHTML = '💾 送出叫貨單';
+
+  if (r.ok) {
+    toast('✓ 叫貨單已送出', 'ok');
+    resetOrderForm();
+  } else toast('儲存失敗：' + (r.error||''), 'er');
+}
+
+function resetOrderForm() {
+  _selectedItems = {};
+  document.getElementById('o-date').value = today;
+  document.getElementById('o-arrive').value = '';
+  document.getElementById('o-amount').value = '';
+  document.getElementById('o-note').value = '';
+  document.getElementById('o-invoice').checked = false;
+  document.getElementById('o-expense').checked = true;
+  document.getElementById('o-orderer').value = _currentUser;
+  renderItemSelectGrid();
+  renderSelectedItems();
+}
+
+// ════════════════════════════════════════
+// 叫貨記錄列表
+// ════════════════════════════════════════
+function buildMonthFilter() {
+  var sel = document.getElementById('f-month');
+  var now = new Date();
+  for (var i = 0; i < 6; i++) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    var val = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    var label = (d.getFullYear()-1911) + '年' + (d.getMonth()+1) + '月';
+    var opt = document.createElement('option');
+    opt.value = val; opt.textContent = label;
+    sel.appendChild(opt);
+  }
+}
+
+async function loadOrders() {
+  var r = await api({ action: 'orderRecordGetAll' });
+  _orders = r.ok ? (r.data||[]) : [];
+  renderOrderList();
+  updateStats();
+}
+
+function renderOrderList() {
+  var monthFilter = document.getElementById('f-month').value;
+  var statusFilter = document.getElementById('f-status').value;
+
+  var filtered = _orders.filter(o => {
+    if (monthFilter && !o.date.startsWith(monthFilter)) return false;
+    if (statusFilter && o.status !== statusFilter) return false;
+    return true;
+  });
+
+  var el = document.getElementById('orderList');
+  if (!filtered.length) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-h);">尚無叫貨記錄</div>';
+    return;
+  }
+
+  filtered.sort((a,b) => b.date.localeCompare(a.date));
+  el.innerHTML = filtered.map(o => {
+    var items = []; try { items = JSON.parse(o.items||'[]'); } catch(e){}
+    var statusBadge = o.status === '已進貨'
+      ? '<span class="badge badge-green">✓ 已進貨</span>'
+      : o.status === '部分到貨'
+        ? '<span class="badge badge-amber">部分到貨</span>'
+        : '<span class="badge badge-gray">待進貨</span>';
+
+    return `<div class="order-card">
+      <div class="oc-head">
+        <div>
+          <div class="oc-title">📦 ${o.date} 叫貨單</div>
+          <div class="oc-meta">
+            叫貨人：${o.orderer}　配送：${o.delivery||'—'}
+            ${o.arriveDate ? '　預計到貨：'+o.arriveDate : ''}
+          </div>
+        </div>
+        ${statusBadge}
+      </div>
+      <div class="oc-body">
+        <div class="oc-items">
+          ${items.map(it => `<div class="oc-item-row">
+            <span style="font-weight:500;">${it.name}</span>
+            <span style="color:var(--teal);font-weight:600;">${it.qty} ${it.unit}</span>
+          </div>`).join('')}
+        </div>
+        <div class="oc-badges">
+          ${o.amount && o.amount!='0' ? `<span class="badge badge-blue">💰 $${parseInt(o.amount).toLocaleString()} ${o.payment||''}</span>` : ''}
+          ${o.hasInvoice==='是' ? '<span class="badge badge-green">🧾 有發票</span>' : '<span class="badge badge-gray">無發票</span>'}
+          ${o.isExpense==='是' ? '<span class="badge badge-amber">💸 計入支出</span>' : ''}
+          ${o.note ? `<span class="badge badge-gray" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">📝 ${o.note}</span>` : ''}
+        </div>
+        ${o.receiveDate ? `<div style="font-size:12px;color:var(--teal);margin-top:6px;">✓ 進貨時間：${o.receiveDate}　進貨人員：${o.receiver||'—'}</div>` : ''}
+      </div>
+      <div class="oc-actions">
+        ${o.status !== '已進貨' ? `<button class="sbtn g" style="height:28px;font-size:12px;" onclick="openReceiveModal('${o.id}')">✓ 確認進貨</button>` : ''}
+        <button class="sbtn" style="height:28px;font-size:12px;background:var(--gray);" onclick="deleteOrder('${o.id}')">刪除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateStats() {
+  var now = new Date();
+  var thisMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  var monthOrders = _orders.filter(o => o.date.startsWith(thisMonth) && o.isExpense==='是');
+  var total = monthOrders.reduce((s,o) => s + (parseInt(o.amount)||0), 0);
+  var pending = _orders.filter(o => o.status === '待進貨').length;
+  document.getElementById('stat-total').textContent = '$' + total.toLocaleString();
+  document.getElementById('stat-count').textContent = monthOrders.length;
+  document.getElementById('stat-pending').textContent = pending;
+}
+
+// ════════════════════════════════════════
+// 確認進貨 Modal（簡單 confirm）
+// ════════════════════════════════════════
+async function openReceiveModal(id) {
+  var receiver = prompt('進貨人員姓名：', _currentUser);
+  if (receiver === null) return;
+  var receiveDate = new Date().toISOString().slice(0,10);
+  var r = await api({
+    action: 'orderRecordUpdate',
+    id, status: '已進貨',
+    receiver: receiver || _currentUser,
+    receiveDate
+  });
+  if (r.ok) { toast('✓ 已確認進貨', 'ok'); loadOrders(); }
+  else toast('更新失敗', 'er');
+}
+
+async function deleteOrder(id) {
+  if (!confirm('確定刪除此筆叫貨記錄？')) return;
+  var r = await api({ action: 'orderRecordDelete', id });
+  if (r.ok) { toast('已刪除', 'ok'); loadOrders(); }
+  else toast('刪除失敗', 'er');
 }
 </script>
 </body>
