@@ -1,107 +1,66 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>茶製記錄 — 龍吟後台</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="base.css">
 <style>
-/* ── 茶種分頁 ── */
 .tea-tabs{display:flex;overflow-x:auto;background:var(--surface);border-bottom:2px solid var(--border);position:sticky;top:52px;z-index:50;-webkit-overflow-scrolling:touch;}
 .tea-tabs::-webkit-scrollbar{display:none;}
 .tt-btn{flex-shrink:0;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--text-m);font-family:var(--font);border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;}
 .tt-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
-.tab-pane{display:none;}.tab-pane.active{display:block;}
 
-/* ── 批次卡片 ── */
-.batch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;}
-.bc{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s;}
-.bc:hover{box-shadow:0 2px 14px rgba(0,0,0,.09);}
-.bc.s-warn{border-left:4px solid var(--amber);}
-.bc.s-expire{border-left:4px solid var(--red);}
-.bc.s-done{opacity:.5;border-left:4px solid var(--teal);}
+/* ── 茶製表格 ── */
+.tea-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.tea-tbl{border-collapse:collapse;width:100%;font-size:12px;min-width:600px;}
+.tea-tbl th{background:var(--bg);padding:8px 10px;text-align:center;font-weight:600;border:1px solid var(--border);white-space:nowrap;color:var(--text-m);font-size:11px;}
+.tea-tbl td{padding:6px 8px;border:1px solid var(--border);text-align:center;vertical-align:middle;white-space:nowrap;}
+.tea-tbl tr.active-row{background:rgba(0,119,85,.04);}
+.tea-tbl tr.warn-row{background:rgba(245,158,11,.06);}
+.tea-tbl tr.expire-row{background:rgba(239,68,68,.06);}
+.tea-tbl tr.done-row{opacity:.55;background:var(--bg);}
+.timer-cell{font-weight:700;font-size:13px;letter-spacing:.02em;}
+.t-ok{color:var(--teal);} .t-warn{color:var(--amber);} .t-expire{color:var(--red);} .t-done{color:var(--gray);}
+.status-chip{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;}
+.s-ok{background:var(--teal-l);color:var(--teal);}
+.s-warn{background:var(--amber-l);color:var(--amber);}
+.s-expire{background:var(--red-l);color:var(--red);}
+.s-done{background:var(--gray-l);color:var(--gray);}
 
-.bc-head{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.bc-barrel{font-size:22px;font-weight:800;letter-spacing:.03em;}
-.bc-gram{font-size:13px;font-weight:700;color:var(--text-m);}
-.bc-status-chip{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;}
-.cs-ok{background:var(--teal-l);color:var(--teal);}
-.cs-warn{background:var(--amber-l);color:var(--amber);}
-.cs-expire{background:var(--red-l);color:var(--red);}
-.cs-done{background:var(--gray-l);color:var(--gray);}
+/* ── 新增按鈕 ── */
+.add-row-btn{width:100%;padding:10px;background:var(--bg);border:1.5px dashed var(--border-md);border-radius:var(--rx);font-size:13px;color:var(--text-m);cursor:pointer;font-family:var(--font);margin-top:6px;}
+.add-row-btn:hover{background:var(--teal-l);color:var(--teal);border-color:var(--teal);}
 
-.bc-body{padding:12px 14px;}
-.bc-timer{font-size:24px;font-weight:800;text-align:center;padding:8px 0 4px;letter-spacing:.02em;}
-.t-ok{color:var(--teal);} .t-warn{color:var(--amber);} .t-expire{color:var(--red);}
-.bc-prog{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:10px;}
-.bc-prog-fill{height:100%;border-radius:3px;transition:width .5s;}
-.pf-ok{background:var(--teal);} .pf-warn{background:var(--amber-m);} .pf-expire{background:var(--red);}
+/* ── 行內編輯 ── */
+.edit-inp{height:30px;border:1.5px solid var(--teal);border-radius:var(--rx);padding:0 6px;font-size:12px;font-family:var(--font);text-align:center;background:var(--surface);}
+.edit-inp:focus{outline:none;}
+.edit-time{width:80px;}
+.edit-sel{height:30px;border:1.5px solid var(--teal);border-radius:var(--rx);padding:0 4px;font-size:12px;font-family:var(--font);background:var(--surface);}
+.mbtn-sm{height:28px;padding:0 10px;font-size:11px;border:1px solid var(--border-md);border-radius:var(--rx);background:var(--surface);color:var(--text-m);cursor:pointer;font-family:var(--font);}
+.mbtn-sm:hover{background:var(--bg);}
+.mbtn-sm.g{background:var(--teal);border-color:var(--teal);color:#fff;}
+.mbtn-sm.r{background:var(--red-l);border-color:#F7C1C1;color:var(--red);}
 
-.bc-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;font-size:12px;}
-.bc-lbl{color:var(--text-m);}
-.bc-val{font-weight:600;font-size:12px;}
-
-.bc-foot{padding:9px 14px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;}
-.act{height:29px;padding:0 11px;font-size:11px;font-weight:500;border:1px solid var(--border-md);border-radius:var(--rx);background:var(--surface);color:var(--text-m);cursor:pointer;font-family:var(--font);}
-.act:hover{background:var(--bg);}
-.act.green{background:var(--teal);border-color:var(--teal);color:#fff;}
-.act.green:hover{background:#0A5042;}
-.act.red{background:var(--red-l);border-color:#F7C1C1;color:var(--red);}
-
-/* ── 備註展開 ── */
-.bc-notes{display:none;padding:8px 14px;background:var(--bg);border-top:1px solid var(--border);font-size:12px;color:var(--text-m);line-height:1.7;}
-.bc-notes.open{display:block;}
-.note-entry{padding:4px 0;border-bottom:1px solid var(--border);}
-.note-entry:last-child{border-bottom:none;}
-.flag-chip{display:inline;font-size:10px;padding:1px 6px;border-radius:20px;font-weight:600;margin-right:4px;}
-.fc-normal{background:var(--teal-l);color:var(--teal);}
-.fc-abnormal{background:var(--red-l);color:var(--red);}
-
-/* ── 新增 Modal ── */
+/* ── Modal ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center;}
 @media(min-width:600px){.modal-overlay{align-items:center;}}
-.modal{background:var(--surface);border-radius:var(--r) var(--r) 0 0;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 -4px 32px rgba(0,0,0,.18);}
-@media(min-width:600px){.modal{border-radius:var(--r);}}
-.modal-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-.modal-section{font-size:11px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px;}
-
-/* ── 桶號格子 ── */
-.barrel-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
-.barrel-cell{height:40px;border:1.5px solid var(--border-md);border-radius:var(--rx);background:var(--surface);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .12s;}
-.barrel-cell:hover{border-color:var(--teal);color:var(--teal);}
-.barrel-cell.sel{background:var(--teal);border-color:var(--teal);color:#fff;}
-.barrel-cell.used{background:var(--bg);color:var(--text-h);cursor:not-allowed;border-style:dashed;}
-
-/* ── 人員選擇器 ── */
-.member-row{display:flex;flex-wrap:wrap;gap:5px;}
-.mpill{padding:6px 13px;border:1.5px solid var(--border-md);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .12s;}
+.modal{background:var(--surface);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:460px;max-height:85vh;overflow-y:auto;box-shadow:0 -4px 32px rgba(0,0,0,.2);}
+@media(min-width:600px){.modal{border-radius:16px;}}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:14px;}
+.mpill-row{display:flex;flex-wrap:wrap;gap:5px;}
+.mpill{padding:6px 13px;border:1.5px solid var(--border-md);border-radius:20px;font-size:12px;cursor:pointer;font-family:var(--font);}
 .mpill:hover{border-color:var(--teal);color:var(--teal);}
 .mpill.sel{background:var(--teal);border-color:var(--teal);color:#fff;}
-.mpill.multi.sel{background:var(--purple);border-color:var(--purple);color:#fff;}
-
-/* ── 時間預覽 ── */
-.time-preview-box{background:var(--bg);border-radius:var(--rs);padding:10px 12px;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.tpb-item .lbl{font-size:11px;color:var(--text-m);margin-bottom:2px;}
-.tpb-item .val{font-size:13px;font-weight:700;}
-.val-warn{color:var(--amber);}
-.val-er{color:var(--red);}
-
-/* ── 統計表 ── */
-.stat-table{width:100%;border-collapse:collapse;font-size:12px;}
-.stat-table th{background:var(--bg);padding:8px 10px;text-align:left;font-weight:600;color:var(--text-m);border-bottom:1px solid var(--border);white-space:nowrap;}
-.stat-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
-.stat-table tr:last-child td{border-bottom:none;}
-
-/* ── spin ── */
+.mpill.msel.sel{background:var(--purple);border-color:var(--purple);}
+.tp-preview{background:var(--bg);border-radius:var(--rs);padding:8px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:12px;}
+.tp-item .lbl{color:var(--text-m);margin-bottom:2px;font-size:11px;}
+.tp-item .val{font-weight:700;}
+.val-warn{color:var(--amber);} .val-er{color:var(--red);}
 .spin{width:13px;height:13px;border:2px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-2px;margin-right:4px;}
-
-/* ── 空狀態 ── */
-.empty-state{text-align:center;padding:2.5rem;color:var(--text-h);font-size:13px;}
 </style>
 </head>
 <body>
-
 <div class="tb">
   <div class="tbl" onclick="goHome()">🍵</div>
   <div class="page-title-wrap">
@@ -110,86 +69,68 @@
   </div>
   <div class="tbr">
     <div class="uc"><div class="ua" id="tav"></div><span class="un" id="tnm"></span><span class="rp" id="trl"></span></div>
-    <button class="lgb" onclick="goHome()">🏠 主頁</button>
-    <button class="lgb" onclick="doLogout()">↩ 登出</button>
+    <button class="lgb" onclick="goHome()">🏠</button>
+    <button class="lgb" onclick="doLogout()">↩</button>
   </div>
 </div>
 
-<!-- 茶種分頁列 -->
 <div class="tea-tabs" id="teaTabs"></div>
 
 <div class="main">
-  <!-- 進行中批次 -->
-  <div class="tc" style="margin-bottom:1rem;">
+  <div class="tc">
     <div class="tc-head">
-      <div class="tc-title" id="batchSectionTitle">進行中批次</div>
+      <div class="tc-title" id="tableTitle">茶製記錄表</div>
       <div style="display:flex;gap:6px;align-items:center;">
         <span id="batchCount" style="font-size:12px;color:var(--text-m);"></span>
         <button class="sbtn g" style="height:30px;font-size:12px;" onclick="loadBatches()">🔄</button>
-        <button class="sbtn g" style="height:30px;font-size:12px;" onclick="openAddModal()">＋ 新增</button>
       </div>
     </div>
-    <div style="padding:12px;">
-      <div class="batch-grid" id="batchGrid">
-        <div class="empty-state">載入中…</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 今日統計表 -->
-  <div class="tc">
-    <div class="tc-head">
-      <div class="tc-title" id="statSectionTitle">今日完成記錄</div>
-      <button class="sbtn g" style="height:28px;font-size:12px;" onclick="switchStatTab('today')">今日</button>
-      <button class="sbtn" style="height:28px;font-size:12px;background:var(--gray);margin-left:4px;" onclick="switchStatTab('all')">全部</button>
-    </div>
-    <div style="overflow-x:auto;padding:0 2px;">
-      <table class="stat-table" id="statTable">
-        <thead id="statHead"></thead>
-        <tbody id="statBody"><tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text-h);">載入中…</td></tr></tbody>
+    <div class="tea-table-wrap" style="padding:0 2px 12px;">
+      <table class="tea-tbl" id="teaTable">
+        <thead id="teaHead"></thead>
+        <tbody id="teaBody"><tr><td colspan="12" style="padding:20px;color:var(--text-h);">載入中…</td></tr></tbody>
       </table>
+      <button class="add-row-btn" onclick="openAddModal()">＋ 新增批次</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════ -->
-<!-- 新增批次 Modal -->
-<!-- ══════════════════════════════════════════ -->
+<!-- 新增 Modal -->
 <div id="addModal" class="modal-overlay" style="display:none;" onclick="closeAddModal()">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-title" id="addModalTitle">＋ 新增批次</div>
 
-    <!-- 桶號（有桶號的茶種顯示） -->
     <div id="barrelSection">
-      <div class="modal-section">選擇桶號</div>
-      <div class="barrel-grid" id="barrelGrid"></div>
+      <div class="ffl" style="margin-top:0;">桶號</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px;" id="barrelGrid"></div>
     </div>
 
-    <!-- 公克數（糖水專屬） -->
-    <div id="gramSection" style="display:none;">
-      <div class="modal-section">公克數</div>
-      <input type="number" class="ffi" id="gramInput" placeholder="填入公克數" style="max-width:160px;">
+    <div id="gramSection" style="display:none;margin-top:10px;">
+      <label class="ffl">公克數</label>
+      <input type="number" class="ffi" id="gramInput" placeholder="輸入公克數" style="max-width:140px;">
     </div>
 
-    <!-- 煮茶人員 -->
-    <div class="modal-section">煮茶人員</div>
-    <div class="member-row" id="brewerRow"></div>
+    <div style="margin-top:10px;">
+      <label class="ffl">煮茶人員</label>
+      <div class="mpill-row" id="brewerRow"></div>
+    </div>
 
-    <!-- 煮茶時間 -->
-    <div class="modal-section">煮好時間（可編輯）</div>
-    <input type="time" class="ffi" id="brewTimeInput" style="max-width:160px;" oninput="updateTimePreview()">
+    <div style="margin-top:10px;">
+      <label class="ffl">煮好時間（可調整）</label>
+      <input type="time" class="ffi" id="brewTimeInput" style="max-width:150px;" oninput="updateTimePreview()">
+    </div>
 
-    <!-- 時間預覽（有效期的茶種顯示） -->
     <div id="timePreviewSection">
-      <div class="time-preview-box">
-        <div class="tpb-item"><div class="lbl">⚠ 警告時間</div><div class="val val-warn" id="tpWarn">—</div></div>
-        <div class="tpb-item"><div class="lbl">❌ 報廢時間</div><div class="val val-er" id="tpExpire">—</div></div>
+      <div class="tp-preview">
+        <div class="tp-item"><div class="lbl">⚠ 警告時間</div><div class="val val-warn" id="tpWarn">—</div></div>
+        <div class="tp-item"><div class="lbl">❌ 報廢時間</div><div class="val val-er" id="tpExpire">—</div></div>
       </div>
     </div>
 
-    <!-- 備註 -->
-    <div class="modal-section">備註（選填）</div>
-    <input type="text" class="ffi" id="brewNoteInput" placeholder="如：補桶、更換桶…">
+    <div style="margin-top:10px;">
+      <label class="ffl">備註（選填）</label>
+      <input type="text" class="ffi" id="brewNote" placeholder="補充說明…">
+    </div>
 
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
       <button class="sbtn" style="background:var(--gray);height:36px;" onclick="closeAddModal()">取消</button>
@@ -198,61 +139,29 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════ -->
-<!-- 清潔下架 Modal -->
-<!-- ══════════════════════════════════════════ -->
+<!-- 清潔 Modal -->
 <div id="cleanModal" class="modal-overlay" style="display:none;" onclick="closeCleanModal()">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-title">🧹 清潔下架</div>
     <div id="cleanInfo" style="background:var(--bg);border-radius:var(--rs);padding:10px 12px;font-size:13px;margin-bottom:12px;line-height:1.8;"></div>
 
-    <!-- 試喝人員（有需要的茶種） -->
-    <div id="tasterSection" style="display:none;">
-      <div class="modal-section">試喝人員（可多選）</div>
-      <div class="member-row" id="tasterRow"></div>
-      <div style="margin-top:8px;">
-        <label class="ffl">試喝結果</label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
-          <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="tasteResult" value="正常" checked> ✓ 正常</label>
-          <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="tasteResult" value="異常"> ⚠ 異常</label>
-          <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="tasteResult" value="未試喝"> — 未試喝</label>
-        </div>
+    <div id="tasterSection" style="display:none;margin-bottom:10px;">
+      <label class="ffl">試喝人員（可多選）</label>
+      <div class="mpill-row" id="tasterRow"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+        <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="tasteR" value="正常" checked> ✓ 正常</label>
+        <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="tasteR" value="異常"> ⚠ 異常</label>
+        <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="tasteR" value="未試喝"> — 未試喝</label>
       </div>
     </div>
 
-    <div class="modal-section">清潔人員</div>
-    <div class="member-row" id="cleanerRow"></div>
-
-    <div class="modal-section">清潔時間（預設現在）</div>
-    <input type="time" class="ffi" id="cleanTimeInput" style="max-width:160px;">
-
-    <div class="modal-section">備註（選填）</div>
-    <input type="text" class="ffi" id="cleanNoteInput" placeholder="清潔備注…">
+    <div><label class="ffl">清潔人員</label><div class="mpill-row" id="cleanerRow"></div></div>
+    <div style="margin-top:10px;"><label class="ffl">清潔時間</label><input type="time" class="ffi" id="cleanTimeInput" style="max-width:150px;"></div>
+    <div style="margin-top:10px;"><label class="ffl">備註</label><input type="text" class="ffi" id="cleanNote" placeholder="清潔備注…"></div>
 
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
       <button class="sbtn" style="background:var(--gray);height:36px;" onclick="closeCleanModal()">取消</button>
       <button class="sbtn g" style="height:36px;" onclick="submitClean()">✓ 確認下架</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════ -->
-<!-- 備註 Modal -->
-<!-- ══════════════════════════════════════════ -->
-<div id="noteModal" class="modal-overlay" style="display:none;" onclick="closeNoteModal()">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-title" id="noteModalTitle">📝 備註記錄</div>
-    <div id="noteModalInfo" style="background:var(--bg);border-radius:var(--rs);padding:10px 12px;font-size:13px;margin-bottom:12px;"></div>
-    <div id="noteHistory" style="margin-bottom:12px;max-height:180px;overflow-y:auto;"></div>
-    <div class="modal-section">新增記錄</div>
-    <textarea class="ffi" id="noteTextInput" rows="2" style="height:auto;padding:8px;resize:none;font-family:var(--font);" placeholder="記錄這桶茶的狀況…"></textarea>
-    <div style="display:flex;gap:8px;margin-top:6px;">
-      <label style="font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="noteFlag" value="正常" checked> 正常</label>
-      <label style="font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="noteFlag" value="異常"> ⚠ 異常</label>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
-      <button class="sbtn" style="background:var(--gray);height:34px;" onclick="closeNoteModal()">關閉</button>
-      <button class="sbtn g" style="height:34px;" onclick="submitNote()">儲存備註</button>
     </div>
   </div>
 </div>
@@ -262,571 +171,384 @@
 
 <script src="base.js"></script>
 <script>
-// ════════════════════════════════════════════════════════
-// 茶種設定（依照各 PDF 表格欄位）
-// ════════════════════════════════════════════════════════
 var TEA_CONFIG = {
-  black: {
-    label: '🍵 紅茶',
-    barrels: ['A1','A2','A3','A4','B1','B2','B3','B4'],
-    warnH: 28, expireH: 36,
-    hasTaste: true,
-    hasBarrel: true,
-    hasGram: false,
-    hasWarn: true,
-    hasMount: false,   // 上架時間/人員
-    cols: ['桶號','煮茶時間','煮茶人員','警告時間','報廢時間','試喝人員','下架時間','清潔人員','總時間','備註']
-  },
-  green: {
-    label: '🍃 綠茶',
-    barrels: ['A1','A2','A3','A4','B1','B2','B3','B4'],
-    warnH: 28, expireH: 36,
-    hasTaste: true,
-    hasBarrel: true,
-    hasGram: false,
-    hasWarn: true,
-    hasMount: false,
-    cols: ['桶號','煮茶時間','煮茶人員','警告時間','報廢時間','試喝人員','下架時間','清潔人員','總時間','備註']
-  },
-  wintermelon: {
-    label: '🫙 冬瓜茶',
-    barrels: ['A1','A2','A3','A4','B1','B2','B3','B4'],
-    warnH: 24, expireH: 48,
-    hasTaste: true,
-    hasBarrel: true,
-    hasGram: false,
-    hasWarn: true,
-    hasMount: true,   // 有上架時間（無上架人員）
-    hasMountPerson: false,
-    cols: ['桶號','煮茶時間','上架時間','煮茶人員','警告時間','報廢時間','試喝人員','下架時間','清潔人員','總時間','備註']
-  },
-  jelly: {
-    label: '🧊 仙草凍',
-    barrels: ['A1','A2','A3','A4','B1','B2','B3','B4'],
-    warnH: 24, expireH: 48,
-    hasTaste: false,
-    hasBarrel: true,
-    hasGram: false,
-    hasWarn: true,
-    hasMount: true,   // 有上架時間 + 上架人員
-    hasMountPerson: true,
-    cols: ['桶號','煮好時間','上架時間','上架人員','煮茶人員','警告時間','報廢時間','下架時間','清潔人員','總時間','備註']
-  },
-  plum: {
-    label: '🍑 梅釀',
-    barrels: [],
-    warnH: 0, expireH: 0,   // 無效期
-    hasTaste: false,
-    hasBarrel: false,
-    hasGram: false,
-    hasWarn: false,
-    hasMount: false,
-    cols: ['煮好時間','煮茶人員','下架時間','清洗人員','總時間','備註']
-  },
-  syrup: {
-    label: '🍬 糖水',
-    barrels: [],
-    warnH: 4, expireH: 8,
-    hasTaste: false,
-    hasBarrel: false,
-    hasGram: true,
-    hasWarn: true,
-    hasMount: false,
-    cols: ['公克數','煮好時間','煮茶人員','警告時間','報廢時間','下架時間','清潔人員','總時間','備註']
-  }
+  black:       { label:'🍵 紅茶',   barrels:['A1','A2','A3','A4','B1','B2','B3','B4'], warnH:28, expireH:36, hasTaste:true,  hasBarrel:true,  hasGram:false, hasWarn:true,  hasMount:false, hasMountPerson:false },
+  green:       { label:'🍃 綠茶',   barrels:['A1','A2','A3','A4','B1','B2','B3','B4'], warnH:28, expireH:36, hasTaste:true,  hasBarrel:true,  hasGram:false, hasWarn:true,  hasMount:false, hasMountPerson:false },
+  wintermelon: { label:'🫙 冬瓜茶', barrels:['A1','A2','A3','A4','B1','B2','B3','B4'], warnH:24, expireH:48, hasTaste:true,  hasBarrel:true,  hasGram:false, hasWarn:true,  hasMount:true,  hasMountPerson:false },
+  jelly:       { label:'🧊 仙草凍', barrels:['A1','A2','A3','A4','B1','B2','B3','B4'], warnH:24, expireH:48, hasTaste:false, hasBarrel:true,  hasGram:false, hasWarn:true,  hasMount:true,  hasMountPerson:true  },
+  plum:        { label:'🍑 梅釀',   barrels:[], warnH:0, expireH:0, hasTaste:false, hasBarrel:false, hasGram:false, hasWarn:false, hasMount:false, hasMountPerson:false },
+  syrup:       { label:'🍬 糖水',   barrels:[], warnH:4,  expireH:8,  hasTaste:false, hasBarrel:false, hasGram:true,  hasWarn:true,  hasMount:false, hasMountPerson:false },
 };
-
 var MEMBERS = ['Brian','紘誠','美君'];
 var _currentType = 'black';
 var _batches = {};
 var _cleanTarget = null;
-var _noteTarget = null;
-var _statMode = 'today';
+var _selectedBarrel = '';
+var _editingId = null;
 var _rafId = null;
 var _currentUser = '';
 
-// ════════════════════════════════════════════════════════
-// 初始化
-// ════════════════════════════════════════════════════════
 window.addEventListener('load', () => {
-  var u = buildSubHeader('茶製記錄', '製茶批次・效期追蹤・清潔記錄');
+  var u = buildSubHeader('茶製記錄','製茶批次・效期追蹤・清潔記錄');
   if (!u) return;
   _currentUser = u.name;
-
   buildTabs();
   switchType('black');
   startTimer();
 });
 
-function buildTabs() {
-  var tabs = document.getElementById('teaTabs');
-  tabs.innerHTML = Object.entries(TEA_CONFIG).map(([k, cfg]) =>
-    `<button class="tt-btn${k==='black'?' active':''}" id="ttab-${k}" onclick="switchType('${k}')">${cfg.label}</button>`
+function pad2(n){ return String(n).padStart(2,'0'); }
+function fmtTime(d){ return pad2(d.getHours())+':'+pad2(d.getMinutes()); }
+function fmtDatetime(d){ return (d.getMonth()+1)+'/'+d.getDate()+' '+pad2(d.getHours())+':'+pad2(d.getMinutes()); }
+function fmtElapsed(ms){
+  if(ms<0)ms=0;
+  return Math.floor(ms/3600000)+'h '+pad2(Math.floor((ms%3600000)/60000))+'m '+pad2(Math.floor((ms%60000)/1000))+'s';
+}
+
+// ── 分頁 ──────────────────────────────────
+function buildTabs(){
+  document.getElementById('teaTabs').innerHTML = Object.entries(TEA_CONFIG).map(([k,cfg])=>
+    `<button class="tt-btn" id="ttab-${k}" onclick="switchType('${k}')">${cfg.label}</button>`
   ).join('');
 }
-
-function switchType(type) {
-  _currentType = type;
-  var cfg = TEA_CONFIG[type];
-  document.querySelectorAll('.tt-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('ttab-' + type)?.classList.add('active');
-  document.getElementById('batchSectionTitle').textContent = cfg.label + ' 進行中批次';
-  document.getElementById('statSectionTitle').textContent = cfg.label + ' 記錄統計';
+function switchType(type){
+  _currentType=type;
+  document.querySelectorAll('.tt-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('ttab-'+type)?.classList.add('active');
+  document.getElementById('tableTitle').textContent = TEA_CONFIG[type].label+' 茶製記錄表';
   loadBatches();
-  renderStatTable([]);
 }
 
-// ════════════════════════════════════════════════════════
-// 載入批次
-// ════════════════════════════════════════════════════════
-async function loadBatches() {
-  // 不傳 date，撈全部（讓跨日的進行中批次也能顯示）
-  var r = await api({ action: 'teaBrewGetAll', teaType: _currentType });
-  _batches[_currentType] = r.ok ? (r.data || []) : [];
-  renderBatchGrid();
-  loadStatData();
+// ── 載入 ──────────────────────────────────
+async function loadBatches(){
+  var r = await api({action:'teaBrewGetAll', teaType:_currentType});
+  _batches[_currentType] = r.ok ? (r.data||[]) : [];
+  renderTable();
 }
 
-// ════════════════════════════════════════════════════════
-// 渲染進行中卡片
-// ════════════════════════════════════════════════════════
-function renderBatchGrid() {
+// ── 表格渲染 ──────────────────────────────
+function renderTable(){
   var cfg = TEA_CONFIG[_currentType];
-  var grid = document.getElementById('batchGrid');
-  var active = (_batches[_currentType] || []).filter(b => b.status === '進行中');
+  var all = _batches[_currentType]||[];
+  var active = all.filter(b=>b.status==='進行中');
+  var done   = all.filter(b=>b.status==='已清潔');
+  document.getElementById('batchCount').textContent = '進行中 '+active.length+' 桶';
 
-  document.getElementById('batchCount').textContent = '進行中 ' + active.length + ' 桶';
+  // 表頭（依茶種欄位）
+  var heads = ['桶號'];
+  if(cfg.hasGram) heads = ['公克數'];
+  heads.push('煮'+(cfg.hasGram?'好':'茶')+'時間');
+  heads.push('煮茶人員');
+  if(cfg.hasWarn){ heads.push('⚠ 警告'); heads.push('❌ 報廢'); }
+  if(cfg.hasMount) heads.push('上架時間');
+  if(cfg.hasMountPerson) heads.push('上架人員');
+  heads.push('已過時間');
+  heads.push('狀態');
+  if(cfg.hasTaste) heads.push('試喝人員');
+  heads.push('下架時間');
+  heads.push('清潔人員');
+  heads.push('總時間');
+  heads.push('備註');
+  heads.push('操作');
 
-  if (!active.length) {
-    grid.innerHTML = '<div class="empty-state">目前無進行中批次，點右上角「＋ 新增」開始記錄</div>';
+  document.getElementById('teaHead').innerHTML =
+    '<tr>'+heads.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+
+  var tbody = document.getElementById('teaBody');
+  if(!all.length){
+    tbody.innerHTML = `<tr><td colspan="${heads.length}" style="padding:24px;color:var(--text-h);">尚無記錄，點下方「＋ 新增批次」開始</td></tr>`;
     return;
   }
 
-  grid.innerHTML = active.map(b => batchCardHTML(b, cfg)).join('');
-}
-
-function batchCardHTML(b, cfg) {
-  var brewTs = new Date(b.brewTime).getTime();
-  var warnTs = cfg.hasWarn ? new Date(b.warnTime).getTime() : 0;
-  var expTs  = cfg.hasWarn ? new Date(b.expireTime).getTime() : 0;
-  var now    = Date.now();
-  var elapsed = now - brewTs;
-  var isWarn   = cfg.hasWarn && elapsed >= (warnTs - brewTs);
-  var isExpire = cfg.hasWarn && elapsed >= (expTs - brewTs);
-  var statusCls = isExpire ? 's-expire' : isWarn ? 's-warn' : '';
-  var chipCls   = isExpire ? 'cs-expire' : isWarn ? 'cs-warn' : 'cs-ok';
-  var chipText  = isExpire ? '❌ 報廢時間到' : isWarn ? '⚠ 警告中' : '✓ 正常';
-  var timerCls  = isExpire ? 't-expire' : isWarn ? 't-warn' : 't-ok';
-
-  var notes = []; try { notes = JSON.parse(b.notes||'[]'); } catch(e){}
-
-  // 頭部識別（桶號 or 公克數 or 序號）
-  var headLeft = cfg.hasBarrel ? `<span class="bc-barrel">${b.barrel}</span>` :
-                 cfg.hasGram   ? `<span class="bc-gram">${b.gram||''}g</span>` :
-                                 `<span class="bc-gram">#${b.id.slice(-4)}</span>`;
-
-  // 列資料
-  var rows = [];
-  rows.push(['煮茶人員', b.brewer]);
-  rows.push(['煮好時間', fmtTime(new Date(b.brewTime))]);
-  if (cfg.hasMount && b.mountTime) rows.push(['上架時間', fmtTime(new Date(b.mountTime))]);
-  if (cfg.hasMountPerson && b.mountPerson) rows.push(['上架人員', b.mountPerson]);
-  if (cfg.hasWarn) {
-    rows.push(['⚠ 警告時間', fmtDatetime(new Date(b.warnTime))]);
-    rows.push(['❌ 報廢時間', fmtDatetime(new Date(b.expireTime))]);
-  }
-  if (b.note) rows.push(['備註', b.note]);
-
-  var rowsHTML = rows.map(([l,v]) => `<div class="bc-row"><span class="bc-lbl">${l}</span><span class="bc-val">${v||'—'}</span></div>`).join('');
-
-  // 進度條
-  var progHTML = '';
-  if (cfg.hasWarn) {
-    var totalMs = expTs - brewTs;
-    var pct = Math.min(elapsed / totalMs * 100, 100);
-    var pfCls = isExpire ? 'pf-expire' : isWarn ? 'pf-warn' : 'pf-ok';
-    progHTML = `<div class="bc-prog"><div class="bc-prog-fill ${pfCls}" style="width:${pct}%"></div></div>`;
+  var html = '';
+  // 進行中
+  active.sort((a,b)=>new Date(a.brewTime)-new Date(b.brewTime));
+  active.forEach(b=>{ html += batchRow(b, cfg, heads.length, false); });
+  // 已完成（今日）
+  var todayStr = today;
+  var todayDone = done.filter(b=>(b.date||'').slice(0,10)===todayStr);
+  var oldDone   = done.filter(b=>(b.date||'').slice(0,10)!==todayStr);
+  todayDone.sort((a,b)=>new Date(b.brewTime)-new Date(a.brewTime));
+  todayDone.forEach(b=>{ html += batchRow(b, cfg, heads.length, false); });
+  // 舊記錄（摺疊）
+  if(oldDone.length){
+    html += `<tr><td colspan="${heads.length}" style="padding:8px;text-align:center;">
+      <button class="mbtn-sm" onclick="toggleOldRows(this)">▼ 顯示更早的 ${oldDone.length} 筆記錄</button>
+      <tbody id="oldRows" style="display:none;">`;
+    oldDone.sort((a,b)=>new Date(b.brewTime)-new Date(a.brewTime));
+    oldDone.forEach(b=>{ html += batchRow(b, cfg, heads.length, true); });
+    html += '</tbody></td></tr>';
   }
 
-  // 備註歷史
-  var notesHTML = notes.length ? notes.map(n =>
-    `<div class="note-entry"><span class="flag-chip ${n.flag==='異常'?'fc-abnormal':'fc-normal'}">${n.flag}</span><span style="color:var(--text-h)">${n.time}</span>　${n.text||''}</div>`
-  ).join('') : '<div style="color:var(--text-h);">尚無備註</div>';
-
-  return `<div class="bc ${statusCls}" id="bc-${b.id}">
-    <div class="bc-head">
-      ${headLeft}
-      <span class="bc-status-chip ${chipCls}">${chipText}</span>
-    </div>
-    <div class="bc-body" data-brew="${brewTs}" data-warn="${warnTs}" data-exp="${expTs}" data-haswarn="${cfg.hasWarn?1:0}">
-      <div class="bc-timer ${timerCls}">${fmtElapsed(elapsed)}</div>
-      ${progHTML}
-      ${rowsHTML}
-    </div>
-    <div class="bc-notes" id="bcn-${b.id}">${notesHTML}</div>
-    <div class="bc-foot">
-      <button class="act" onclick="toggleNotes('${b.id}')">📝 備註</button>
-      <button class="act" onclick="openNoteModal('${b.id}','${b.barrel||''}','${b.brewTime}')">＋ 新增記錄</button>
-      <button class="act green" onclick="openCleanModal('${b.id}','${b.barrel||b.id.slice(-4)}','${b.brewTime}')">🧹 清潔下架</button>
-    </div>
-  </div>`;
+  tbody.innerHTML = html;
 }
 
-function toggleNotes(id) {
-  document.getElementById('bcn-' + id)?.classList.toggle('open');
+function batchRow(b, cfg, colCount, isOld){
+  var brewTs  = b.brewTime  ? new Date(b.brewTime).getTime()  : 0;
+  var warnTs  = b.warnTime  ? new Date(b.warnTime).getTime()  : 0;
+  var expTs   = b.expireTime? new Date(b.expireTime).getTime(): 0;
+  var now     = Date.now();
+  var isDone  = b.status==='已清潔';
+  var elapsed = brewTs ? now-brewTs : 0;
+  var isWarn  = cfg.hasWarn && !isDone && elapsed>=(warnTs-brewTs);
+  var isExpire= cfg.hasWarn && !isDone && elapsed>=(expTs-brewTs);
+  var rowCls  = isDone?'done-row':isExpire?'expire-row':isWarn?'warn-row':'active-row';
+  var statusHtml = isDone
+    ? '<span class="status-chip s-done">✓ 已清潔</span>'
+    : isExpire ? '<span class="status-chip s-expire">❌ 報廢</span>'
+    : isWarn   ? '<span class="status-chip s-warn">⚠ 警告</span>'
+    :             '<span class="status-chip s-ok">進行中</span>';
+  var timerCls  = isDone?'t-done':isExpire?'t-expire':isWarn?'t-warn':'t-ok';
+  var elapsedStr= brewTs ? fmtElapsed(elapsed) : '—';
+
+  var cells = '';
+  // 桶號 or 公克數
+  cells += `<td style="font-weight:700;">${cfg.hasGram?(b.gram||'—')+'g' : (b.barrel||'—')}</td>`;
+  // 煮好時間
+  cells += `<td>${brewTs?fmtTime(new Date(b.brewTime)):'—'}</td>`;
+  // 煮茶人員
+  cells += `<td>${b.brewer||'—'}</td>`;
+  // 警告/報廢
+  if(cfg.hasWarn){
+    cells += `<td style="color:var(--amber);font-size:11px;">${warnTs?fmtDatetime(new Date(b.warnTime)):'—'}</td>`;
+    cells += `<td style="color:var(--red);font-size:11px;">${expTs?fmtDatetime(new Date(b.expireTime)):'—'}</td>`;
+  }
+  // 上架
+  if(cfg.hasMount)       cells += `<td>${b.mountTime?fmtTime(new Date(b.mountTime)):'—'}</td>`;
+  if(cfg.hasMountPerson) cells += `<td>${b.mountPerson||'—'}</td>`;
+  // 計時（進行中才即時更新）
+  cells += isDone
+    ? `<td class="timer-cell t-done">${brewTs&&b.cleanTime?fmtElapsed(new Date(b.cleanTime)-brewTs):'—'}</td>`
+    : `<td class="timer-cell ${timerCls}" data-brew="${brewTs}" data-warn="${warnTs}" data-exp="${expTs}" data-haswarn="${cfg.hasWarn?1:0}" id="timer-${b.id}">${elapsedStr}</td>`;
+  // 狀態
+  cells += `<td>${statusHtml}</td>`;
+  // 試喝
+  if(cfg.hasTaste) cells += `<td style="font-size:11px;">${b.taster||'—'}</td>`;
+  // 下架/清潔/總時間
+  cells += `<td style="font-size:11px;">${b.cleanTime?fmtTime(new Date(b.cleanTime)):'—'}</td>`;
+  cells += `<td>${b.cleaner||'—'}</td>`;
+  cells += `<td style="font-weight:600;">${b.totalTime||'—'}</td>`;
+  // 備註
+  cells += `<td style="font-size:11px;max-width:120px;color:var(--text-m);">${b.note||'—'}</td>`;
+  // 操作
+  var ops = `<div style="display:flex;gap:4px;justify-content:center;">`;
+  ops += `<button class="mbtn-sm" onclick="openEditModal('${b.id}')">✏️</button>`;
+  if(!isDone) ops += `<button class="mbtn-sm g" onclick="openCleanModal('${b.id}','${b.barrel||b.id.slice(-4)}','${b.brewTime}')">🧹</button>`;
+  ops += `<button class="mbtn-sm r" onclick="deleteBatch('${b.id}')">✕</button>`;
+  ops += `</div>`;
+  cells += `<td>${ops}</td>`;
+
+  return `<tr class="${rowCls}" id="row-${b.id}">${cells}</tr>`;
 }
 
-// ════════════════════════════════════════════════════════
-// 即時計時器
-// ════════════════════════════════════════════════════════
-function startTimer() {
-  function tick() {
-    var now = Date.now();
-    document.querySelectorAll('[data-brew]').forEach(el => {
-      var brewTs = parseInt(el.getAttribute('data-brew'));
-      var warnTs = parseInt(el.getAttribute('data-warn'));
-      var expTs  = parseInt(el.getAttribute('data-exp'));
-      var hasWarn = el.getAttribute('data-haswarn') === '1';
-      var elapsed = now - brewTs;
-      var isWarn   = hasWarn && elapsed >= (warnTs - brewTs);
-      var isExpire = hasWarn && elapsed >= (expTs - brewTs);
+function toggleOldRows(btn){
+  var el = document.getElementById('oldRows');
+  if(!el) return;
+  var show = el.style.display==='none';
+  el.style.display = show?'':'none';
+  btn.textContent = show?'▲ 收起':'▼ 顯示更早記錄';
+}
 
-      var timerEl = el.querySelector('.bc-timer');
-      if (timerEl) {
-        timerEl.textContent = fmtElapsed(elapsed);
-        timerEl.className = 'bc-timer ' + (isExpire ? 't-expire' : isWarn ? 't-warn' : 't-ok');
-      }
-      var fill = el.querySelector('.bc-prog-fill');
-      if (fill && hasWarn) {
-        var pct = Math.min(elapsed / (expTs - brewTs) * 100, 100);
-        fill.style.width = pct + '%';
-        fill.className = 'bc-prog-fill ' + (isExpire ? 'pf-expire' : isWarn ? 'pf-warn' : 'pf-ok');
-      }
-      // 卡片邊框
-      var card = el.closest('.bc');
-      if (card) {
-        card.classList.toggle('s-expire', isExpire);
-        card.classList.toggle('s-warn', !isExpire && isWarn);
-      }
+// ── 計時器 ──────────────────────────────
+function startTimer(){
+  function tick(){
+    var now=Date.now();
+    document.querySelectorAll('[data-brew]').forEach(el=>{
+      var brewTs=parseInt(el.getAttribute('data-brew'));
+      var warnTs=parseInt(el.getAttribute('data-warn'));
+      var expTs=parseInt(el.getAttribute('data-exp'));
+      var hasWarn=el.getAttribute('data-haswarn')==='1';
+      var elapsed=now-brewTs;
+      var isWarn=hasWarn&&elapsed>=(warnTs-brewTs);
+      var isExpire=hasWarn&&elapsed>=(expTs-brewTs);
+      el.textContent=fmtElapsed(elapsed);
+      el.className='timer-cell '+(isExpire?'t-expire':isWarn?'t-warn':'t-ok');
+      var row=el.closest('tr');
+      if(row){row.className=isExpire?'expire-row':isWarn?'warn-row':'active-row';}
     });
-    _rafId = requestAnimationFrame(tick);
+    requestAnimationFrame(tick);
   }
   tick();
 }
 
-// ════════════════════════════════════════════════════════
-// 新增批次 Modal
-// ════════════════════════════════════════════════════════
-function openAddModal() {
-  var cfg = TEA_CONFIG[_currentType];
-  document.getElementById('addModalTitle').textContent = '＋ 新增 ' + cfg.label;
+// ── 新增 Modal ──────────────────────────
+function openAddModal(){
+  var cfg=TEA_CONFIG[_currentType];
+  _selectedBarrel='';
+  _editingId=null;
+  document.getElementById('addModalTitle').textContent='＋ 新增 '+cfg.label;
 
-  // 桶號
-  var barrelSec = document.getElementById('barrelSection');
-  barrelSec.style.display = cfg.hasBarrel ? '' : 'none';
-  if (cfg.hasBarrel) {
-    var inUse = (_batches[_currentType]||[]).filter(b=>b.status==='進行中').map(b=>b.barrel);
-    document.getElementById('barrelGrid').innerHTML = cfg.barrels.map(b =>
-      `<button class="barrel-cell${inUse.includes(b)?' used':''}" id="barrel-${b}"
-        onclick="${inUse.includes(b)?'':("selectBarrel('"+b+"')")}">${b}</button>`
+  var bSec=document.getElementById('barrelSection');
+  bSec.style.display=cfg.hasBarrel?'':'none';
+  if(cfg.hasBarrel){
+    var inUse=(_batches[_currentType]||[]).filter(b=>b.status==='進行中').map(b=>b.barrel);
+    document.getElementById('barrelGrid').innerHTML=cfg.barrels.map(b=>
+      `<button class="mpill${inUse.includes(b)?' used':''}" style="${inUse.includes(b)?'opacity:.4;cursor:not-allowed;':''}"
+        id="brl-${b}" onclick="${inUse.includes(b)?'':("selBarrel('"+b+"')")}">${b}</button>`
     ).join('');
   }
 
-  // 公克數
-  document.getElementById('gramSection').style.display = cfg.hasGram ? '' : 'none';
-  document.getElementById('gramInput').value = '';
+  document.getElementById('gramSection').style.display=cfg.hasGram?'':'none';
+  document.getElementById('gramInput').value='';
 
-  // 人員
-  buildMemberPills('brewerRow', 'single', _currentUser);
+  var now=new Date();
+  document.getElementById('brewTimeInput').value=pad2(now.getHours())+':'+pad2(now.getMinutes());
+  document.getElementById('timePreviewSection').style.display=cfg.hasWarn?'':'none';
+  document.getElementById('brewNote').value='';
 
-  // 時間
-  var now = new Date();
-  document.getElementById('brewTimeInput').value = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
-
-  // 時間預覽
-  document.getElementById('timePreviewSection').style.display = cfg.hasWarn ? '' : 'none';
+  buildMpills('brewerRow','single',_currentUser);
   updateTimePreview();
-
-  document.getElementById('brewNoteInput').value = '';
-  document.getElementById('addModal').style.display = 'flex';
+  document.getElementById('addModal').style.display='flex';
 }
 
-function closeAddModal() {
-  document.getElementById('addModal').style.display = 'none';
+function closeAddModal(){ document.getElementById('addModal').style.display='none'; _editingId=null; }
+
+function selBarrel(b){
+  _selectedBarrel=b;
+  document.querySelectorAll('#barrelGrid .mpill').forEach(p=>p.classList.remove('sel'));
+  document.getElementById('brl-'+b)?.classList.add('sel');
 }
 
-var _selectedBarrel = '';
-function selectBarrel(b) {
-  _selectedBarrel = b;
-  document.querySelectorAll('.barrel-cell').forEach(el => el.classList.remove('sel'));
-  document.getElementById('barrel-' + b)?.classList.add('sel');
+// ── 編輯 Modal（重用新增 Modal）────────
+function openEditModal(id){
+  var b=(_batches[_currentType]||[]).find(x=>x.id===id);
+  if(!b)return;
+  var cfg=TEA_CONFIG[_currentType];
+  _editingId=id;
+  _selectedBarrel=b.barrel||'';
+
+  document.getElementById('addModalTitle').textContent='✏️ 編輯批次 '+(b.barrel||'');
+  document.getElementById('barrelSection').style.display=cfg.hasBarrel?'':'none';
+  if(cfg.hasBarrel){
+    var inUse=(_batches[_currentType]||[]).filter(x=>x.status==='進行中'&&x.id!==id).map(x=>x.barrel);
+    document.getElementById('barrelGrid').innerHTML=cfg.barrels.map(brl=>
+      `<button class="mpill${brl===b.barrel?' sel':''}${inUse.includes(brl)?' used':''}"
+        style="${inUse.includes(brl)?'opacity:.4;cursor:not-allowed;':''}"
+        id="brl-${brl}" onclick="${inUse.includes(brl)?'':("selBarrel('"+brl+"')")}">${brl}</button>`
+    ).join('');
+  }
+
+  document.getElementById('gramSection').style.display=cfg.hasGram?'':'none';
+  if(cfg.hasGram) document.getElementById('gramInput').value=b.gram||'';
+
+  var brewDt=b.brewTime?new Date(b.brewTime):new Date();
+  document.getElementById('brewTimeInput').value=fmtTime(brewDt);
+  document.getElementById('timePreviewSection').style.display=cfg.hasWarn?'':'none';
+  document.getElementById('brewNote').value=b.note||'';
+
+  buildMpills('brewerRow','single',b.brewer||_currentUser);
+  updateTimePreview();
+  document.getElementById('addModal').style.display='flex';
 }
 
-function buildMemberPills(containerId, mode, defaultName) {
-  // mode: 'single' | 'multi'
-  var el = document.getElementById(containerId);
-  if (!el) return;
-  el.innerHTML = MEMBERS.map(m =>
-    `<span class="mpill${mode==='multi'?' multi':''}${m===defaultName?' sel':''}"
-      onclick="togglePill(this,'${mode}')">${m}</span>`
+function buildMpills(id,mode,defaultVal){
+  var el=document.getElementById(id); if(!el)return;
+  el.innerHTML=MEMBERS.map(m=>
+    `<span class="mpill${mode==='multi'?' msel':''}${(mode==='single'?m===defaultVal:(defaultVal||'').includes(m))?' sel':''}"
+      onclick="toggleMpill(this,'${mode}')">${m}</span>`
   ).join('');
 }
+function toggleMpill(el,mode){
+  if(mode==='single'){el.closest('.mpill-row').querySelectorAll('.mpill').forEach(p=>p.classList.remove('sel'));el.classList.add('sel');}
+  else el.classList.toggle('sel');
+}
+function getSelected(id){ return [...document.querySelectorAll(`#${id} .mpill.sel`)].map(p=>p.textContent); }
 
-function togglePill(el, mode) {
-  if (mode === 'single') {
-    el.closest('.member-row').querySelectorAll('.mpill').forEach(p => p.classList.remove('sel'));
-    el.classList.add('sel');
-  } else {
-    el.classList.toggle('sel');
-  }
+function updateTimePreview(){
+  var cfg=TEA_CONFIG[_currentType]; if(!cfg.hasWarn)return;
+  var val=document.getElementById('brewTimeInput').value; if(!val)return;
+  var[hh,mm]=val.split(':').map(Number);
+  var d=new Date(); d.setHours(hh,mm,0,0);
+  document.getElementById('tpWarn').textContent  =fmtDatetime(new Date(d.getTime()+cfg.warnH*3600000));
+  document.getElementById('tpExpire').textContent=fmtDatetime(new Date(d.getTime()+cfg.expireH*3600000));
 }
 
-function getSelected(containerId) {
-  return [...document.querySelectorAll(`#${containerId} .mpill.sel`)].map(p => p.textContent);
+async function saveBatch(){
+  var cfg=TEA_CONFIG[_currentType];
+  var brewers=getSelected('brewerRow');
+  if(!brewers.length){toast('請選擇煮茶人員','er');return;}
+  if(cfg.hasBarrel&&!_selectedBarrel&&!_editingId){toast('請選擇桶號','er');return;}
+
+  var timeVal=document.getElementById('brewTimeInput').value;
+  if(!timeVal){toast('請填寫煮好時間','er');return;}
+  var[hh,mm]=timeVal.split(':').map(Number);
+  var brewDt=new Date(); brewDt.setHours(hh,mm,0,0);
+
+  var warnDt=cfg.hasWarn?new Date(brewDt.getTime()+cfg.warnH*3600000):null;
+  var expDt =cfg.hasWarn?new Date(brewDt.getTime()+cfg.expireH*3600000):null;
+
+  var btn=document.getElementById('addSaveBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>儲存…';
+
+  var params={
+    action: _editingId?'teaBrewUpdate':'teaBrewSave',
+    teaType:_currentType,
+    barrel:_selectedBarrel||'',
+    gram:cfg.hasGram?(document.getElementById('gramInput').value||''):'',
+    brewer:brewers.join('、'),
+    brewTime:brewDt.toISOString(),
+    warnTime:warnDt?warnDt.toISOString():'',
+    expireTime:expDt?expDt.toISOString():'',
+    note:document.getElementById('brewNote').value.trim(),
+    date:today
+  };
+  if(_editingId) params.id=_editingId;
+
+  var r=await api(params);
+  btn.disabled=false; btn.innerHTML='✓ 記錄';
+  if(r.ok){ toast(_editingId?'✓ 已更新':'✓ 已記錄','ok'); closeAddModal(); loadBatches(); }
+  else toast('儲存失敗：'+(r.error||''),'er');
 }
 
-function updateTimePreview() {
-  var cfg = TEA_CONFIG[_currentType];
-  if (!cfg.hasWarn) return;
-  var val = document.getElementById('brewTimeInput').value;
-  if (!val) return;
-  var [hh, mm] = val.split(':').map(Number);
-  var d = new Date(); d.setHours(hh, mm, 0, 0);
-  var warnD   = new Date(d.getTime() + cfg.warnH * 3600000);
-  var expireD = new Date(d.getTime() + cfg.expireH * 3600000);
-  document.getElementById('tpWarn').textContent   = fmtDatetime(warnD);
-  document.getElementById('tpExpire').textContent = fmtDatetime(expireD);
+async function deleteBatch(id){
+  if(!confirm('確定刪除此筆記錄？'))return;
+  var r=await api({action:'teaBrewDelete',id});
+  if(r.ok){toast('已刪除','ok');loadBatches();}
+  else toast('刪除失敗','er');
 }
 
-async function saveBatch() {
-  var cfg = TEA_CONFIG[_currentType];
-  var brewers = getSelected('brewerRow');
-  if (!brewers.length) { toast('請選擇煮茶人員', 'er'); return; }
+// ── 清潔 Modal ──────────────────────────
+function openCleanModal(id,label,brewTime){
+  var cfg=TEA_CONFIG[_currentType];
+  _cleanTarget={id,label,brewTime,type:_currentType};
+  var elapsed=brewTime?fmtElapsed(Date.now()-new Date(brewTime).getTime()):'—';
+  document.getElementById('cleanInfo').innerHTML=`<b>${label}</b>　煮好：${fmtTime(new Date(brewTime))}<br>已過：<b style="color:var(--teal)">${elapsed}</b>`;
 
-  if (cfg.hasBarrel && !_selectedBarrel) { toast('請選擇桶號', 'er'); return; }
+  document.getElementById('tasterSection').style.display=cfg.hasTaste?'':'none';
+  if(cfg.hasTaste){ buildMpills('tasterRow','multi',null); document.querySelector('input[name="tasteR"][value="正常"]').checked=true; }
 
-  var timeVal = document.getElementById('brewTimeInput').value;
-  if (!timeVal) { toast('請填寫煮好時間', 'er'); return; }
-
-  var [hh, mm] = timeVal.split(':').map(Number);
-  var brewDt = new Date(); brewDt.setHours(hh, mm, 0, 0);
-  var warnDt   = cfg.hasWarn ? new Date(brewDt.getTime() + cfg.warnH * 3600000) : null;
-  var expireDt = cfg.hasWarn ? new Date(brewDt.getTime() + cfg.expireH * 3600000) : null;
-
-  var btn = document.getElementById('addSaveBtn');
-  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>儲存…';
-
-  var r = await api({
-    action: 'teaBrewSave',
-    teaType: _currentType,
-    barrel: _selectedBarrel || '',
-    gram: cfg.hasGram ? (document.getElementById('gramInput').value || '') : '',
-    brewer: brewers.join('、'),
-    brewTime: brewDt.toISOString(),
-    warnTime: warnDt ? warnDt.toISOString() : '',
-    expireTime: expireDt ? expireDt.toISOString() : '',
-    note: document.getElementById('brewNoteInput').value.trim(),
-    date: today
-  });
-
-  btn.disabled = false; btn.innerHTML = '✓ 記錄';
-
-  if (r.ok) {
-    toast('✓ 已記錄', 'ok');
-    _selectedBarrel = '';
-    closeAddModal();
-    loadBatches();
-  } else {
-    toast('儲存失敗：' + (r.error||''), 'er');
-  }
+  buildMpills('cleanerRow','single',_currentUser);
+  var now=new Date();
+  document.getElementById('cleanTimeInput').value=pad2(now.getHours())+':'+pad2(now.getMinutes());
+  document.getElementById('cleanNote').value='';
+  document.getElementById('cleanModal').style.display='flex';
 }
+function closeCleanModal(){ document.getElementById('cleanModal').style.display='none'; _cleanTarget=null; }
 
-// ════════════════════════════════════════════════════════
-// 清潔下架 Modal
-// ════════════════════════════════════════════════════════
-function openCleanModal(id, label, brewTime) {
-  var cfg = TEA_CONFIG[_currentType];
-  _cleanTarget = { id, label, brewTime, type: _currentType };
+async function submitClean(){
+  if(!_cleanTarget)return;
+  var cleaners=getSelected('cleanerRow');
+  if(!cleaners.length){toast('請選擇清潔人員','er');return;}
 
-  var elapsed = fmtElapsed(Date.now() - new Date(brewTime).getTime());
-  document.getElementById('cleanInfo').innerHTML =
-    `<b>${label}</b>　煮好時間：${fmtTime(new Date(brewTime))}<br>已過：<b style="color:var(--teal)">${elapsed}</b>`;
+  var cleanTimeVal=document.getElementById('cleanTimeInput').value;
+  var[hh,mm]=cleanTimeVal.split(':').map(Number);
+  var cleanDt=new Date(); cleanDt.setHours(hh,mm,0,0);
+  var brewDt=new Date(_cleanTarget.brewTime);
+  var diffMs=cleanDt-brewDt;
+  var totalTime=Math.floor(diffMs/3600000)+'h '+pad2(Math.floor((diffMs%3600000)/60000))+'m';
 
-  // 試喝（依茶種）
-  var tasterSec = document.getElementById('tasterSection');
-  tasterSec.style.display = cfg.hasTaste ? '' : 'none';
-  if (cfg.hasTaste) {
-    buildMemberPills('tasterRow', 'multi', null);
-    document.querySelector('input[name="tasteResult"][value="正常"]').checked = true;
-  }
-
-  // 清潔人員
-  buildMemberPills('cleanerRow', 'single', _currentUser);
-
-  // 清潔時間
-  var now = new Date();
-  document.getElementById('cleanTimeInput').value = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
-  document.getElementById('cleanNoteInput').value = '';
-
-  document.getElementById('cleanModal').style.display = 'flex';
-}
-
-function closeCleanModal() {
-  document.getElementById('cleanModal').style.display = 'none';
-  _cleanTarget = null;
-}
-
-async function submitClean() {
-  if (!_cleanTarget) return;
-  var cfg = TEA_CONFIG[_cleanTarget.type || _currentType];
-  var cleaners = getSelected('cleanerRow');
-  if (!cleaners.length) { toast('請選擇清潔人員', 'er'); return; }
-
-  var cleanTimeVal = document.getElementById('cleanTimeInput').value;
-  var [hh, mm] = cleanTimeVal.split(':').map(Number);
-  var cleanDt = new Date(); cleanDt.setHours(hh, mm, 0, 0);
-  var brewDt = new Date(_cleanTarget.brewTime);
-  var diffMs = cleanDt - brewDt;
-  var totalTime = Math.floor(diffMs/3600000) + 'h ' + pad2(Math.floor((diffMs%3600000)/60000)) + 'm';
-
-  var tasters = '', tasteResult = '';
-  if (document.getElementById('tasterSection').style.display !== 'none') {
-    tasters = getSelected('tasterRow').join('、');
-    tasteResult = document.querySelector('input[name="tasteResult"]:checked')?.value || '';
+  var tasters='', tasteResult='';
+  if(document.getElementById('tasterSection').style.display!=='none'){
+    tasters=getSelected('tasterRow').join('、');
+    tasteResult=document.querySelector('input[name="tasteR"]:checked')?.value||'';
   }
 
-  var r = await api({
-    action: 'teaBrewClean',
-    id: _cleanTarget.id,
-    cleaner: cleaners.join('、'),
-    cleanTime: cleanDt.toISOString(),
-    taster: tasters,
-    tasteResult,
-    totalTime,
-    note: document.getElementById('cleanNoteInput').value.trim(),
-    status: '已清潔'
-  });
+  var r=await api({action:'teaBrewClean',id:_cleanTarget.id,cleaner:cleaners.join('、'),
+    cleanTime:cleanDt.toISOString(),taster:tasters,tasteResult,
+    totalTime,note:document.getElementById('cleanNote').value.trim(),status:'已清潔'});
 
-  if (r.ok) {
-    toast('✓ 下架完成（總時間 ' + totalTime + '）', 'ok');
-    closeCleanModal();
-    loadBatches();
-  } else {
-    toast('儲存失敗', 'er');
-  }
-}
-
-// ════════════════════════════════════════════════════════
-// 備註 Modal
-// ════════════════════════════════════════════════════════
-function openNoteModal(id, label, brewTime) {
-  _noteTarget = { id };
-  document.getElementById('noteModalTitle').textContent = '📝 ' + (label||'') + ' 備註記錄';
-  var elapsed = fmtElapsed(Date.now() - new Date(brewTime).getTime());
-  document.getElementById('noteModalInfo').innerHTML =
-    `煮好時間：${fmtTime(new Date(brewTime))}　已過：<b style="color:var(--teal)">${elapsed}</b>`;
-
-  // 載入現有備註
-  var batch = (_batches[_currentType]||[]).find(b=>b.id===id);
-  var notes = []; try { notes = JSON.parse(batch?.notes||'[]'); } catch(e){}
-  var histEl = document.getElementById('noteHistory');
-  histEl.innerHTML = notes.length ? notes.map(n =>
-    `<div class="note-entry"><span class="flag-chip ${n.flag==='異常'?'fc-abnormal':'fc-normal'}">${n.flag}</span>
-     <span style="color:var(--text-h);font-size:11px;">${n.time}</span>　${n.text||''}</div>`
-  ).join('') : '<div style="color:var(--text-h);font-size:12px;">尚無備註</div>';
-
-  document.getElementById('noteTextInput').value = '';
-  document.querySelector('input[name="noteFlag"][value="正常"]').checked = true;
-  document.getElementById('noteModal').style.display = 'flex';
-}
-
-function closeNoteModal() {
-  document.getElementById('noteModal').style.display = 'none';
-  _noteTarget = null;
-}
-
-async function submitNote() {
-  if (!_noteTarget) return;
-  var text = document.getElementById('noteTextInput').value.trim();
-  var flag = document.querySelector('input[name="noteFlag"]:checked')?.value || '正常';
-  if (!text) { toast('請填寫備註內容', 'er'); return; }
-
-  var entry = { time: fmtDatetime(new Date()), flag, text };
-  var r = await api({ action: 'teaBrewAddNote', id: _noteTarget.id, note: JSON.stringify(entry) });
-  if (r.ok) {
-    toast('✓ 備註已儲存', 'ok');
-    closeNoteModal();
-    loadBatches();
-  } else {
-    toast('儲存失敗', 'er');
-  }
-}
-
-// ════════════════════════════════════════════════════════
-// 統計表
-// ════════════════════════════════════════════════════════
-async function loadStatData() {
-  var r = await api({ action: 'teaBrewGetAll', teaType: _currentType });
-  var all = r.ok ? (r.data||[]) : [];
-  var filtered = _statMode === 'today'
-    ? all.filter(b => (b.date||'').slice(0,10) === today)
-    : all;
-  renderStatTable(filtered.filter(b => b.status === '已清潔'));
-}
-
-function switchStatTab(mode) {
-  _statMode = mode;
-  loadStatData();
-}
-
-function renderStatTable(data) {
-  var cfg = TEA_CONFIG[_currentType];
-  var thead = document.getElementById('statHead');
-  var tbody = document.getElementById('statBody');
-
-  thead.innerHTML = '<tr>' + cfg.cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
-
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="${cfg.cols.length}" style="text-align:center;color:var(--text-h);padding:20px;">尚無完成記錄</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = data.map(b => {
-    var cells = [];
-    if (cfg.hasBarrel)      cells.push(`<td><b>${b.barrel||'—'}</b></td>`);
-    if (cfg.hasGram)        cells.push(`<td>${b.gram||'—'}g</td>`);
-    if (!cfg.hasMount)      cells.push(`<td>${b.brewTime ? fmtTime(new Date(b.brewTime)) : '—'}</td>`);
-    if (cfg.hasMount) {
-      cells.push(`<td>${b.brewTime ? fmtTime(new Date(b.brewTime)) : '—'}</td>`);
-      cells.push(`<td>${b.mountTime ? fmtTime(new Date(b.mountTime)) : '—'}</td>`);
-      if (cfg.hasMountPerson) cells.push(`<td>${b.mountPerson||'—'}</td>`);
-    }
-    cells.push(`<td>${b.brewer||'—'}</td>`);
-    if (cfg.hasWarn) {
-      cells.push(`<td style="color:var(--amber)">${b.warnTime ? fmtDatetime(new Date(b.warnTime)) : '—'}</td>`);
-      cells.push(`<td style="color:var(--red)">${b.expireTime ? fmtDatetime(new Date(b.expireTime)) : '—'}</td>`);
-    }
-    if (cfg.hasTaste)       cells.push(`<td>${b.taster||'—'}</td>`);
-    cells.push(`<td>${b.cleanTime ? fmtTime(new Date(b.cleanTime)) : '—'}</td>`);
-    cells.push(`<td>${b.cleaner||'—'}</td>`);
-    cells.push(`<td><b>${b.totalTime||'—'}</b></td>`);
-    cells.push(`<td style="color:var(--text-m);max-width:120px;">${b.note||''}</td>`);
-    return '<tr>' + cells.join('') + '</tr>';
-  }).join('');
-}
-
-// ════════════════════════════════════════════════════════
-// 工具函式
-// ════════════════════════════════════════════════════════
-function pad2(n) { return String(n).padStart(2,'0'); }
-function fmtTime(d) { return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
-function fmtDatetime(d) { return (d.getMonth()+1) + '/' + d.getDate() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
-function fmtElapsed(ms) {
-  if (ms < 0) ms = 0;
-  var h = Math.floor(ms/3600000);
-  var m = Math.floor((ms%3600000)/60000);
-  var s = Math.floor((ms%60000)/1000);
-  return h + 'h ' + pad2(m) + 'm ' + pad2(s) + 's';
+  if(r.ok){toast('✓ 下架完成（'+totalTime+'）','ok');closeCleanModal();loadBatches();}
+  else toast('儲存失敗','er');
 }
 </script>
 </body>
