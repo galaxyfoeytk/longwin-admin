@@ -532,10 +532,17 @@ async function submitClean(){
 
   var cleanTimeVal=document.getElementById('cleanTimeInput').value;
   var[hh,mm]=cleanTimeVal.split(':').map(Number);
-  var cleanDt=new Date(); cleanDt.setHours(hh,mm,0,0);
   var brewDt=new Date(_cleanTarget.brewTime);
+
+  // 以今天日期組合清潔時間，若清潔時間早於煮好時間則視為跨日（+1天）
+  var cleanDt=new Date();
+  cleanDt.setHours(hh,mm,0,0);
+  if(cleanDt < brewDt) cleanDt.setDate(cleanDt.getDate()+1);
+
   var diffMs=cleanDt-brewDt;
   var totalTime=Math.floor(diffMs/3600000)+'h '+pad2(Math.floor((diffMs%3600000)/60000))+'m';
+  // 傳送 ISO 完整時間（含日期），避免 GAS 端再次計算錯誤
+  var cleanIso=cleanDt.toISOString();
 
   var tasters='', tasteResult='';
   if(document.getElementById('tasterSection').style.display!=='none'){
@@ -544,7 +551,7 @@ async function submitClean(){
   }
 
   var r=await api({action:'teaBrewClean',id:_cleanTarget.id,cleaner:cleaners.join('、'),
-    cleanTime:cleanDt.toISOString(),taster:tasters,tasteResult,
+    cleanTime:cleanIso,taster:tasters,tasteResult,
     totalTime,note:document.getElementById('cleanNote').value.trim(),status:'已清潔'});
 
   if(r.ok){toast('✓ 下架完成（'+totalTime+'）','ok');closeCleanModal();loadBatches();}
