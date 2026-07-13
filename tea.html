@@ -101,8 +101,11 @@
     <div class="modal-title" id="addModalTitle">＋ 新增批次</div>
 
     <div id="barrelSection">
-      <div class="ffl" style="margin-top:0;">桶號</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px;" id="barrelGrid"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span class="ffl" style="margin-bottom:0;">桶號</span>
+        <button class="mbtn-sm" onclick="openBarrelConfig()" style="font-size:11px;">⚙ 自訂桶號</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;" id="barrelGrid"></div>
     </div>
 
     <div id="gramSection" style="display:none;margin-top:10px;">
@@ -169,6 +172,20 @@
 <div class="toast" id="toast"></div>
 <div class="bb"><div class="bd"></div><span class="bt">龍吟古早味飲品專賣・茶製記錄</span></div>
 
+<!-- 桶號設定 Modal -->
+<div id="barrelConfigModal" class="modal-overlay" style="display:none;" onclick="closeBarrelConfig()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="barrelConfigTitle">⚙ 桶號設定</div>
+    <div style="font-size:12px;color:var(--text-m);margin-bottom:10px;">每行一個桶號，如 A1、B2、冷藏1</div>
+    <textarea id="barrelConfigInput" class="ffi" rows="8"
+      style="height:auto;padding:10px;resize:none;font-family:monospace;font-size:14px;line-height:1.8;"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button class="sbtn" style="background:var(--gray);height:36px;" onclick="closeBarrelConfig()">取消</button>
+      <button class="sbtn g" style="height:36px;" onclick="saveBarrelConfig()">✓ 儲存</button>
+    </div>
+  </div>
+</div>
+
 <script src="base.js"></script>
 <script>
 var TEA_CONFIG = {
@@ -187,6 +204,16 @@ var _selectedBarrel = '';
 var _editingId = null;
 var _rafId = null;
 var _currentUser = '';
+
+// ── 桶號自訂（存 localStorage，跨頁自動讀取）──
+function getBarrels(type) {
+  var saved = localStorage.getItem('lw_barrels_' + type);
+  if (saved) { try { return JSON.parse(saved); } catch(e){} }
+  return TEA_CONFIG[type].barrels.slice(); // 預設值
+}
+function saveBarrels(type, list) {
+  localStorage.setItem('lw_barrels_' + type, JSON.stringify(list));
+}
 
 window.addEventListener('load', () => {
   var u = buildSubHeader('茶製記錄','製茶批次・效期追蹤・清潔記錄');
@@ -382,10 +409,8 @@ function openAddModal(){
   bSec.style.display=cfg.hasBarrel?'':'none';
   if(cfg.hasBarrel){
     var inUse=(_batches[_currentType]||[]).filter(b=>b.status==='進行中').map(b=>b.barrel);
-    document.getElementById('barrelGrid').innerHTML=cfg.barrels.map(b=>
-      `<button class="mpill${inUse.includes(b)?' used':''}" style="${inUse.includes(b)?'opacity:.4;cursor:not-allowed;':''}"
-        id="brl-${b}" onclick="${inUse.includes(b)?'':("selBarrel('"+b+"')")}">${b}</button>`
-    ).join('');
+    var barrels=getBarrels(_currentType);
+    renderBarrelGrid(barrels, inUse, null);
   }
 
   document.getElementById('gramSection').style.display=cfg.hasGram?'':'none';
@@ -409,6 +434,42 @@ function selBarrel(b){
   document.getElementById('brl-'+b)?.classList.add('sel');
 }
 
+function renderBarrelGrid(barrels, inUse, selectedBarrel) {
+  _selectedBarrel = selectedBarrel || '';
+  document.getElementById('barrelGrid').innerHTML = barrels.map(b => {
+    var isUsed = inUse.includes(b);
+    var isSel  = b === selectedBarrel;
+    return `<button class="mpill${isSel?' sel':''}${isUsed?' used':''}"
+      style="${isUsed?'opacity:.4;cursor:not-allowed;':''}"
+      id="brl-${b}" onclick="${isUsed?'':("selBarrel('"+b+"')")}">${b}</button>`;
+  }).join('');
+}
+
+// ── 桶號自訂 ──────────────────────────────
+function openBarrelConfig() {
+  var barrels = getBarrels(_currentType);
+  var cfg = TEA_CONFIG[_currentType];
+  document.getElementById('barrelConfigTitle').textContent = '⚙ ' + cfg.label + ' 桶號設定';
+  document.getElementById('barrelConfigInput').value = barrels.join('\n');
+  document.getElementById('barrelConfigModal').style.display = 'flex';
+}
+
+function closeBarrelConfig() {
+  document.getElementById('barrelConfigModal').style.display = 'none';
+}
+
+function saveBarrelConfig() {
+  var raw = document.getElementById('barrelConfigInput').value;
+  var list = raw.split('\n').map(s=>s.trim()).filter(Boolean);
+  if (!list.length) { toast('至少需要一個桶號', 'er'); return; }
+  saveBarrels(_currentType, list);
+  closeBarrelConfig();
+  // 重新渲染桶號格子
+  var inUse = (_batches[_currentType]||[]).filter(b=>b.status==='進行中').map(b=>b.barrel);
+  renderBarrelGrid(list, inUse, _selectedBarrel);
+  toast('✓ 桶號已儲存', 'ok');
+}
+
 // ── 編輯 Modal（重用新增 Modal）────────
 function openEditModal(id){
   var b=(_batches[_currentType]||[]).find(x=>x.id===id);
@@ -421,11 +482,8 @@ function openEditModal(id){
   document.getElementById('barrelSection').style.display=cfg.hasBarrel?'':'none';
   if(cfg.hasBarrel){
     var inUse=(_batches[_currentType]||[]).filter(x=>x.status==='進行中'&&x.id!==id).map(x=>x.barrel);
-    document.getElementById('barrelGrid').innerHTML=cfg.barrels.map(brl=>
-      `<button class="mpill${brl===b.barrel?' sel':''}${inUse.includes(brl)?' used':''}"
-        style="${inUse.includes(brl)?'opacity:.4;cursor:not-allowed;':''}"
-        id="brl-${brl}" onclick="${inUse.includes(brl)?'':("selBarrel('"+brl+"')")}">${brl}</button>`
-    ).join('');
+    var barrels=getBarrels(_currentType);
+    renderBarrelGrid(barrels, inUse, b.barrel);
   }
 
   document.getElementById('gramSection').style.display=cfg.hasGram?'':'none';
